@@ -1,15 +1,18 @@
 // import Versions from './components/Versions'
 
+import { Content, RootLayout } from './components'
 import Login from './components/Login'
+import { Sidebar } from './components/SidebarComponent/Sidebar'
 
 function App(): JSX.Element {
-  // const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
-
   return (
     <>
-
-<Login />
-      {/* <h1>Hello </h1> */}
+      <RootLayout>
+        <Sidebar />
+          {/* Sidebar content (e.g., navigation links) */}
+        {/* </Sidebar> */}
+        <Content className="p-4">Main content (e.g., dashboard, forms, etc.)</Content>
+      </RootLayout>
     </>
   )
 }
