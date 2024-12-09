@@ -1,7 +1,6 @@
 import { ComponentProps, forwardRef } from 'react'
 import { twMerge } from 'tailwind-merge'
-import NavItem from './SidebarComponent/NavItem';
-import { FaUser, FaComments, FaChartPie, FaMoneyCheckAlt, FaPercent, FaBook, FaUserTie, FaUsers, FaBell, FaCog } from 'react-icons/fa';
+
 
 // RootLayout Component
 export const RootLayout = ({ children, className, ...props }: ComponentProps<'main'>) => {
