@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+.light-text{
+  color: #00000080;
+}
+.light-text-300{
+  /* color: #000000CC; */
+  color: #00000080;
+  font-size: 14px;
+  font-weight: 300;
+}
+.light-text-400{
+  /* color: #000000CC; */
+  color: #00000080;
+  font-size: 14px;
+  font-weight: 400;
+}
