@@ -1,21 +1,52 @@
-import React from "react";
+import React, { useState } from "react";
 import { MdOutlineDescription, MdChatBubbleOutline, MdEdit } from "react-icons/md";
 // import { AiOutlineCheckCircle } from "react-icons/ai";
-import { Colors } from "@renderer/constant/Colors";
+// import { Colors } from "@renderer/constant/Colors";
 import { Images } from "@renderer/constant/Image";
 import { MdEmail, MdLock, MdPhone, MdPerson, MdLocationOn } from "react-icons/md";
 import { FaTicketAlt } from "react-icons/fa";
 import ContactRow from "@renderer/components/ContactRow";
+// import { useParams } from 'react-router-dom';
+import KYCDetailsModal from "@renderer/components/modal/KYCDetailsModal";
 
-// Define the TypeScript type for customer data
+// interface CustomerDetailsProps {
+//   customer: Customer;
+// }
 
+const CustomerDetails: React.FC = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // const { id } = useParams<{ id: string }>();
 
-// Props interface for the component
-interface CustomerDetailsProps {
-  customer: Customer;
-}
-
-const CustomerDetails: React.FC<CustomerDetailsProps> = ({ customer }) => {
+  const kycData = {
+    surname: "Adewale",
+    firstName: "Susan",
+    bvn: "234567890",
+    dateOfBirth: "Feb 22, 1986",
+    updateStatus: "Successful",
+  };
+  const customer: Customer = {
+    id: 1,
+    name: "Qamardeen Abdulmalik",
+    username: "Alucard",
+    email: "johndoe@gmail.com",
+    mobileNumber: "+23481235848",
+    password: "********",
+    gender: "Male",
+    referralCode: null,
+    country: "Nigeria",
+    kycStatus: "Successful",
+    tier: "Tier 2",
+    dateJoined: "Nov 7, 2024 - 04:30 PM",
+    lastPasswordReset: "Nov 7, 2024 - 04:30 PM",
+    accountActivities: [
+      { label: "Date Joined", date: "Nov 7, 2024 - 04:30 PM" },
+      { label: "Password Reset", date: "Nov 7, 2024 - 04:30 PM" },
+    ],
+  };
+  const handleUpdate = (status: string) => {
+    console.log("Updated Status:", status);
+    setIsModalOpen(false);
+  };
   return (
     <div className=" min-h-screen  w-full">
       {/* Tabs */}
@@ -37,10 +68,9 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({ customer }) => {
           <div>
             <h1 className="text-lg font-bold mb-4">{customer.name}</h1>
             <p className="text-[16px] text-[#FFFFFF]">@{customer.username} - {customer.tier}</p>
-            <div className="mt-2 flex flex-col items-start gap-2 bg-white text-[#147341] text-xs px-[14px] py-[10px] mr-[20px] w-[60%] rounded-[10px] gap-1" >
+            <div className="mt-2 flex flex-col items-start  bg-white text-[#147341] text-xs px-[14px] py-[10px] mr-[20px] w-[60%] rounded-[10px] gap-1" >
               <div>
                 <span className=" text-[10px] font-[400]">KYC status </span>
-
               </div>
               <div className="flex flex-ContactRow  bg-[#1473414D] rounded-[5px] border-[#147341] px-[6px] pr-[15px] py-[5px] gap-1">
                 <img src={Images.tick} alt="" />
@@ -52,7 +82,7 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({ customer }) => {
         </div>
         <div className="flex gap-3 items-end justify-end ">
           {/* Action Buttons */}
-          <button className="bg-white text-[#00000080] rounded-[8px] p-2 shadow-md">
+          <button className="bg-white text-[#00000080] rounded-[8px] p-2 shadow-md" onClick={() => setIsModalOpen(true)}>
             <MdOutlineDescription className="text-xl" />
           </button>
           <button className="bg-white text-[#00000080] rounded-[8px] p-2 shadow-md">
@@ -108,8 +138,8 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({ customer }) => {
         />
       </div>
 
-       {/* Account Activities Section */}
-       <div className="bg-white rounded-lg shadow-md mt-11">
+      {/* Account Activities Section */}
+      <div className="bg-white rounded-lg shadow-md mt-11">
         <h2 className="px-6 py-4 font-bold text-gray-700">Account Activities</h2>
         <table className="min-w-full text-left text-sm text-gray-600">
           <tbody>
@@ -122,17 +152,16 @@ const CustomerDetails: React.FC<CustomerDetailsProps> = ({ customer }) => {
           </tbody>
         </table>
       </div>
+      <KYCDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        kycData={kycData}
+        onUpdate={handleUpdate}
+      />
     </div>
+
   );
 };
-const styleSheet = {
-  topBox: {
-    width: "100%",
-    backgroundColor: Colors.bg,
-    paddingLeft: "20px",
-    padingBottom: "15px",
-    borderRadius: "10px"
-  },
-}
+//
 export default CustomerDetails;
 

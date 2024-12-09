@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import {  useNavigate } from 'react-router-dom';
 
 interface Transaction {
   id: number;
@@ -17,11 +18,14 @@ interface TransactionsTableProps {
 
 const TransactionsTable: React.FC<TransactionsTableProps> = ({ data }) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
+  const navigate = useNavigate(); // Correct usage of useNavigate
 
   const toggleMenu = (id: number) => {
     setActiveMenu(activeMenu === id ? null : id);
   };
-
+  const handleViewCustomerDetails = (id: number) => {
+    navigate(`/customers/${id}`);
+  };
   return (
     <div className="mt-6 bg-white rounded-lg shadow-md ">
       <table className="min-w-full text-left text-sm text-gray-700">
@@ -74,7 +78,8 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ data }) => {
                     }}
                   >
                     <button
-                      onClick={() => console.log('View Customer Details')}
+                   onClick={() => handleViewCustomerDetails(1)}
+
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                     >
                       View Customer Details

@@ -42,6 +42,16 @@ interface Customer {
   lastPasswordReset: string;
   accountActivities: AccountActivity[];
 }
-
+interface KYCDetailsProps {
+  isOpen: boolean;
+  onClose: () => void;
+  kycData: {
+    surname: string;
+    firstName: string;
+    bvn: string;
+    dateOfBirth: string;
+    updateStatus: string;
+  };
+}
 
 // export { StatsCardProps };

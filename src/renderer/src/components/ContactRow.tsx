@@ -8,7 +8,7 @@ interface RowProps {
 
 const ContactRow: React.FC<RowProps> = ({ icon, label, value }) => {
   return (
-    <div className="flex items-center gap-4 w-[80%]">
+    <div className="flex   gap-4 w-[80%]" style={{ alignItems: "center" }}>
       {/* Circular Icon */}
       <div className="flex items-center justify-center w-12 h-12 border rounded-full text-[#8A8A8A]">
         {icon}
@@ -21,7 +21,7 @@ const ContactRow: React.FC<RowProps> = ({ icon, label, value }) => {
 
         </div>
         <div className="text-left">
-          <p className="text-black font-normal text-xl text-left">{value || "None"}</p>
+          <p className="text-black font-normal text-xl ">{value || "None"}</p>
 
         </div>
       </div>
