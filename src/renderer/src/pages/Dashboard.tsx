@@ -1,7 +1,10 @@
+import StatsCard from '@renderer/components/Dashboard/StatsCard';
+import TransactionsFilter from '@renderer/components/Dashboard/TransactionsFilter';
+import TransactionsTable from '@renderer/components/Dashboard/TransactionsTable';
 import React, { useState } from 'react';
-import StatsCard from './StatsCard';
-import TransactionsTable from './TransactionsTable';
-import TransactionsFilter from './TransactionsFilter';
+// import StatsCard from './StatsCard';
+// import TransactionsTable from './TransactionsTable';
+// import TransactionsFilter from './TransactionsFilter';
 
 const Dashboard: React.FC = () => {
   const sampleData = [
