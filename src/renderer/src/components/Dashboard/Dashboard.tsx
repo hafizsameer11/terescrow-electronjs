@@ -1,8 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import StatsCard from './StatsCard';
 import TransactionsTable from './TransactionsTable';
+import TransactionsFilter from './TransactionsFilter';
 
 const Dashboard: React.FC = () => {
+  const sampleData = [
+    {
+      id: 1,
+      name: 'Qamardeen Abdulmalik',
+      username: 'Alucard',
+      status: 'Declined',
+      serviceType: 'Gift Card',
+      transactionType: 'Buy - Amazon gift card',
+      date: 'Nov 6, 2024',
+      amount: '$100',
+    },
+    {
+      id: 2,
+      name: 'Adam Sandler',
+      username: 'Adam',
+      status: 'Successful',
+      serviceType: 'Crypto',
+      transactionType: 'Sell - BTC',
+      date: 'Nov 6, 2024',
+      amount: '$100',
+    },
+    {
+      id: 3,
+      name: 'Sasha Sloan',
+      username: 'Sasha',
+      status: 'Successful',
+      serviceType: 'Crypto',
+      transactionType: 'Buy - USDT',
+      date: 'Nov 6, 2024',
+      amount: '$100',
+    },
+  ];
+
+  const [filters, setFilters] = useState({
+    status: 'All',
+    type: 'All',
+    dateRange: 'Last 30 days',
+    search: '',
+    transactionType: 'All',
+    category:'All'
+
+  });
+
+  // Filter data based on the selected filters
+  const filteredData = sampleData.filter((transaction) => {
+    const matchesStatus =
+      filters.status === 'All' || transaction.status === filters.status;
+    const matchesType =
+      filters.type === 'All' || transaction.serviceType === filters.type;
+    const matchesSearch =
+      filters.search === '' ||
+      transaction.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      transaction.username.toLowerCase().includes(filters.search.toLowerCase());
+
+    return matchesStatus && matchesType && matchesSearch;
+  });
   return (
     <div className="p-6 space-y-8 w-full">
       {/* Header */}
@@ -21,13 +78,16 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Transactions Table */}
-      <section>
-        <h2 className="text-lg font-semibold text-gray-800">Transactions on the app</h2>
-        <p className="text-sm text-gray-600">
-          Manage total customers and see their activities
-        </p>
-        <TransactionsTable />
-      </section>
+      <div>
+
+          <TransactionsFilter
+            filters={filters}
+            onChange={(updatedFilters) =>
+              setFilters({ ...filters, ...updatedFilters })
+            }
+          />
+          <TransactionsTable data={filteredData} />
+        </div>
     </div>
   );
 };

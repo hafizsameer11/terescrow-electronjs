@@ -2,40 +2,40 @@ import React from 'react';
 
 
 
-const transactions: Transaction[] = [
-  {
-    id: 1,
-    name: 'Qamardeen Abdulmalik',
-    username: 'Alucard',
-    status: 'Declined',
-    serviceType: 'Gift Card',
-    transactionType: 'Buy - Amazon gift card',
-    date: 'Nov 6, 2024',
-    amount: '$100',
-  },
-  {
-    id: 2,
-    name: 'Adam Sandler',
-    username: 'Adam',
-    status: 'Successful',
-    serviceType: 'Crypto',
-    transactionType: 'Sell - BTC',
-    date: 'Nov 6, 2024',
-    amount: '$100',
-  },
-  {
-    id: 3,
-    name: 'Sasha Sloan',
-    username: 'Sasha',
-    status: 'Successful',
-    serviceType: 'Crypto',
-    transactionType: 'Buy - USDT',
-    date: 'Nov 6, 2024',
-    amount: '$100',
-  },
-];
+// const transactions: Transaction[] = [
+//   {
+//     id: 1,
+//     name: 'Qamardeen Abdulmalik',
+//     username: 'Alucard',
+//     status: 'Declined',
+//     serviceType: 'Gift Card',
+//     transactionType: 'Buy - Amazon gift card',
+//     date: 'Nov 6, 2024',
+//     amount: '$100',
+//   },
+//   {
+//     id: 2,
+//     name: 'Adam Sandler',
+//     username: 'Adam',
+//     status: 'Successful',
+//     serviceType: 'Crypto',
+//     transactionType: 'Sell - BTC',
+//     date: 'Nov 6, 2024',
+//     amount: '$100',
+//   },
+//   {
+//     id: 3,
+//     name: 'Sasha Sloan',
+//     username: 'Sasha',
+//     status: 'Successful',
+//     serviceType: 'Crypto',
+//     transactionType: 'Buy - USDT',
+//     date: 'Nov 6, 2024',
+//     amount: '$100',
+//   },
+// ];
 
-const TransactionsTable: React.FC = () => {
+const TransactionsTable: React.FC<TransactionsTableProps> = ({data} ) => {
   return (
     <div className="mt-6 bg-white rounded-lg shadow-md overflow-hidden">
       <table className="min-w-full text-left text-sm text-gray-700">
@@ -50,7 +50,7 @@ const TransactionsTable: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {transactions.map((transaction) => (
+          {data.map((transaction) => (
             <tr key={transaction.id} className="border-t hover:bg-gray-50">
               <td className="py-3 px-4">
                 <div>

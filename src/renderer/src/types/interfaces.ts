@@ -10,13 +10,16 @@ interface Transaction {
   id: number;
   name: string;
   username: string;
-  status: string; // e.g., "Successful" or "Declined"
+  status: string;
   serviceType: string;
   transactionType: string;
   date: string;
   amount: string;
 }
 
+interface TransactionsTableProps {
+  data: Transaction[];
+}
 
 
 
