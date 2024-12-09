@@ -1,0 +1,112 @@
+import React from "react";
+import { MdPushPin } from "react-icons/md"; // Pin icon
+// import { AiOutlineEdit, AiOutlineDelete } from "react-icons/ai"; // Edit and Delete icons
+import { Icons } from "@renderer/constant/Icons";
+
+interface NotesHistoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  notes: Array<{
+    id: number;
+    content: string;
+    date: string;
+    savedBy: string;
+    isHighlighted?: boolean;
+  }>;
+  onNewNote: () => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+}
+
+const NotesHistoryModal: React.FC<NotesHistoryModalProps> = ({
+  isOpen,
+  onClose,
+  notes,
+  onNewNote,
+  onEdit,
+  onDelete,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-end z-50 px-10">
+      <div className="relative bg-white rounded-lg shadow-lg p-6 w-[600px]">
+        {/* Modal Header */}
+        <div className="flex flex-col relative">
+          <button
+            onClick={onClose}
+            className=" text-gray-500 hover:text-gray-800 text-2xl  flex justify-end mb-4 "
+          >
+            <img src={Icons.cross} alt="" />
+          </button>
+          <div className="flex justify-between items-center pb-4 mb-4 border-b">
+
+            <h2 className="text-lg font-semibold text-gray-700">Notes History</h2>
+            <button
+              onClick={onNewNote}
+              className="bg-[#147341] text-white px-4 py-2 rounded-lg hover:bg-green-700"
+            >
+              New Note
+            </button>
+          </div>
+
+        </div>
+
+        {/* Close Icon */}
+
+
+        {/* Notes List */}
+        <div className="overflow-y-auto max-h-[300px]">
+          {notes.map((note) => (
+            <div
+              key={note.id}
+              className={`p-4 flex items-center gap-1 rounded-lg mb-4 ${note.isHighlighted ? "bg-[#B3FFD7]" : "bg-gray-50"
+                }`} >
+
+              <div>
+                {note.isHighlighted && (
+                  <MdPushPin className="text-[#00000080] text-lg" />
+                )}
+              </div>
+              <div>
+
+                <div className="flex justify-between items-center">
+
+                  <div className="flex items-center gap-2">
+
+                    <span className="font-semibold text-gray-700">{note.content}</span>
+                  </div>
+
+                </div>
+
+                {/* Metadata */}
+                <div className="mt-2 text-sm text-gray-500  flex justify-between">
+                  <div>
+
+                    {note.date} <span className="font-semibold">Saved by {note.savedBy}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => onEdit(note.id)}
+                      className="text-blue-600 hover:text-blue-800"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => onDelete(note.id)}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default NotesHistoryModal;

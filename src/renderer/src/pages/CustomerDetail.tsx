@@ -1,21 +1,16 @@
 import React, { useState } from "react";
 import { MdOutlineDescription, MdChatBubbleOutline, MdEdit } from "react-icons/md";
-// import { AiOutlineCheckCircle } from "react-icons/ai";
-// import { Colors } from "@renderer/constant/Colors";
-import { Images } from "@renderer/constant/Image";
 import { MdEmail, MdLock, MdPhone, MdPerson, MdLocationOn } from "react-icons/md";
 import { FaTicketAlt } from "react-icons/fa";
 import ContactRow from "@renderer/components/ContactRow";
-// import { useParams } from 'react-router-dom';
 import KYCDetailsModal from "@renderer/components/modal/KYCDetailsModal";
-
-// interface CustomerDetailsProps {
-//   customer: Customer;
-// }
+import NotesHistoryModal from "@renderer/components/modal/NotesHistoryModal";
+import EditProfileModal from "@renderer/components/modal/EditProfileModal";
 
 const CustomerDetails: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  // const { id } = useParams<{ id: string }>();
+  const [isKYCModalOpen, setIsKYCModalOpen] = useState(false);
+  const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const kycData = {
     surname: "Adewale",
@@ -24,7 +19,8 @@ const CustomerDetails: React.FC = () => {
     dateOfBirth: "Feb 22, 1986",
     updateStatus: "Successful",
   };
-  const customer: Customer = {
+
+  const customer = {
     id: 1,
     name: "Qamardeen Abdulmalik",
     username: "Alucard",
@@ -43,102 +39,105 @@ const CustomerDetails: React.FC = () => {
       { label: "Password Reset", date: "Nov 7, 2024 - 04:30 PM" },
     ],
   };
-  const handleUpdate = (status: string) => {
+
+  const notes = [
+    {
+      id: 1,
+      content: "Adecrypto Vendor - NGN1670/$1",
+      date: "Nov 7, 2024 - 10:22 am",
+      savedBy: "Alucard",
+      isHighlighted: true,
+    },
+    {
+      id: 2,
+      content:
+        "Customer is kind and reputable and respectful, does not like waiting for too long",
+      date: "Nov 7, 2024 - 10:22 am",
+      savedBy: "Dave",
+    },
+  ];
+
+  const handleKYCUpdate = (status: string) => {
     console.log("Updated Status:", status);
-    setIsModalOpen(false);
+    setIsKYCModalOpen(false);
   };
+
+  const handleEditProfile = (updatedData: Record<string, string>) => {
+    console.log("Updated Profile Data:", updatedData);
+    setIsEditModalOpen(false);
+  };
+
+  const handleNewNote = () => {
+    console.log("New Note");
+  };
+
+  const handleEditNote = (id: number) => {
+    console.log("Edit Note", id);
+  };
+
+  const handleDeleteNote = (id: number) => {
+    console.log("Delete Note", id);
+  };
+
   return (
-    <div className=" min-h-screen  w-full">
+    <div className="min-h-screen w-full">
       {/* Tabs */}
-      <div className="flex  mb-6">
-        <button className="bg-[#147341] text-[white] px-4 py-2 rounded-md shadow-sm">
+      <div className="flex mb-6">
+        <button className="bg-[#147341] text-white px-4 py-2 rounded-md shadow-sm">
           Customer details and activities
         </button>
-        <button className="bg- text-gray-700 px-4 py-2 rounded-md shadow-sm border border-gray-200">
+        <button className="text-gray-700 px-4 py-2 rounded-md shadow-sm border border-gray-200">
           Transaction activities and balance
         </button>
       </div>
 
       {/* Profile Section */}
       <div className="bg-[#147341] text-white rounded-lg p-4 flex items-end justify-between mb-6">
-        <div className="flex  gap-4">
+        <div className="flex gap-4">
           <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-lg font-bold">
             {customer.name.charAt(0)}
           </div>
           <div>
             <h1 className="text-lg font-bold mb-4">{customer.name}</h1>
-            <p className="text-[16px] text-[#FFFFFF]">@{customer.username} - {customer.tier}</p>
-            <div className="mt-2 flex flex-col items-start  bg-white text-[#147341] text-xs px-[14px] py-[10px] mr-[20px] w-[60%] rounded-[10px] gap-1" >
-              <div>
-                <span className=" text-[10px] font-[400]">KYC status </span>
-              </div>
-              <div className="flex flex-ContactRow  bg-[#1473414D] rounded-[5px] border-[#147341] px-[6px] pr-[15px] py-[5px] gap-1">
-                <img src={Images.tick} alt="" />
-
-                <span className="text-[10px] text-[#147341]">Successful </span>
-              </div>
+            <p className="text-[16px]">@{customer.username} - {customer.tier}</p>
+            <div className="mt-2 flex items-center gap-2 bg-white text-[#147341] px-4 py-2 rounded-md">
+              <span className="text-xs font-medium">KYC Status: {customer.kycStatus}</span>
             </div>
           </div>
         </div>
-        <div className="flex gap-3 items-end justify-end ">
-          {/* Action Buttons */}
-          <button className="bg-white text-[#00000080] rounded-[8px] p-2 shadow-md" onClick={() => setIsModalOpen(true)}>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setIsKYCModalOpen(true)}
+            className="bg-white text-[#00000080] rounded-lg p-2 shadow-md"
+          >
             <MdOutlineDescription className="text-xl" />
           </button>
-          <button className="bg-white text-[#00000080] rounded-[8px] p-2 shadow-md">
+          <button
+            onClick={() => setIsNotesModalOpen(true)}
+            className="bg-white text-[#00000080] rounded-lg p-2 shadow-md"
+          >
             <MdChatBubbleOutline className="text-xl" />
           </button>
-          <button className="bg-white text-[#00000080] rounded-[8px] p-2 shadow-md">
+          <button
+            onClick={() => setIsEditModalOpen(true)}
+            className="bg-white text-[#00000080] rounded-lg p-2 shadow-md"
+          >
             <MdEdit className="text-xl" />
           </button>
         </div>
       </div>
-      {/* contact details */}
+
+      {/* Contact Details */}
       <div className="grid grid-cols-2 gap-8 bg-[#F9FAFF] p-6 rounded-lg shadow-md">
-        {/* Email Address */}
-        <ContactRow
-          icon={<MdEmail className="text-xl" />}
-          label="Email Address"
-          value={customer.email}
-        />
-
-        {/* Mobile Number */}
-        <ContactRow
-          icon={<MdPhone className="text-xl" />}
-          label="Mobile Number"
-          value={customer.mobileNumber}
-        />
-
-        {/* Password */}
-        <ContactRow
-          icon={<MdLock className="text-xl" />}
-          label="Password"
-          value="••••••••••"
-        />
-
-        {/* Gender */}
-        <ContactRow
-          icon={<MdPerson className="text-xl" />}
-          label="Gender"
-          value={customer.gender}
-        />
-
-        {/* Referral Code */}
-        <ContactRow
-          icon={<FaTicketAlt className="text-xl" />}
-          label="Referral Code"
-          value={customer.referralCode}
-        />
-
-        {/* Country */}
-        <ContactRow
-          icon={<MdLocationOn className="text-xl" />}
-          label="Country"
-          value={customer.country}
-        />
+        <ContactRow icon={<MdEmail />} label="Email Address" value={customer.email} />
+        <ContactRow icon={<MdPhone />} label="Mobile Number" value={customer.mobileNumber} />
+        <ContactRow icon={<MdLock />} label="Password" value="••••••••••" />
+        <ContactRow icon={<MdPerson />} label="Gender" value={customer.gender} />
+        <ContactRow icon={<FaTicketAlt />} label="Referral Code" value={customer.referralCode} />
+        <ContactRow icon={<MdLocationOn />} label="Country" value={customer.country} />
       </div>
 
-      {/* Account Activities Section */}
+      {/* Account Activities */}
       <div className="bg-white rounded-lg shadow-md mt-11">
         <h2 className="px-6 py-4 font-bold text-gray-700">Account Activities</h2>
         <table className="min-w-full text-left text-sm text-gray-600">
@@ -152,16 +151,37 @@ const CustomerDetails: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Modals */}
       <KYCDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isKYCModalOpen}
+        onClose={() => setIsKYCModalOpen(false)}
         kycData={kycData}
-        onUpdate={handleUpdate}
+        onUpdate={handleKYCUpdate}
+      />
+      <NotesHistoryModal
+        isOpen={isNotesModalOpen}
+        onClose={() => setIsNotesModalOpen(false)}
+        notes={notes}
+        onNewNote={handleNewNote}
+        onEdit={handleEditNote}
+        onDelete={handleDeleteNote}
+      />
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        userData={{
+          fullName: customer.name,
+          username: customer.username,
+          email: customer.email,
+          phoneNumber: customer.mobileNumber,
+          gender: customer.gender,
+          password: customer.password,
+        }}
+        onUpdate={handleEditProfile}
       />
     </div>
-
   );
 };
-//
-export default CustomerDetails;
 
+export default CustomerDetails;

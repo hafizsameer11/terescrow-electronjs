@@ -53,5 +53,20 @@ interface KYCDetailsProps {
     updateStatus: string;
   };
 }
+interface Note {
+  id: number;
+  content: string;
+  date: string;
+  savedBy: string;
+  isHighlighted?: boolean;
+}
 
+interface NotesHistoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  notes: Note[];
+  onNewNote: () => void;
+  onEdit: (id: number) => void;
+  onDelete: (id: number) => void;
+}
 // export { StatsCardProps };
