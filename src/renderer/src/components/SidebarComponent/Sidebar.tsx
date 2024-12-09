@@ -12,6 +12,9 @@ import {
   FaBell,
   FaCog,
 } from 'react-icons/fa';
+import { RiTeamFill } from "react-icons/ri";
+import { Images } from '@renderer/constant/Image';
+
 
 export const Sidebar = () => {
   const [activeItem, setActiveItem] = useState('dashboard');
@@ -32,18 +35,19 @@ export const Sidebar = () => {
   const bottomMenuItems = [
     { label: 'Notifications', icon: <FaBell />, href: '#notifications', id: 'notifications' },
     { label: 'Settings', icon: <FaCog />, href: '#settings', id: 'settings' },
+    { label: 'Team Communication', icon: <RiTeamFill />, href: '#team-communication', id: 'team-communication' },
   ];
 
   return (
-    <aside className="w-[250px] h-screen bg-white text-gray-800 flex flex-col border-r border-gray-200 overflow-auto">
+    <aside className="w-[280px] h-screen bg-white text-gray-800 flex flex-col border-r border-[#989898] overflow-auto">
       {/* Logo Section */}
-      <div className="flex items-center justify-center py-6 border-b border-gray-200">
-        <img src="/path-to-logo.png" alt="Logo" className="w-10 h-10 object-contain" />
-        <span className="ml-2 text-lg font-bold">Terescrow</span>
+      <div className="flex items-start justify-start py-6 px-8">
+        <img src={Images.logo} alt="Logo" className=" h-14 object-contain" />
+        {/* <span className="ml-2 text-lg font-bold">Terescrow</span> */}
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-2 mt-4">
+      <nav className="flex-1 px-[30px] mt-4">
         <ul className="space-y-1">
           {menuItems.map((item) => (
             <NavItem
@@ -60,7 +64,7 @@ export const Sidebar = () => {
 
       {/* Bottom Section */}
       <div className="border-t border-gray-200 mt-2">
-        <ul className="space-y-1 mt-4 px-2">
+        <ul className="space-y-1 mt-4 px-[30px]">
           {bottomMenuItems.map((item) => (
             <NavItem
               key={item.id}

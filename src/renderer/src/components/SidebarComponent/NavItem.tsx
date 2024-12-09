@@ -14,9 +14,9 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon, href, isActive, onClick 
       <a
         href={href}
         onClick={onClick}
-        className={`flex items-center px-4 py-2 rounded-md transition-colors ${
+        className={`flex items-center px-[18px] py-[16px] rounded-md transition-colors ${
           isActive
-            ? 'bg-green-600 text-white'
+            ? 'bg-[#147341] text-white'
             : 'text-gray-800 hover:bg-gray-100'
         }`}
       >

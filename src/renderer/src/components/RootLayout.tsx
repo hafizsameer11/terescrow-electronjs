@@ -12,42 +12,6 @@ export const RootLayout = ({ children, className, ...props }: ComponentProps<'ma
   )
 }
 
-// Sidebar Component
-// export const Sidebar = ({ className, children, ...props }: ComponentProps<'aside'>) => {
-//   const menuItems = [
-//     { label: 'Dashboard', icon: <FaChartPie />, href: '#dashboard', id: 'dashboard' },
-//     { label: 'Customers', icon: <FaUser />, href: '#customers', id: 'customers' },
-//     { label: 'Chats', icon: <FaComments />, href: '#chats', id: 'chats' },
-//     { label: 'Transactions', icon: <FaMoneyCheckAlt />, href: '#transactions', id: 'transactions' },
-//     { label: 'Rates', icon: <FaPercent />, href: '#rates', id: 'rates' },
-//     { label: 'Log', icon: <FaBook />, href: '#log', id: 'log' },
-//     { label: 'Department', icon: <FaUserTie />, href: '#department', id: 'department' },
-//     { label: 'Teams', icon: <FaUsers />, href: '#teams', id: 'teams' },
-//     { label: 'Users', icon: <FaUser />, href: '#users', id: 'users' },
-//     { label: 'Notifications', icon: <FaBell />, href: '#notifications', id: 'notifications' },
-//     { label: 'Settings', icon: <FaCog />, href: '#settings', id: 'settings' },
-//   ];
-
-//   return (
-//     <aside className="w-[250px] h-screen bg-gray-800 text-white">
-
-//       <nav className="flex-1 px-2">
-//         <ul className="space-y-2">
-//           {menuItems.map((item) => (
-//             <NavItem
-//               key={item.id}
-//               label={item.label}
-//               icon={item.icon}
-//               href={item.href}
-//               // isActive={activeItem === item.id}
-//               // onClick={() => setActiveItem(item.id)} // Update the active item on click
-//             />
-//           ))}
-//         </ul>
-//       </nav>
-//     </aside>
-//   );
-// }
 // Content Component
 export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(({ children, className, ...props }, ref) => {
     return (
@@ -60,3 +24,14 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(({ chil
 Content.displayName = 'Content';
 
 
+
+
+
+
+export const MainContent = ({ children, className, ...props }: ComponentProps<'div'>) => {
+  return (
+    <div className={twMerge('flex flex-row h-[100vh] px-[40px] py-[48px]', className)} {...props}>
+      {children}
+    </div>
+  )
+}
