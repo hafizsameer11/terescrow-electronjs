@@ -35,7 +35,7 @@ export const Sidebar = () => {
   const bottomMenuItems = [
     { label: 'Notifications', icon: <FaBell />, href: '/notifications', id: 'notifications' },
     { label: 'Settings', icon: <FaCog />, href: '#settings', id: 'settings' },
-    { label: 'Team Communication', icon: <RiTeamFill />, href: '#team-communication', id: 'team-communication' },
+    { label: 'Team Communication', icon: <RiTeamFill />, href: '/team-communication', id: 'team-communication' },
   ];
 
   return (

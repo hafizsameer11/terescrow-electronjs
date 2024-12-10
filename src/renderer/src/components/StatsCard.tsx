@@ -7,7 +7,7 @@ import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
 interface StatsCardProps {
   title: string;
   value: string;
-  change: string; // e.g., +1% or -1%
+  change?: string; // e.g., +1% or -1%
   isPositive?: boolean; // Determines if the change is positive or negative
   action?: string; // Optional action label (e.g., "Edit" or "View")
 }

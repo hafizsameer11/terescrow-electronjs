@@ -16,6 +16,8 @@ import RatesHistory from './pages/RatesHistory'
 import LogPage from './pages/LogPage'
 import Departments from './pages/Departments'
 import Notifications from './pages/Notifications'
+import Chat from './pages/Chat'
+import TeamCommunication from './pages/TeamCommunication'
 
 function App(): JSX.Element {
 
@@ -32,11 +34,12 @@ function App(): JSX.Element {
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/customers" element={<CustomersPage />} />
-              <Route path="/chats" element={<ChatPage />} />
+              <Route path="/chats" element={<Chat />} />
               <Route path="/rates" element={<RatesHistory />} />
               <Route path="/log" element={<LogPage />} />
               <Route path="/departments" element={<Departments />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/team-communication" element={<TeamCommunication />} />
               <Route path="/team" element={<LogPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/customers/:id" element={<CustomerDetails />} />
