@@ -21,8 +21,8 @@ export const Sidebar = () => {
 
   // Navigation menu data
   const menuItems = [
-    { label: 'Dashboard', icon: <FaChartPie />, href: '#dashboard', id: 'dashboard' },
-    { label: 'Customers', icon: <FaUser />, href: '#customers', id: 'customers' },
+    { label: 'Dashboard', icon: <FaChartPie />, href: '/', id: 'dashboard' },
+    { label: 'Customers', icon: <FaUser />, href: '/customers', id: 'customers' },
     { label: 'Chats', icon: <FaComments />, href: '#chats', id: 'chats' },
     { label: 'Transactions', icon: <FaMoneyCheckAlt />, href: '#transactions', id: 'transactions' },
     { label: 'Rates', icon: <FaPercent />, href: '#rates', id: 'rates' },

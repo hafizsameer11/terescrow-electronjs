@@ -6,20 +6,32 @@ interface StatsCardProps {
   action?: string; // Optional action label (e.g., "Edit" or "View")
 }
 
-interface Transaction {
+export interface TransactionBase {
   id: number;
   name: string;
   username: string;
-  status: string;
-  serviceType: string;
-  transactionType: string;
+  status: string; // Successful, Failed, etc.
+  serviceType: string; // Gift Card, Crypto, etc.
+  transactionType: string; // Buy, Sell, etc.
   date: string;
-  amount: string;
+  amount: string; // "$100 / NGN75,000" (can be split if needed)
 }
 
-interface TransactionsTableProps {
-  data: Transaction[];
+export interface DetailedTransaction extends TransactionBase {
+  dollarAmount: string;
+  nairaAmount: string;
+  giftCardType?: string;
+  giftCardSubType?: string;
+  quantity: number;
+  code: string;
+  transactionId: string;
+  assignedAgent: string;
 }
+
+
+// interface TransactionsTableProps {
+//   data: Transaction[];
+// }
 
 interface AccountActivity {
   label: string;
@@ -70,3 +82,4 @@ interface NotesHistoryModalProps {
   onDelete: (id: number) => void;
 }
 // export { StatsCardProps };
+// export {Customer}

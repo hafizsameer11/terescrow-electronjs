@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import {  useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import TransactionDetailsModal from "../modal/TransactionDetailsModal";
 
-interface Transaction {
+export interface Transaction {
   id: number;
   name: string;
   username: string;
@@ -14,20 +15,43 @@ interface Transaction {
 
 interface TransactionsTableProps {
   data: Transaction[];
+  showCustomerDetailsButton?: boolean;
+  onRowClick?: (transaction: Transaction) => void; // Custom row click behavior
+  showTransactionDetailsModal?: boolean; // Show transaction modal
 }
 
-const TransactionsTable: React.FC<TransactionsTableProps> = ({ data }) => {
+const TransactionsTable: React.FC<TransactionsTableProps> = ({
+  data,
+  showCustomerDetailsButton = true,
+  onRowClick,
+  showTransactionDetailsModal = false,
+}) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
-  const navigate = useNavigate(); // Correct usage of useNavigate
+  const handleRowClick = (transaction: Transaction) => {
+    if (onRowClick) {
+      onRowClick(transaction);
+    } else if (showTransactionDetailsModal) {
+      setSelectedTransaction(transaction);
+      setIsModalOpen(true);
+    }
+  };
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedTransaction(null);
+  };
+
+  const handleViewCustomerDetails = (customerId: number) => {
+    navigate(`/customers/${customerId}`);
+  };
   const toggleMenu = (id: number) => {
     setActiveMenu(activeMenu === id ? null : id);
   };
-  const handleViewCustomerDetails = (id: number) => {
-    navigate(`/customers/${id}`);
-  };
   return (
-    <div className="mt-6 bg-white rounded-lg shadow-md ">
+    <div className="mt-6 bg-white rounded-lg shadow-md">
       <table className="min-w-full text-left text-sm text-gray-700">
         <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
           <tr>
@@ -37,12 +61,17 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ data }) => {
             <th className="py-3 px-4">Transaction Type</th>
             <th className="py-3 px-4">Date</th>
             <th className="py-3 px-4">Amount</th>
-            <th className="py-3 px-1"></th>
+            {showCustomerDetailsButton && <th className="py-3 px-1"></th>}
           </tr>
         </thead>
         <tbody>
           {data.map((transaction) => (
-            <tr key={transaction.id} className="border-t hover:bg-gray-50 relative">
+            <tr
+              key={transaction.id}
+              className="border-t hover:bg-gray-50 cursor-pointer relative"
+              onClick={() => handleRowClick(transaction)}
+
+            >
               <td className="py-3 px-4">
                 <div>
                   <span className="font-semibold">{transaction.name}</span>
@@ -51,10 +80,11 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ data }) => {
               </td>
               <td className="py-3 px-4">
                 <span
-                  className={`px-2 py-1 text-xs rounded-lg ${transaction.status === 'Successful'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
-                    }`}
+                  className={`px-2 py-1 text-xs rounded-lg ${
+                    transaction.status === "Successful"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
                 >
                   {transaction.status}
                 </span>
@@ -63,7 +93,8 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ data }) => {
               <td className="py-3 px-4">{transaction.transactionType}</td>
               <td className="py-3 px-4">{transaction.date}</td>
               <td className="py-3 px-4">{transaction.amount}</td>
-              <td className="py-3 px-4 text-right ">
+              {showCustomerDetailsButton && (
+                <td className="py-3 px-4 text-right ">
                 <button
                   onClick={() => toggleMenu(transaction.id)}
                   className="text-gray-500 hover:text-gray-700 focus:outline-none"
@@ -93,10 +124,31 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({ data }) => {
                   </div>
                 )}
               </td>
+              )}
             </tr>
           ))}
         </tbody>
       </table>
+
+      {/* Transaction Details Modal */}
+      {showTransactionDetailsModal && isModalOpen && selectedTransaction && (
+        <TransactionDetailsModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          transactionData={{
+            dollarAmount: "$250,000",
+            nairaAmount: "NGN425,000,000",
+            serviceType: "Gift Card Purchase",
+            giftCardType: "Amazon Gift Card",
+            giftCardSubType: "-",
+            quantity: 2,
+            code: "034ahds49djskd",
+            transactionId: "238Dsjfjf3djcmdnsd",
+            assignedAgent: "Qamardeen Abdulmalik",
+            status: "Successful",
+          }}
+        />
+      )}
     </div>
   );
 };

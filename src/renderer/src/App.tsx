@@ -9,6 +9,8 @@ import { Sidebar } from './components/SidebarComponent/Sidebar'
 import TopBar from './components/TopBar/TopBar'
 import CustomerDetails from './pages/CustomerDetail'
 import Dashboard from './pages/Dashboard'
+import TransactionDetails from './pages/TransactionDetails'
+import CustomersPage from './pages/CustomersPage'
 
 function App(): JSX.Element {
 
@@ -24,9 +26,10 @@ function App(): JSX.Element {
             {/* <Dashboard /> */}
             <Routes>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/customers" element={<CustomerDetails />} />
+              <Route path="/customers" element={<CustomersPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/customers/:id" element={<CustomerDetails />} />
+              <Route path="/transaction-details/:customerId" element={<TransactionDetails />} />
 
             </Routes>
 

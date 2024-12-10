@@ -1,7 +1,10 @@
+// import { title } from 'process';
 import React from 'react';
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
 
-
+// interface StatsCardProps:{
+//   // title:string,
+// }
 
 const StatsCard: React.FC<StatsCardProps> = ({ title, value, change, isPositive = true }) => {
   return (

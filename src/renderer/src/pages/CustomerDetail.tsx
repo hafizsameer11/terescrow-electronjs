@@ -6,12 +6,17 @@ import ContactRow from "@renderer/components/ContactRow";
 import KYCDetailsModal from "@renderer/components/modal/KYCDetailsModal";
 import NotesHistoryModal from "@renderer/components/modal/NotesHistoryModal";
 import EditProfileModal from "@renderer/components/modal/EditProfileModal";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 const CustomerDetails: React.FC = () => {
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false);
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
+  // const { customerId } = useParams<{ customerId: string }>();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<"details" | "transactions">(
+    "details"
+  );
   const kycData = {
     surname: "Adewale",
     firstName: "Susan",
@@ -78,15 +83,34 @@ const CustomerDetails: React.FC = () => {
   const handleDeleteNote = (id: number) => {
     console.log("Delete Note", id);
   };
-
+  const handleTabChange = (tab: "details" | "transactions") => {
+    setActiveTab(tab);
+    if (tab === "details") {
+      navigate(`/customers/${customer.id}`);
+    } else {
+      navigate(`/transaction-details/${customer.id}`);
+    }
+  };
   return (
     <div className="min-h-screen w-full">
       {/* Tabs */}
-      <div className="flex mb-6">
-        <button className="bg-[#147341] text-white px-4 py-2 rounded-md shadow-sm">
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => handleTabChange("details")}
+          className={`px-4 py-2 rounded-md shadow-sm ${activeTab === "details"
+            ? "bg-[#147341] text-white"
+            : "text-gray-700 border border-gray-200"
+            }`}
+        >
           Customer details and activities
         </button>
-        <button className="text-gray-700 px-4 py-2 rounded-md shadow-sm border border-gray-200">
+        <button
+          onClick={() => handleTabChange("transactions")}
+          className={`ml-4 px-4 py-2 rounded-md shadow-sm ${activeTab === "transactions"
+            ? "bg-[#147341] text-white"
+            : "text-gray-700 border border-gray-200"
+            }`}
+        >
           Transaction activities and balance
         </button>
       </div>

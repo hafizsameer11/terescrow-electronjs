@@ -1,6 +1,9 @@
-import StatsCard from '@renderer/components/Dashboard/StatsCard';
-import TransactionsFilter from '@renderer/components/Dashboard/TransactionsFilter';
-import TransactionsTable from '@renderer/components/Dashboard/TransactionsTable';
+// import StatsCard from '@renderer/components/Dashboard/StatsCard';
+// import TransactionsFilter from '@renderer/components/Dashboard/TransactionsFilter';
+import StatsCard from '@renderer/components/StatsCard';
+import TransactionsTable from '@renderer/components/Transaction/TransactionTable';
+import TransactionsFilter from '@renderer/components/TransactionsFilter';
+// import TransactionsTable from '@renderer/components/Dashboard/DashboardTransactionsTable';
 import React, { useState } from 'react';
 // import StatsCard from './StatsCard';
 // import TransactionsTable from './TransactionsTable';
@@ -46,7 +49,7 @@ const Dashboard: React.FC = () => {
     dateRange: 'Last 30 days',
     search: '',
     transactionType: 'All',
-    category:'All'
+    category: 'All'
 
   });
 
@@ -83,14 +86,19 @@ const Dashboard: React.FC = () => {
       {/* Transactions Table */}
       <div>
 
-          <TransactionsFilter
-            filters={filters}
-            onChange={(updatedFilters) =>
-              setFilters({ ...filters, ...updatedFilters })
-            }
-          />
-          <TransactionsTable data={filteredData} />
-        </div>
+        <TransactionsFilter
+          filters={filters}
+          onChange={(updatedFilters) =>
+            setFilters({ ...filters, ...updatedFilters })
+          }
+        />
+        <TransactionsTable
+          data={filteredData} // Array of transactions
+          showCustomerDetailsButton={true} // Dashboard does not show "View Customer Details"
+          showTransactionDetailsModal={false} // Show transaction details modal
+        />
+
+      </div>
     </div>
   );
 };
