@@ -40,7 +40,6 @@ const Chat = () => {
     }
   ]
 
-<<<<<<< HEAD
   const [filters, setFilters] = useState({
     status: 'All',
     type: 'All',
@@ -58,16 +57,6 @@ const Chat = () => {
       filters.search === '' ||
       transaction.name.toLowerCase().includes(filters.search.toLowerCase()) ||
       transaction.username.toLowerCase().includes(filters.search.toLowerCase())
-=======
-    const [filters, setFilters] = useState({
-        status: 'All',
-        type: 'All',
-        dateRange: 'Last 30 days',
-        search: '',
-        transactionType: 'All',
-        category: 'All'
-    });
->>>>>>> bea381b5bf28d73ac5a1e095a44a79d6c1695a97
 
     return matchesStatus && matchesType && matchesSearch
   })
