@@ -1,6 +1,9 @@
 import React from "react";
 import { IoCopyOutline } from "react-icons/io5";
 import { MdCheckCircle } from "react-icons/md";
+import { FiUpload } from "react-icons/fi"; // Upload icon
+import { FiPrinter } from "react-icons/fi"; // Print icon
+import { FiTrash2 } from "react-icons/fi"; // Trash icon
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
@@ -31,7 +34,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
       <div className="bg-white rounded-lg shadow-lg w-[600px] p-6 relative">
         {/* Modal Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-800 text-center w-full">
+          <h2 className="text-xl font-bold text-gray-800 text-center w-full">
             Full Transaction Details
           </h2>
           <button
@@ -131,29 +134,31 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">Transaction Status</span>
             <span
-              className={`px-4 py-1 rounded-lg text-sm ${
-                transactionData.status === "Successful"
-                  ? "bg-green-100 text-[#147341]"
-                  : transactionData.status === "Failed"
-                  ? "bg-red-100 text-red-600"
-                  : "bg-yellow-100 text-yellow-600"
-              }`}
+              className={`px-2 py-1 flex items-center gap-2 text-sm font-medium rounded-lg border ${transactionData.status === "Successful"
+                ? "bg-green-100 text-green-700 border-green-500"
+                : "bg-red-100 text-red-700 border-red-500"
+                }`}
             >
+              <span
+                className={`w-2 h-2 rounded-full ${transactionData.status === "Successful" ? "bg-green-700" : "bg-red-700"
+                  }`}
+              ></span>
               {transactionData.status}
             </span>
+
           </div>
         </div>
 
         {/* Footer Icons */}
-        <div className="flex justify-between mt-6 px-6">
+        <div className="flex gap-5 mt-6 px-6">
           <button className="bg-gray-200 text-gray-700 rounded-full p-3 hover:bg-gray-300">
-            <i className="fas fa-upload"></i>
+            <FiUpload className="h-5 w-5" />
           </button>
           <button className="bg-gray-200 text-gray-700 rounded-full p-3 hover:bg-gray-300">
-            <i className="fas fa-print"></i>
+            <FiPrinter className="h-5 w-5" />
           </button>
           <button className="bg-gray-200 text-gray-700 rounded-full p-3 hover:bg-gray-300">
-            <i className="fas fa-trash"></i>
+            <FiTrash2 className="h-5 w-5 text-red-500" />
           </button>
         </div>
       </div>

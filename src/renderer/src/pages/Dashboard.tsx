@@ -68,9 +68,18 @@ const Dashboard: React.FC = () => {
   });
   return (
     <div className="p-6 space-y-8 w-full">
-      {/* Header */}
-      <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
 
+      <div className="flex items-center justify-between">
+        {/* Header */}
+        <h1 className="text-[40px] text-gray-800">Dashboard</h1>
+
+        {/* Dropdown */}
+        <select className="ml-4 px-3 py-2 rounded-lg border border-gray-300 text-gray-800">
+          <option>Last 30 days</option>
+          <option>Last 15 days</option>
+          <option>Last 7 days</option>
+        </select>
+      </div>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <StatsCard title="Total Users" value="15,000" change="+1%" isPositive={true} />

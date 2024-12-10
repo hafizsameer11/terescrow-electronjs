@@ -72,7 +72,7 @@ const TeamCommunication = () => {
     <>
       <div className="p-6 space-y-8 w-full">
         {/* Header */}
-        <div className="flex justify-between items-center bg-gray-50 py-4">
+        <div className="flex justify-between items-center py-4">
           {/* Title */}
           <h1 className="text-[40px] text-gray-800">Teams</h1>
 

@@ -63,11 +63,11 @@ const KYCDetailsModal: React.FC<KYCDetailsProps> = ({ isOpen, onClose, kycData, 
           {/* Update Status */}
         </div>
           <div className="flex flex-col py-1 pb-2 px-4 border   border-[#000000CC] mt-3 rounded-lg">
-            <span className="text-gray-600">Update Status</span>
-            <select
+          <span className="text-gray-600 text-[14px]">Update Status</span>
+          <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-2 bg-white text-[20px] font-normal appearance-none border-none outline-none"
+              className="w-full border border-gray-300 rounded-lg px-2 bg-white text-[18px] font-normal appearance-none border-none outline-none"
 
               style={{
                 backgroundImage:
