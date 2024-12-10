@@ -31,7 +31,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
             <button
               key={status}
               className={`px-6 py-2 text-sm font-medium transition ${filters.status === status
-                ? 'bg-green-600 text-white'
+                ? 'bg-[#147341] text-white'
                 : 'bg- text-gray-600 hover:bg-gray-100 border-gray-300'
                 } ${index === 0 ? 'rounded-l-lg' : 'border-l'
                 } ${index === statusOptions.length - 1 ? 'rounded-r-lg' : ''
@@ -51,7 +51,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
             <button
               key={status}
               className={`px-6 py-2 text-sm font-medium transition ${filters.status === status
-                ? 'bg-green-600 text-white'
+                ? 'bg-[#147341] text-white'
                 : 'bg- text-gray-600 hover:bg-gray-100 border-gray-300'
                 } ${index === 0 ? 'rounded-l-lg' : 'border-l'
                 } ${index === statusOptions.length - 1 ? 'rounded-r-lg' : ''
@@ -71,7 +71,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
             <button
               key={serviceType}
               className={`px-6 py-2 text-sm font-medium transition ${filters.type === serviceType
-                ? 'bg-green-600 text-white'
+                ? 'bg-[#147341] text-white'
                 : 'bg- text-gray-600 hover:bg-gray-100 border-gray-300'
                 } ${index === 0 ? 'rounded-l-lg' : 'border-l'
                 } ${index === typeOption.length - 1 ? 'rounded-r-lg' : ''

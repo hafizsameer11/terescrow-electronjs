@@ -21,7 +21,7 @@ const CustomerFilters: React.FC<CustomerFiltersProps> = ({ filters, onChange }) 
           <button
             key={gender}
             className={`px-4 py-2 text-sm font-medium transition ${
-              filters.gender === gender ? "bg-green-600 text-white" : "text-gray-600 hover:bg-gray-100"
+              filters.gender === gender ? "bg-[#147341] text-white" : "text-gray-600 hover:bg-gray-100"
             } border ${gender === "All" ? "rounded-l-lg" : ""} ${
               gender === "Female" ? "rounded-r-lg" : ""
             }`}

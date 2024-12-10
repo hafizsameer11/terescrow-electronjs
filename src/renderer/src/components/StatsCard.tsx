@@ -3,8 +3,14 @@ import React from 'react';
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa';
 
 // interface StatsCardProps:{
-//   // title:string,
-// }
+//   title:string,
+interface StatsCardProps {
+  title: string;
+  value: string;
+  change: string; // e.g., +1% or -1%
+  isPositive?: boolean; // Determines if the change is positive or negative
+  action?: string; // Optional action label (e.g., "Edit" or "View")
+}
 
 const StatsCard: React.FC<StatsCardProps> = ({ title, value, change, isPositive = true }) => {
   return (

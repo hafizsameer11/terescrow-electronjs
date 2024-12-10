@@ -23,17 +23,17 @@ export const Sidebar = () => {
   const menuItems = [
     { label: 'Dashboard', icon: <FaChartPie />, href: '/', id: 'dashboard' },
     { label: 'Customers', icon: <FaUser />, href: '/customers', id: 'customers' },
-    { label: 'Chats', icon: <FaComments />, href: '#chats', id: 'chats' },
+    { label: 'Chats', icon: <FaComments />, href: '/chats', id: 'chats' },
     { label: 'Transactions', icon: <FaMoneyCheckAlt />, href: '#transactions', id: 'transactions' },
-    { label: 'Rates', icon: <FaPercent />, href: '#rates', id: 'rates' },
-    { label: 'Log', icon: <FaBook />, href: '#log', id: 'log' },
-    { label: 'Department', icon: <FaUserTie />, href: '#department', id: 'department' },
+    { label: 'Rates', icon: <FaPercent />, href: '/rates', id: 'rates' },
+    { label: 'Log', icon: <FaBook />, href: '/log', id: 'log' },
+    { label: 'Department', icon: <FaUserTie />, href: '/departments', id: 'department' },
     { label: 'Teams', icon: <FaUsers />, href: '#teams', id: 'teams' },
     { label: 'Users', icon: <FaUser />, href: '#users', id: 'users' },
   ];
 
   const bottomMenuItems = [
-    { label: 'Notifications', icon: <FaBell />, href: '#notifications', id: 'notifications' },
+    { label: 'Notifications', icon: <FaBell />, href: '/notifications', id: 'notifications' },
     { label: 'Settings', icon: <FaCog />, href: '#settings', id: 'settings' },
     { label: 'Team Communication', icon: <RiTeamFill />, href: '#team-communication', id: 'team-communication' },
   ];

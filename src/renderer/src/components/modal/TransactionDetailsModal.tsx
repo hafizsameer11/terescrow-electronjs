@@ -133,7 +133,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             <span
               className={`px-4 py-1 rounded-lg text-sm ${
                 transactionData.status === "Successful"
-                  ? "bg-green-100 text-green-600"
+                  ? "bg-green-100 text-[#147341]"
                   : transactionData.status === "Failed"
                   ? "bg-red-100 text-red-600"
                   : "bg-yellow-100 text-yellow-600"
