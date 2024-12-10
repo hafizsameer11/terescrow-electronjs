@@ -19,9 +19,9 @@ interface Transaction {
 }
 
 interface TransactionsTableProps {
-  data: Transaction[]
-  isChat?: boolean // Optional prop
-  isTeam?: boolean
+  data: Transaction[];
+  isChat?: boolean; 
+  isTeam?: boolean;
 }
 
 const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isTeam = false }) => {
@@ -35,7 +35,6 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
   const [isTeamChatOpen, setIsTeamChatOpen] = useState(false)
 
   if (isChat) {
-    // Render Chat Section Format (as per the image)
     return (
       <div className="mt-6 bg-white rounded-lg shadow-md">
         <table className="min-w-full text-left text-sm text-gray-700">
