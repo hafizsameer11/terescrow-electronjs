@@ -56,12 +56,12 @@ const RatesHistory: React.FC = () => {
 
   return (
     <div className="p-6 w-full">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-4">Rates</h1>
+      <h1 className="text-[40px] font-semibold text-gray-800 mb-4">Rates</h1>
 
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-lg font-medium text-gray-600">Rates History</h2>
-          <p className="text-sm text-gray-500">View rates history table</p>
+          <h2 className="text-[30px] font-medium text-gray-600">Rates History</h2>
+          <p className="text-[20px] text-gray-500">View rates history table</p>
         </div>
         <div className="flex gap-4">
           <select
