@@ -165,16 +165,18 @@ const TransactionDetails: React.FC = () => {
 
       {/* Transaction History */}
       <div>
-        <h2 className="text-lg font-bold text-gray-800">
+        {/* <h2 className="text-lg font-bold text-gray-800">
           Transaction History ({customerData.transactions.length})
         </h2>
         <p className="text-sm text-gray-600">
           View the total transaction history for this user
-        </p>
+        </p> */}
 
         {/* Filters and Table */}
-        <div className="mt-4">
+        <div className="mt-10">
           <TransactionsFilter
+          title="Transaction History (3)"
+          subTitle = "View the total transaction history for this user"
             filters={filters}
             onChange={(updatedFilters) =>
               setFilters({ ...filters, ...updatedFilters })

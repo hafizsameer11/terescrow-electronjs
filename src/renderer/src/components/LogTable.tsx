@@ -115,26 +115,24 @@ const LogTable: React.FC = () => {
   return (
     <div className="p-6 w-full">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold text-gray-800">Log Table</h1>
+      <div className="flex gap-8 items-center mb-5">
+        <h1 className="text-[40px] font-semibold text-gray-800 pb-2">Log Card</h1>
         <div className="flex ">
           <button
             onClick={() => handleFilterChange({ category: "Gift Card", transactionType: "Buy" })}
-            className={`px-4 py-2 rounded-md border text-sm font-medium ${
-              filters.category === "Gift Card"
+            className={`px-4 py-2 rounded-md border text-sm font-medium ${filters.category === "Gift Card"
                 ? "bg-[#147341] text-white border-[#147341]"
                 : "bg- text-[#147341] border-[#147341]"
-            }`}
+              }`}
           >
             Gift Card
           </button>
           <button
             onClick={() => handleFilterChange({ category: "Crypto", transactionType: "Buy" })}
-            className={`px-4 py-2 rounded-md border text-sm font-medium ${
-              filters.category === "Crypto"
+            className={`px-4 py-2 rounded-md border text-sm font-medium ${filters.category === "Crypto"
                 ? "bg-[#147341] text-white border-[#147341]"
                 : "bg- text-gray-600 border-[#147341]"
-            }`}
+              }`}
           >
             Crypto
           </button>
@@ -146,21 +144,19 @@ const LogTable: React.FC = () => {
         <div className="">
           <button
             onClick={() => handleFilterChange({ transactionType: "Buy" })}
-            className={`px-4 py-2 rounded-lg border text-sm font-medium ${
-              filters.transactionType === "Buy"
+            className={`px-4 py-2 rounded-lg border text-sm font-medium ${filters.transactionType === "Buy"
                 ? "bg-[#147341] text-white border-[#147341]"
                 : "bg- text-gray-600 border-[#147341]"
-            }`}
+              }`}
           >
             {filters.category === "Gift Card" ? "Gift card buy" : "Crypto buy"}
           </button>
           <button
             onClick={() => handleFilterChange({ transactionType: "Sell" })}
-            className={`px-4 py-2 rounded-lg border text-sm font-medium ${
-              filters.transactionType === "Sell"
+            className={`px-4 py-2 rounded-lg border text-sm font-medium ${filters.transactionType === "Sell"
                 ? "bg-[#147341] text-white border-[#147341]"
                 : "bg- text-gray-600 border-[#147341]"
-            }`}
+              }`}
           >
             {filters.category === "Gift Card" ? "Gift card sell" : "Crypto sell"}
           </button>
@@ -220,7 +216,7 @@ const LogTable: React.FC = () => {
                     <BsThreeDotsVertical />
                   </button>
                   {activeMenu === transaction.id && (
-                    <div className="absolute right-0 mt-2 bg-white rounded-md shadow-lg z-50 w-40">
+                    <div className="absolute right-0 mt-2 bg-white rounded-lg shadow-md z-50 w-48 border border-gray-200">
                       <button className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left">
                         Edit Log
                       </button>
@@ -230,10 +226,11 @@ const LogTable: React.FC = () => {
                       >
                         View Transaction details
                       </button>
-                      <button className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100 w-full text-left">
+                      <button className="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left">
                         Delete Transaction details
                       </button>
                     </div>
+
                   )}
                 </td>
               </tr>
@@ -242,25 +239,25 @@ const LogTable: React.FC = () => {
         </table>
 
 
-      {/* Transaction Details Modal */}
-      {isModalOpen && selectedTransaction && (
-        <TransactionDetailsModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          transactionData={{
-            dollarAmount: selectedTransaction.amountUSD,
-            nairaAmount: selectedTransaction.amountNGN,
-            serviceType: selectedTransaction.type,
-            giftCardType: selectedTransaction.category === "Gift Card" ? selectedTransaction.name : undefined,
-            giftCardSubType: selectedTransaction.category === "Gift Card" ? selectedTransaction.type : undefined,
-            quantity: 1,
-            code: "12345-ABCDE",
-            transactionId: `TX-${selectedTransaction.id}`,
-            assignedAgent: selectedTransaction.loggedBy,
-            status: "Successful",
-          }}
-        />
-      )}
+        {/* Transaction Details Modal */}
+        {isModalOpen && selectedTransaction && (
+          <TransactionDetailsModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            transactionData={{
+              dollarAmount: selectedTransaction.amountUSD,
+              nairaAmount: selectedTransaction.amountNGN,
+              serviceType: selectedTransaction.type,
+              giftCardType: selectedTransaction.category === "Gift Card" ? selectedTransaction.name : undefined,
+              giftCardSubType: selectedTransaction.category === "Gift Card" ? selectedTransaction.type : undefined,
+              quantity: 1,
+              code: "12345-ABCDE",
+              transactionId: `TX-${selectedTransaction.id}`,
+              assignedAgent: selectedTransaction.loggedBy,
+              status: "Successful",
+            }}
+          />
+        )}
       </div>
     </div>
   );

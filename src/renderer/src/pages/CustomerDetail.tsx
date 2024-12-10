@@ -123,7 +123,7 @@ const CustomerDetails: React.FC = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold mb-4">{customer.name}</h1>
-            <p className="text-[16px]">@{customer.username} - {customer.tier}</p>
+            <p className="text-[16px] text-white">@{customer.username} - {customer.tier}</p>
             <div className="mt-2 flex items-center gap-2 bg-white text-[#147341] px-4 py-2 rounded-md">
               <span className="text-xs font-medium">KYC Status: {customer.kycStatus}</span>
             </div>
@@ -168,8 +168,8 @@ const CustomerDetails: React.FC = () => {
           <tbody>
             {customer.accountActivities.map((activity, index) => (
               <tr key={index} className="border-t">
-                <td className="px-6 py-4">{activity.label}</td>
-                <td className="px-6 py-4 text-right">{activity.date}</td>
+                <td className="px-6 py-4 text-gray-800 font-semibold">{activity.label}</td>
+                <td className="px-6 py-4 text-gray-800 font-semibold text-right">{activity.date}</td>
               </tr>
             ))}
           </tbody>

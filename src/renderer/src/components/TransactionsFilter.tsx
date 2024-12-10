@@ -1,4 +1,5 @@
 import React from 'react';
+import { FiSearch } from "react-icons/fi"; // Importing the search icon
 
 interface TransactionsFilterProps {
   filters: {
@@ -7,24 +8,28 @@ interface TransactionsFilterProps {
     dateRange: string;
     search: string;
     category?: string;
-
   };
+  title?: string;
+  subTitle?: string;
   onChange: (updatedFilters: Partial<TransactionsFilterProps['filters']>) => void;
 }
 
-const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChange }) => {
+const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChange, title, subTitle }) => {
   const statusOptions = ['All', 'Successful', 'Pending', 'Declined'];
   const typeOption = ['All', 'Buy', 'Sell'];
-  const category=['All','Crypto','Gift Card']
+  const category = ['All', 'Crypto', 'Gift Card']
   return (
     <>
       <div className="m flex flex-row justify-between">
         <div className="ext">
-          <h2 className="text-lg font-semibold text-gray-800">Transactions on the app</h2>
-          <p className="text-sm text-gray-600">
-            Manage total customers and see their activities
+          {/* Use provided title or fallback to default */}
+          <h2 className="text-[36px] font-semibold text-gray-800">
+            {title || "Transactions on the app"}
+          </h2>
+          {/* Use provided subtitle or fallback to default */}
+          <p className="text-[16px] text-gray-600">
+            {subTitle || "Manage total customers and see their activities"}
           </p>
-
         </div>
         <div className="filters-top">
           {category.map((status, index) => (
@@ -98,15 +103,17 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
         </select>
 
         {/* Search Bar */}
-        <div className="flex items-center border bg-white border-gray-300 rounded-lg px-4 py-2 w-100">
+        <div className="flex items-center border bg-white border-gray-300 rounded-full px-4 py-2 w-[250px] shadow-sm">
+          <FiSearch className="h-5 w-5 text-gray-400 mr-2" /> {/* React Icon */}
           <input
             type="text"
             placeholder="Search"
             value={filters.search}
             onChange={(e) => onChange({ search: e.target.value })}
-            className="outline-none text-sm text-gray-600 w-full"
+            className="outline-none text-sm text-gray-600 w-full bg-transparent placeholder-gray-400"
           />
         </div>
+
 
       </div>
     </>

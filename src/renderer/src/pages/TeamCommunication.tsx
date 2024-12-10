@@ -1,7 +1,7 @@
-import ChatTable from '@renderer/components/ChatTable';
-import StatsCard from '@renderer/components/StatsCard';
-import TeamFilterHeader from '@renderer/components/TeamFilterHeader';
-import React, { useState } from 'react';
+import ChatTable from '@renderer/components/ChatTable'
+import StatsCard from '@renderer/components/StatsCard'
+import TeamFilterHeader from '@renderer/components/TeamFilterHeader'
+import { useState } from 'react'
 // import StatsCard from '@renderer/components/Dashboard/StatsCard';
 // import TransactionsTable from '@renderer/components/Dashboard/TransactionsTable';
 // import TeamFilterHeader from '@renderer/components/TeamFilterHeader';
@@ -14,7 +14,7 @@ const TeamCommunication = () => {
       username: 'Alucard',
       status: 'Active', // Status will determine green or red dot
       role: 'Manager', // Either 'Manager' or 'Agent'
-      dateAdded: 'Nov 7, 2024',
+      dateAdded: 'Nov 7, 2024'
     },
     {
       id: 2,
@@ -22,7 +22,7 @@ const TeamCommunication = () => {
       username: 'Adam',
       status: 'Active',
       role: 'Agent',
-      dateAdded: 'Nov 7, 2024',
+      dateAdded: 'Nov 7, 2024'
     },
     {
       id: 3,
@@ -30,49 +30,49 @@ const TeamCommunication = () => {
       username: 'Sasha',
       status: 'Inactive',
       role: 'Agent',
-      dateAdded: 'Nov 7, 2024',
-    },
-  ];
+      dateAdded: 'Nov 7, 2024'
+    }
+  ]
 
-  const [activeTab, setActiveTab] = useState<'Active' | 'Deleted'>('Active');
-  const [selectedRole, setSelectedRole] = useState<'Manager' | 'Agent' | 'Roles'>('Roles');
-  const [searchValue, setSearchValue] = useState('');
+  const [activeTab, setActiveTab] = useState<'Active' | 'Deleted'>('Active')
+  const [selectedRole, setSelectedRole] = useState<'Manager' | 'Agent' | 'Roles'>('Roles')
+  const [searchValue, setSearchValue] = useState('')
 
   const handleTabChange = (tab: 'Active' | 'Deleted') => {
-    setActiveTab(tab);
-  };
+    setActiveTab(tab)
+  }
 
   const handleRoleChange = (role: 'Manager' | 'Agent' | 'Roles') => {
-    setSelectedRole(role);
-  };
+    setSelectedRole(role)
+  }
 
   const handleSearchChange = (value: string) => {
-    setSearchValue(value);
-  };
+    setSearchValue(value)
+  }
 
   // Filter the data dynamically based on filters
   const filteredData = sampleData.filter((member) => {
     // Match the `activeTab` to filter by status
     const matchesTab =
-      activeTab === 'Active' ? member.status === 'Active' : member.status === 'Inactive';
+      activeTab === 'Active' ? member.status === 'Active' : member.status === 'Inactive'
 
     // Match the `selectedRole` to filter by role
-    const matchesRole = selectedRole === 'Roles' || member.role === selectedRole;
+    const matchesRole = selectedRole === 'Roles' || member.role === selectedRole
 
     // Match the `searchValue` to filter by name or username
     const matchesSearch =
       searchValue === '' ||
       member.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      member.username.toLowerCase().includes(searchValue.toLowerCase());
+      member.username.toLowerCase().includes(searchValue.toLowerCase())
 
-    return matchesTab && matchesRole && matchesSearch;
-  });
+    return matchesTab && matchesRole && matchesSearch
+  })
 
   return (
     <>
       <div className="p-6 space-y-8 w-full">
         {/* Header */}
-        <div className="flex justify-between items-center bg-gray-50 py-4">
+        <div className="flex justify-between items-center py-4">
           {/* Title */}
           <h1 className="text-[40px] text-gray-800">Teams</h1>
 
@@ -104,7 +104,7 @@ const TeamCommunication = () => {
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default TeamCommunication;
+export default TeamCommunication
