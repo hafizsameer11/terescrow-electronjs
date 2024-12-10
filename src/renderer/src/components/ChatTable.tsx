@@ -197,14 +197,9 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                       <p className="m-0 text-sm text-gray-500">{member.username}</p>
                     </div>
                     <span
-<<<<<<< HEAD
-                      className={`w-3 h-3 rounded-full mb-4 ${member.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
-                        }`}
-=======
-                      className={`w-3 h-3 rounded-full ${
+                      className={`w-3 h-3 rounded-full mb-4 ${
                         member.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
                       }`}
->>>>>>> 2d0a0c59a2368dde476f11c35a0dce4c3c82c6e1
                     ></span>
                   </div>
                 </td>
