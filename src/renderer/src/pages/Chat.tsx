@@ -48,7 +48,6 @@ const Chat = () => {
         search: '',
         transactionType: 'All',
         category: 'All'
-
     });
 
     // Filter data based on the selected filters
