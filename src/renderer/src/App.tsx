@@ -18,6 +18,7 @@ import Departments from './pages/Departments'
 import Notifications from './pages/Notifications'
 import Chat from './pages/Chat'
 import TeamCommunication from './pages/TeamCommunication'
+import AgentsPage from './pages/AgentsPage'
 
 function App(): JSX.Element {
 
@@ -43,6 +44,8 @@ function App(): JSX.Element {
               <Route path="/team" element={<LogPage />} />
               <Route path="/login" element={<Login />} />
               <Route path="/customers/:id" element={<CustomerDetails />} />
+              <Route path="/department-agent" element={<AgentsPage />} />
+              <Route path="/department-details/:id" element={<AgentsPage />} />
               <Route path="/transaction-details/:customerId" element={<TransactionDetails />} />
 
             </Routes>

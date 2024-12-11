@@ -1,10 +1,9 @@
-
-
-import { Icons } from "@renderer/constant/Icons";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import { FaUserAlt } from "react-icons/fa";
 import { MdDelete, MdEdit, MdVisibility } from "react-icons/md";
 import StatusButton from "./StatusButton";
+import { Icons } from "@renderer/constant/Icons";
 
 interface Department {
   id: number;
@@ -46,6 +45,7 @@ const departmentsData: Department[] = [
 ];
 
 const DepartmentsTable: React.FC = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredDepartments, setFilteredDepartments] = useState(departmentsData);
 
@@ -59,10 +59,10 @@ const DepartmentsTable: React.FC = () => {
   };
 
   return (
-    <div className=" w-full">
+    <div className="w-full">
       {/* Search Input */}
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-semibold text-gray-800">Departments</h1>
+
         <input
           type="text"
           placeholder="Search"
@@ -86,31 +86,29 @@ const DepartmentsTable: React.FC = () => {
           </thead>
           <tbody>
             {filteredDepartments.map((department) => (
-              <tr key={department.id} className="border-t hover:bg-gray-50 ">
-                <td className="pt-2 pb-0 px-4 flex  items-center  gap-3">
+              <tr key={department.id} className="border-t hover:bg-gray-50">
+                <td className="pt-2 pb-0 px-4 flex items-center gap-3">
                   <div className="bg-gray-300 rounded-full p-2">
-
+                    {/* Use your Icons.crypto */}
                     <img src={Icons.crypto} alt="" />
                   </div>
-                  <span>
-                    {department.name}
-
-                    </span>
+                  <span>{department.name}</span>
                 </td>
-                <td className="">
-                 <StatusButton title="Active" status={department.status}
-                  />
+                <td>
+                  <StatusButton title="Active" status={department.status} />
                 </td>
                 <td className="py-3 px-4">{department.noOfAgents}</td>
                 <td className="py-3 px-4">{department.description}</td>
                 <td className="py-3 px-4 text-center flex justify-center gap-2">
                   <button
+                     onClick={() => navigate(`/department-agent?id=${department.id}`)} // Navigate to Agent Page
                     className="bg-green-100 text-green-600 px-3 py-2 rounded-lg text-sm flex items-center gap-2"
                     title="Assign Agents"
                   >
                     <FaUserAlt /> Assign Agents
                   </button>
                   <button
+
                     className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200"
                     title="View Details"
                   >
@@ -132,7 +130,7 @@ const DepartmentsTable: React.FC = () => {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table>g
       </div>
     </div>
   );
