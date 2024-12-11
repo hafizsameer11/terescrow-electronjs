@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import AgentCard from "@renderer/components/AgentCard";
 import { Images } from "@renderer/constant/Image";
 import AgentEditProfileModal from "@renderer/components/modal/AgentEditProfileModal";
+import AddAgentProfileModal from "@renderer/components/modal/AddAgentProfileModal";
 
 interface Agent {
   id: number;
@@ -12,11 +13,11 @@ interface Agent {
 }
 
 const AgentsPage: React.FC = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search query
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
-  // Dummy data for agents
   const agents: Agent[] = [
     {
       id: 1,
@@ -95,10 +96,13 @@ const AgentsPage: React.FC = () => {
             type="text"
             placeholder="Search"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)} // Update search query
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">
+          <button
+            className="bg-green-700 text-white px-4 py-2 rounded-lg text-sm"
+            onClick={() => setIsAddModalOpen(true)}
+          >
             Add new Agent
           </button>
         </div>
@@ -113,7 +117,7 @@ const AgentsPage: React.FC = () => {
             onView={() => alert(`Viewing details of ${agent.name}`)}
             onEdit={() => {
               setSelectedAgent(agent);
-              setIsModalOpen(true);
+              setIsEditModalOpen(true);
             }}
             onDelete={() => alert(`Deleting ${agent.name}`)}
           />
@@ -121,14 +125,24 @@ const AgentsPage: React.FC = () => {
       </div>
 
       {/* Edit Profile Modal */}
-      {isModalOpen && selectedAgent && (
+      {isEditModalOpen && selectedAgent && (
         <AgentEditProfileModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
           agentData={agentData}
           onUpdate={(updatedData) =>
             console.log("Updated Data:", updatedData)
           }
+        />
+      )}
+
+      {/* Add Profile Modal */}
+      {isAddModalOpen && (
+        <AddAgentProfileModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onUpdate={(updatedData) => console.log("Updated Data:", updatedData)}
+          agentData={agentData}
         />
       )}
     </div>
