@@ -28,13 +28,13 @@ export const Sidebar = () => {
     { label: 'Rates', icon: <FaPercent />, href: '/rates', id: 'rates' },
     { label: 'Log', icon: <FaBook />, href: '/log', id: 'log' },
     { label: 'Department', icon: <FaUserTie />, href: '/departments', id: 'department' },
-    { label: 'Teams', icon: <FaUsers />, href: '#teams', id: 'teams' },
-    { label: 'Users', icon: <FaUser />, href: '#users', id: 'users' },
+    { label: 'Teams', icon: <FaUsers />, href: '/teams', id: 'teams' },
+    { label: 'Users', icon: <FaUser />, href: '/usersall', id: 'users' },
   ];
 
   const bottomMenuItems = [
     { label: 'Notifications', icon: <FaBell />, href: '/notifications', id: 'notifications' },
-    { label: 'Settings', icon: <FaCog />, href: '#settings', id: 'settings' },
+    { label: 'Settings', icon: <FaCog />, href: '/settings', id: 'settings' },
     { label: 'Team Communication', icon: <RiTeamFill />, href: '/team-communication', id: 'team-communication' },
   ];
 
