@@ -22,6 +22,7 @@ import DetailsDepartment from './components/DetailsDepartment'
 import UsersPage from './pages/UsersPage'
 import Teams from './pages/Teams'
 import Settings from './pages/Settings'
+import Transaction from './pages/Transaction'
 
 function App(): JSX.Element {
 
@@ -54,6 +55,7 @@ function App(): JSX.Element {
               <Route path='/usersall' element={<UsersPage />} />
               <Route path='/teams' element={<Teams />} />
               <Route path='/settings' element={<Settings />} />
+              <Route path='/transactions' element={<Transaction />} />
             </Routes>
 
           </MainContent>
