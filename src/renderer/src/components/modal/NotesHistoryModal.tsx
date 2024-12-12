@@ -68,7 +68,7 @@ const NotesHistoryModal: React.FC<NotesHistoryModalProps> = ({
                   <MdPushPin className="text-[#00000080] text-lg" />
                 )}
               </div>
-              <div>
+              <div className="w-full">
 
                 <div className="flex justify-between items-center">
 

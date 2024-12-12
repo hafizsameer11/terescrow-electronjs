@@ -20,7 +20,7 @@ const ContactRow: React.FC<RowProps> = ({ icon, label, value }) => {
           <p className="text-[#8A8A8A] text-xl m-0">{label}:</p>
         </div>
         <div className="text-right">
-          <p className="text-black font-normal text-xl">{value || "None"}</p>
+          <p className="text-black font-semibold text-xl m-0">{value || "None"}</p>
         </div>
       </div>
     </div>

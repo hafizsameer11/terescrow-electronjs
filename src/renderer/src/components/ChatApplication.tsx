@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import ChatHeader from './ChatHeader'
 import NotificationBanner from './NotificationBanner'
 import NewTransaction from './NewTransaction'
+import { AiOutlineSend, AiOutlinePicture } from 'react-icons/ai'; // Importing icons from react-icons
 
 interface Message {
   id: number
@@ -109,7 +110,16 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
   }, [])
 
   const handleSendMessage = () => {
+    console.log("asdkl");
     if (!inputValue.trim()) return;
+    setTimeout(() => {
+      const dummyResponse: Message = {
+        id: messages.length + 2,
+        text: 'Got it! Let me check.',
+        type: 'received'
+      }
+      setMessages((prev) => [...prev, dummyResponse])
+    }, 1000)
 
 
     const newMessage: Message = {
@@ -150,6 +160,8 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
       })
       setCurrentStatus('Unsuccessful')
     }
+    console.log("asjda");
+
   }
 
   const onSendRate = (rate: string, amountDollar: string, amountNaira: string) => {
@@ -222,27 +234,16 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
         </div>
       )}
 
+
       {/* Input Section */}
       {isInputVisible && (
         <div className="flex items-center p-4 border-t bg-white">
+          {/* Image Upload Icon */}
           <label
             htmlFor="image-upload"
-            className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 mr-4"
+            className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full cursor-pointer hover:bg-gray-200 mr-4"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="w-6 h-6 text-gray-500"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.75 9V5.25m0 0h-7.5m7.5 0l-3 3m3-3l-3-3M9 15.75h6m0 0l-3 3m3-3l-3-3"
-              />
-            </svg>
+            <AiOutlinePicture className="text-gray-500 w-6 h-6" />
             <input
               id="image-upload"
               type="file"
@@ -252,22 +253,25 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
             />
           </label>
 
+          {/* Input Field */}
           <input
             type="text"
-            placeholder="Type Anything"
+            placeholder="Type a message"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-green-300"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring focus:ring-gray-200"
           />
 
+          {/* Send Button */}
           <button
             onClick={handleSendMessage}
-            className="ml-4 px-4 py-2 text-white bg-green-700 rounded-lg hover:bg-green-800"
+            className="ml-4 px-4 py-2 text-green-700 hover:text-green-800 font-medium"
           >
             Send
           </button>
         </div>
       )}
+
 
       {/* NewTrans Modal */}
       {currentStatus === 'Successful' && <NewTransaction />}

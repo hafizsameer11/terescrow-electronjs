@@ -12,7 +12,8 @@ const CustomerDetails: React.FC = () => {
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false);
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  // const { customerId } = useParams<{ customerId: string }>();
+  const { id } = useParams<{ id: string }>();
+  console.log("Customer ID:", id); 
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<"details" | "transactions">(
     "details"

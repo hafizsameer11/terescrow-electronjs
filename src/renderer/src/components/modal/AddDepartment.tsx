@@ -1,5 +1,32 @@
 import React, { useState } from 'react'
 
+
+const FloatingInput = (props: {
+  label: string
+  name: string
+  type?: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+}) => (
+  <div className="relative">
+    <input
+      type={props.type || 'text'}
+      name={props.name}
+      value={props.value}
+      onChange={props.onChange}
+      placeholder=" "
+      className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
+    />
+    <label
+      className={`absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 z-10 ${props.value
+        ? 'scale-75 -translate-y-4'
+        : 'peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100'
+      } peer-focus:scale-75 peer-focus:-translate-y-4`}
+    >
+      {props.label}
+    </label>
+  </div>
+)
 interface AgentEditProfileModalProps {
   isOpen: boolean
   onClose: () => void
@@ -54,32 +81,7 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
 
   if (!isOpen) return null
 
-  const FloatingInput = (props: {
-    label: string
-    name: string
-    type?: string
-    value: string
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  }) => (
-    <div className="relative">
-      <input
-        type={props.type || 'text'}
-        name={props.name}
-        value={props.value}
-        onChange={props.onChange}
-        placeholder=" "
-        className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
-      />
-      <label
-        className={`absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 z-10 ${props.value
-          ? 'scale-75 -translate-y-4'
-          : 'peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100'
-        } peer-focus:scale-75 peer-focus:-translate-y-4`}
-      >
-        {props.label}
-      </label>
-    </div>
-  )
+  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6">

@@ -33,13 +33,16 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   // Close modal
   const handleCloseModal = () => setIsCustomerModalOpen(false)
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const selectedImage = e.target.files[0]
-      setImage(selectedImage)
-      setImagePreview(URL.createObjectURL(selectedImage))
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file); // Convert to Base64
     }
-  }
+  };
 
   const handleRecipientTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRecipientType(e.target.value)
@@ -111,18 +114,15 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
                 setErrors((prev) => ({ ...prev, title: undefined }))
               }}
               placeholder=" "
-              className={`peer w-full border ${
-                errors.title ? 'border-red-500' : 'border-gray-300'
-              } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${
-                errors.title
+              className={`peer w-full border ${errors.title ? 'border-red-500' : 'border-gray-300'
+                } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${errors.title
                   ? 'focus:ring-red-500 focus:border-red-500'
                   : 'focus:ring-[#147341] focus:border-[#147341]'
-              }`}
+                }`}
             />
             <label
-              className={`absolute text-sm ${
-                errors.title ? 'text-red-500' : 'text-gray-500'
-              } duration-300 transform -translate-y-4 scale-75 top-0 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
+              className={`absolute text-sm ${errors.title ? 'text-red-500' : 'text-gray-500'
+                } duration-300 transform -translate-y-4 scale-75 top-0 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
             >
               Title
             </label>
@@ -138,24 +138,20 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
                 setErrors((prev) => ({ ...prev, message: undefined }))
               }}
               placeholder=" "
-              className={`peer w-full border ${
-                errors.message ? 'border-red-500' : 'border-gray-300'
-              } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${
-                errors.message
+              className={`peer w-full border ${errors.message ? 'border-red-500' : 'border-gray-300'
+                } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${errors.message
                   ? 'focus:ring-red-500 focus:border-red-500'
                   : 'focus:ring-[#147341] focus:border-[#147341]'
-              }`}
+                }`}
             />
             <label
-              className={`absolute text-sm ${
-                errors.message ? 'text-red-500' : 'text-gray-500'
-              } duration-300 transform -translate-y-4 scale-75 top-0 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
+              className={`absolute text-sm ${errors.message ? 'text-red-500' : 'text-gray-500'
+                } duration-300 transform -translate-y-4 scale-75 top-0 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
             >
               Message
             </label>
             {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
           </div>
-
           {/* Image Upload */}
           <div className="flex flex-col items-start space-y-2">
             <label
@@ -191,6 +187,7 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
               className="hidden"
             />
           </div>
+
 
           {/* Recipient Type Selection */}
           <div className="flex items-center space-x-4">

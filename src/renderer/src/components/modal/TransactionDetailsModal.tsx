@@ -19,6 +19,7 @@ interface TransactionDetailsModalProps {
     transactionId: string;
     assignedAgent: string;
     status: string;
+    detail?:string[];
   };
 }
 

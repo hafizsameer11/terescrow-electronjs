@@ -10,6 +10,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 const TransactionDetails: React.FC = () => {
   const { customerId } = useParams<{ customerId: string }>()
+  console.log("The Trasnction CustomerID", customerId);
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'details' | 'transactions'>('transactions')
 
@@ -56,7 +57,29 @@ const TransactionDetails: React.FC = () => {
         amount: '$100 / NGN75,000',
         details: {
           dollarAmount: '$100,000',
-          nairaAmount: 'NGN75,000,000',
+          nairaAmount: 'NGN715,000,000',
+          serviceType: 'Crypto',
+          giftCardType: '-',
+          giftCardSubType: '-',
+          quantity: 1,
+          code: 'BTC123456',
+          transactionId: '238DsBTC123',
+          assignedAgent: 'Adam Sandler',
+          status: 'Successful'
+        }
+      },
+      {
+        id: 3,
+        name: 'Qamardeen Abdulmalik',
+        username: 'Alucard',
+        status: 'Successful',
+        serviceType: 'Crypto',
+        transactionType: 'Sell - BTC',
+        date: 'Nov 6, 2024',
+        amount: '$100 / NGN95,000,000',
+        details: {
+          dollarAmount: '$100,000',
+          nairaAmount: 'NGN95,000,000',
           serviceType: 'Crypto',
           giftCardType: '-',
           giftCardSubType: '-',
@@ -177,4 +200,5 @@ const TransactionDetails: React.FC = () => {
   )
 }
 
-export default TransactionDetails
+export default TransactionDetails;
+ 

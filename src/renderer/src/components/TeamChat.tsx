@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import TeamChatSidebar from './TeamChatSidebar';
 import TeamChatSection from './TeamChatSection';
 import TeamGroupCreate from './TeamGroupCreate';
+import { IoCloseOutline } from 'react-icons/io5';
 
 
 export interface ChatUser {
@@ -22,8 +23,11 @@ export interface ChatMessage {
   imageUrl?: string; // Optional field for image messages
 
 }
+interface TeamChatProps {
+  onClose: () => void
+}
 
-const TeamChat: React.FC = () => {
+const TeamChat: React.FC<TeamChatProps> = ({ onClose }) => {
   const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
 
@@ -169,6 +173,15 @@ const TeamChat: React.FC = () => {
 
       {/* Chat Section */}
       <div className="flex-1">
+        {/* Close Button */}
+        <div className='flex justify-end items-end'>
+          <button
+            className="mt-5 me-4 text-gray-500 hover:text-gray-700 focus:outline-none"
+            onClick={onClose}
+          >
+            <IoCloseOutline className="w-6 h-6" />
+          </button>
+        </div>
         {selectedUser ? (
           <TeamChatSection user={selectedUser} />
         ) : (
