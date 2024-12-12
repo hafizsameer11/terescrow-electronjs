@@ -11,7 +11,6 @@ import CustomerDetails from './pages/CustomerDetail'
 import Dashboard from './pages/Dashboard'
 import TransactionDetails from './pages/TransactionDetails'
 import CustomersPage from './pages/CustomersPage'
-import ChatPage from './pages/ChatsPage'
 import RatesHistory from './pages/RatesHistory'
 import LogPage from './pages/LogPage'
 import Departments from './pages/Departments'
@@ -20,6 +19,9 @@ import Chat from './pages/Chat'
 import TeamCommunication from './pages/TeamCommunication'
 import AgentsPage from './pages/AgentsPage'
 import DetailsDepartment from './components/DetailsDepartment'
+import UsersPage from './pages/UsersPage'
+import Teams from './pages/Teams'
+import Settings from './pages/Settings'
 
 function App(): JSX.Element {
 
@@ -49,6 +51,9 @@ function App(): JSX.Element {
               <Route path="/department-details/:id" element={<AgentsPage />} />
               <Route path="/transaction-details/:customerId" element={<TransactionDetails />} />
               <Route path='/details-department/:id' element={<DetailsDepartment />} />
+              <Route path='/usersall' element={<UsersPage />} />
+              <Route path='/teams' element={<Teams />} />
+              <Route path='/settings' element={<Settings />} />
             </Routes>
 
           </MainContent>
