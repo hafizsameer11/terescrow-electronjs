@@ -20,6 +20,7 @@ import Chat from './pages/Chat'
 import TeamCommunication from './pages/TeamCommunication'
 import AgentsPage from './pages/AgentsPage'
 import DetailsDepartment from './components/DetailsDepartment'
+import Transaction from './pages/Transaction'
 
 function App(): JSX.Element {
 
@@ -49,6 +50,7 @@ function App(): JSX.Element {
               <Route path="/department-details/:id" element={<AgentsPage />} />
               <Route path="/transaction-details/:customerId" element={<TransactionDetails />} />
               <Route path='/details-department/:id' element={<DetailsDepartment />} />
+              <Route path='/transactions' element={<Transaction />} />
             </Routes>
 
           </MainContent>

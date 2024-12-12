@@ -24,7 +24,7 @@ export const Sidebar = () => {
     { label: 'Dashboard', icon: <FaChartPie />, href: '/', id: 'dashboard' },
     { label: 'Customers', icon: <FaUser />, href: '/customers', id: 'customers' },
     { label: 'Chats', icon: <FaComments />, href: '/chats', id: 'chats' },
-    { label: 'Transactions', icon: <FaMoneyCheckAlt />, href: '#transactions', id: 'transactions' },
+    { label: 'Transactions', icon: <FaMoneyCheckAlt />, href: '/transactions', id: 'transactions' },
     { label: 'Rates', icon: <FaPercent />, href: '/rates', id: 'rates' },
     { label: 'Log', icon: <FaBook />, href: '/log', id: 'log' },
     { label: 'Department', icon: <FaUserTie />, href: '/departments', id: 'department' },

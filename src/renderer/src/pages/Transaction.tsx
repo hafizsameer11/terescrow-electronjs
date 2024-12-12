@@ -1,6 +1,3 @@
-// import StatsCard from '@renderer/components/Dashboard/StatsCard';
-// import TransactionsFilter from '@renderer/components/Dashboard/TransactionsFilter';
-import TransactionDetailsModal from '@renderer/components/modal/TransactionDetailsModal'
 import StatsCard from '@renderer/components/StatsCard'
 // import CustomerTransaction from '@renderer/components/Transaction/CutomerTransaction';
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable'
@@ -8,7 +5,7 @@ import TransactionsFilter from '@renderer/components/TransactionsFilter'
 import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-const TransactionDetails: React.FC = () => {
+const Transactions: React.FC = () => {
   const { customerId } = useParams<{ customerId: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'details' | 'transactions'>('transactions')
@@ -113,29 +110,7 @@ const TransactionDetails: React.FC = () => {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => handleTabChange('details')}
-          className={`px-4 py-2 rounded-md shadow-sm ${
-            activeTab === 'details'
-              ? 'bg-[#147341] text-white'
-              : 'text-gray-700 border border-gray-200'
-          }`}
-        >
-          Customer details and activities
-        </button>
-        <button
-          onClick={() => handleTabChange('transactions')}
-          className={`ml-4 px-4 py-2 rounded-md shadow-sm ${
-            activeTab === 'transactions'
-              ? 'bg-[#147341] text-white'
-              : 'text-gray-700 border border-gray-200'
-          }`}
-        >
-          Transaction activities and balance
-        </button>
-      </div>
+      <h2 className="text-4xl font-semibold text-gray-800">Transactions</h2>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
@@ -161,15 +136,15 @@ const TransactionDetails: React.FC = () => {
       <div>
         <div className="mt-10">
           <TransactionsFilter
-            title="Transaction History (3)"
-            subTitle="View the total transaction history for this user"
+            title="Transactions"
+            subTitle="Manage customer transactions"
             filters={filters}
             onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
           />
           <TransactionsTable
-            data={filteredData} // Customer-specific transactions
-            showCustomerDetailsButton={false} // Allow "View Customer Details"
-            showTransactionDetailsModal={true}
+            data={filteredData}
+            showTransactionDetailsModal={false}
+            showCustomerDetailsButton
           />
         </div>
       </div>
@@ -177,4 +152,4 @@ const TransactionDetails: React.FC = () => {
   )
 }
 
-export default TransactionDetails
+export default Transactions

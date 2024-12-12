@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import TransactionsTable from '@renderer/components/NotificationTable'
+import NewNotificationModal from '@renderer/components/modal/NewNotificationModal'
+import NewBannerModal from '@renderer/components/modal/NewBannerModal' // Import NewBannerModal
 
 interface Notification {
   type: 'Team' | 'Customer'
@@ -24,44 +26,76 @@ const notifications: Notification[] = [
 ]
 
 const Notifications = () => {
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
+  const [title, setTitle] = useState<string>('Notifications')
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false) // State for NewBannerModal
   const [activeOption, setActiveOption] = useState<'Notifications' | 'In-App Notification'>(
     'Notifications'
   )
+
+  const handleOpenNotificationModal = () => {
+    setIsNotificationModalOpen(true)
+  }
+  const handleCloseNotificationModal = () => {
+    setIsNotificationModalOpen(false)
+  }
+
+  // Open the NewBannerModal when the button is clicked
+  const handleOpenBannerModal = () => {
+    setIsBannerModalOpen(true)
+  }
+
+  const handleCloseBannerModal = () => {
+    setIsBannerModalOpen(false)
+  }
+
+  const titleChange = (newTitle: string) => {
+    setTitle(newTitle)
+  }
+
   return (
     <div className="w-full">
       <div className="flex mb-5 justify-between">
         <div className="flex">
-          <h1 className="text-[40px] text-gray-800 pr-6">Notifications</h1>
-          <div className="flex">
-            <button
-              onClick={() => setActiveOption('Notifications')}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                activeOption === 'Notifications'
-                  ? 'text-white bg-green-700'
-                  : 'text-gray-800 border border-gray-300'
-              }`}
-            >
-              Notifications
-            </button>
-            <button
-              onClick={() => setActiveOption('In-App Notification')}
-              className={`px-4 py-2 rounded-lg font-medium ${
-                activeOption === 'In-App Notification'
-                  ? 'text-white bg-green-700'
-                  : 'text-gray-800 border border-gray-300'
-              }`}
-            >
-              In-App Notification
-            </button>
-          </div>
+          <h1 className="text-[40px] text-gray-800 pr-6">{title}</h1>
+          {title === 'Notifications' && (
+            <div className="flex">
+              <button
+                onClick={() => setActiveOption('Notifications')}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  activeOption === 'Notifications'
+                    ? 'text-white bg-green-700'
+                    : 'text-gray-800 border border-gray-300'
+                }`}
+              >
+                Notifications
+              </button>
+              <button
+                onClick={() => setActiveOption('In-App Notification')}
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  activeOption === 'In-App Notification'
+                    ? 'text-white bg-green-700'
+                    : 'text-gray-800 border border-gray-300'
+                }`}
+              >
+                In-App Notification
+              </button>
+            </div>
+          )}
         </div>
         <div>
           {activeOption === 'In-App Notification' && (
             <div className="flex gap-5">
-              <button className="px-4 py-2 rounded-lg font-medium text-green-700 bg-transparent border border-green-700">
+              <button
+                className="px-4 py-2 rounded-lg font-medium text-green-700 bg-transparent border border-green-700"
+                onClick={handleOpenBannerModal}
+              >
                 Upload Banner
               </button>
-              <button className="px-4 py-3 rounded-lg font-medium text-white bg-green-700">
+              <button
+                className="px-4 py-3 rounded-lg font-medium text-white bg-green-700"
+                onClick={handleOpenNotificationModal}
+              >
                 New Notification
               </button>
             </div>
@@ -110,9 +144,21 @@ const Notifications = () => {
 
       {activeOption === 'In-App Notification' && (
         <div>
-          <TransactionsTable />
+          <TransactionsTable textMsg={true} onTitleChange={titleChange} />
         </div>
       )}
+
+      <NewNotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={handleCloseNotificationModal}
+        onSubmit={handleCloseNotificationModal}
+      />
+
+      <NewBannerModal
+        modalVisible={isBannerModalOpen}
+        setModalVisible={setIsBannerModalOpen}
+        onSend={handleCloseBannerModal}
+      />
     </div>
   )
 }
