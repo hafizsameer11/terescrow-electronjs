@@ -16,7 +16,11 @@ interface ChatApplicationProps {
   data?: any
 }
 
-const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
+const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) => {
+  console.log("The Id")
+  console.log(id);
+  console.log(data);
+  const { name, username, serviceType } = data;
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -161,8 +165,8 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
     <div className="fixed inset-y-0 right-0 w-full m-4 md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col z-50">
       <ChatHeader
         avatar="https://via.placeholder.com/40"
-        name="Qamardeen Malik"
-        username="Alucard"
+        name={name}
+        username={username}
         onClose={onClose}
         onSendRate={onSendRate}
         onLogChat={() => console.log('Log Chat')}

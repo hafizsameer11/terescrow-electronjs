@@ -20,7 +20,7 @@ interface Transaction {
 
 interface TransactionsTableProps {
   data: Transaction[];
-  isChat?: boolean; 
+  isChat?: boolean;
   isTeam?: boolean;
 }
 
@@ -67,8 +67,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                 <td className="py-3 px-4">{transaction.date}</td>
                 <td className="py-3 px-4">
                   <span
-                    className={`px-2 py-1 text-xs rounded-lg ${
-                      transaction.status === 'Successful'
+                    className={`px-2 py-1 text-xs rounded-lg ${transaction.status === 'Successful'
                         ? 'bg-green-100 text-green-700'
                         : transaction.status === 'Declined'
                           ? 'bg-red-100 text-red-700'
@@ -77,18 +76,18 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                             : transaction.status === 'Unanswered'
                               ? 'bg-gray-100 text-gray-500'
                               : 'bg-purple-100 text-purple-700'
-                    }`}
+                      }`}
                   >
                     {transaction.status}
                   </span>
                 </td>
                 <td className="py-3 px-4 flex justify-center items-center h-full relative">
-                  <div className='absolute top-[39px]'>
+                  <div className="absolute top-[39px]">
                     <div className="flex items-center space-x-5">
                       {/* Button to Open Chat */}
                       <button
                         className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                        onClick={() => setIsChatOpen(true)}
+                        onClick={() => setIsChatOpen(transaction.id)} // Pass the transaction ID here
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -114,13 +113,14 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                       </button>
                     </div>
 
-                    {isChatOpen && (
+                    {/* ChatApplication Component */}
+                    {isChatOpen === transaction.id && ( // Check if the open chat matches the transaction ID
                       <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
                         <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative">
                           {/* Close Button */}
                           <button
                             className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
-                            onClick={() => setIsChatOpen(false)}
+                            onClick={() => setIsChatOpen(null)} // Close the chat
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -137,11 +137,10 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                               />
                             </svg>
                           </button>
-                          {/* ChatApplication Component */}
                           <ChatApplication
-                            data={data}
-                            id={transaction.id}
-                            onClose={() => setIsChatOpen(false)}
+                            data={transaction} // Pass the correct transaction data
+                            id={transaction.id} // Pass the correct transaction ID
+                            onClose={() => setIsChatOpen(null)} // Close the chat
                           />
                         </div>
                       </div>
@@ -166,6 +165,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                 </td>
               </tr>
             ))}
+
           </tbody>
         </table>
       </div>
@@ -197,9 +197,8 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                       <p className="m-0 text-sm text-gray-500">{member.username}</p>
                     </div>
                     <span
-                      className={`w-3 h-3 rounded-full mb-4 ${
-                        member.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
-                      }`}
+                      className={`w-3 h-3 rounded-full mb-4 ${member.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
+                        }`}
                     ></span>
                   </div>
                 </td>
@@ -295,11 +294,10 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
               </td>
               <td className="py-3 px-4">
                 <span
-                  className={`px-2 py-1 text-xs rounded-lg ${
-                    transaction.status === 'Successful'
+                  className={`px-2 py-1 text-xs rounded-lg ${transaction.status === 'Successful'
                       ? 'bg-green-100 text-green-700'
                       : 'bg-red-100 text-red-700'
-                  }`}
+                    }`}
                 >
                   {transaction.status}
                 </span>
