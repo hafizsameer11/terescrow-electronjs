@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import ChatHeader from './ChatHeader'
 import NotificationBanner from './NotificationBanner'
 import NewTransaction from './NewTransaction'
-// import NotificationBanner from './NotificationBanner';
-// import ChatHeader from './ChatHeader';
+import { AiOutlineSend, AiOutlinePicture } from 'react-icons/ai'; // Importing icons from react-icons
 
 interface Message {
   id: number
@@ -18,7 +17,11 @@ interface ChatApplicationProps {
   data?: any
 }
 
-const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
+const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) => {
+  console.log("The Id")
+  console.log(id);
+  console.log(data);
+  const { name, username, serviceType } = data;
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
@@ -34,8 +37,8 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
 
   const [inputValue, setInputValue] = useState('')
   const [uploadedImage, setUploadedImage] = useState<File | null>(null)
-  const [showBanner, setShowBanner] = useState(true);
-  const [currentStatus, setCurrentStatus] = useState("Pending");
+  const [showBanner, setShowBanner] = useState(true)
+  const [currentStatus, setCurrentStatus] = useState('Pending')
   const [notification, setNotification] = useState<{
     message: string
     backgroundColor: string
@@ -52,39 +55,26 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
   }, [messages])
 
   // Handle image upload
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const image = event.target.files && event.target.files[0]
-    if (!image) return
+  const handleImageUpload = (files: FileList | null) => {
+    if (files && files[0]) {
+      const file = files[0];
+      const reader = new FileReader();
 
-    const reader = new FileReader()
+      reader.onload = () => {
+        const base64Image = reader.result as string;
+        const newMessage: Message = {
+          id: messages.length + 1,
+          text: '',
+          type: 'sent',
+          imageUrl: base64Image, // Use Base64 string
+        };
 
-    // Convert the image to Base64
-    reader.onload = () => {
-      const base64Image = reader.result as string
+        setMessages((prevMessages) => [...prevMessages, newMessage]);
+      };
 
-      // Add the uploaded image as a new message
-      const newMessage: Message = {
-        id: messages.length + 1,
-        text: '', // No text for image-only message
-        type: 'sent',
-        imageUrl: base64Image // Use Base64 URL
-      }
-
-      setMessages((prev) => [...prev, newMessage])
-
-      // Simulate a dummy response
-      setTimeout(() => {
-        const dummyResponse: Message = {
-          id: messages.length + 2,
-          text: 'Nice image! Let me check.',
-          type: 'received'
-        }
-        setMessages((prev) => [...prev, dummyResponse])
-      }, 1000)
+      reader.readAsDataURL(file); // Convert file to Base64
     }
-
-    reader.readAsDataURL(image)
-  }
+  };
 
   // Handle sending a message
   const sendMessage = () => {
@@ -119,6 +109,28 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
     return () => clearTimeout(timer)
   }, [])
 
+  const handleSendMessage = () => {
+    console.log("asdkl");
+    if (!inputValue.trim()) return;
+    setTimeout(() => {
+      const dummyResponse: Message = {
+        id: messages.length + 2,
+        text: 'Got it! Let me check.',
+        type: 'received'
+      }
+      setMessages((prev) => [...prev, dummyResponse])
+    }, 1000)
+
+
+    const newMessage: Message = {
+      id: messages.length + 1,
+      text: inputValue.trim(),
+      type: 'sent',
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+    setInputValue('');
+  };
   // Handle status change from ChatHeader
   const handleStatusChange = (status: string, reason?: string) => {
     setIsInputVisible(false)
@@ -130,7 +142,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
         textColor: 'text-green-800',
         borderColor: 'border-green-300'
       })
-      setCurrentStatus("Successful")
+      setCurrentStatus('Successful')
     } else if (status === 'Failed' && reason) {
       setNotification({
         message: `This trade was declined by you with reason "${reason}"`,
@@ -138,7 +150,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
         textColor: 'text-red-800',
         borderColor: 'border-red-300'
       })
-      setCurrentStatus("Failed")
+      setCurrentStatus('Failed')
     } else if (status === 'Unsuccessful') {
       setNotification({
         message: 'This trade was unsuccessful',
@@ -146,8 +158,10 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
         textColor: 'text-pink-800',
         borderColor: 'border-pink-300'
       })
-      setCurrentStatus("Unsuccessful")
+      setCurrentStatus('Unsuccessful')
     }
+    console.log("asjda");
+
   }
 
   const onSendRate = (rate: string, amountDollar: string, amountNaira: string) => {
@@ -163,8 +177,8 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
     <div className="fixed inset-y-0 right-0 w-full m-4 md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col z-50">
       <ChatHeader
         avatar="https://via.placeholder.com/40"
-        name="Qamardeen Malik"
-        username="Alucard"
+        name={name}
+        username={username}
         onClose={onClose}
         onSendRate={onSendRate}
         onLogChat={() => console.log('Log Chat')}
@@ -179,9 +193,8 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
             className={`flex ${message.type === 'sent' ? 'justify-end' : 'justify-start'} mb-2`}
           >
             <div
-              className={`max-w-xs px-4 py-2 rounded-lg ${
-                message.type === 'sent' ? 'bg-green-100 text-gray-800' : 'bg-gray-100 text-gray-800'
-              }`}
+              className={`max-w-xs px-4 py-2 rounded-lg ${message.type === 'sent' ? 'bg-green-100 text-gray-800' : 'bg-gray-100 text-gray-800'
+                }`}
             >
               {message.imageUrl && (
                 <img
@@ -190,7 +203,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
                   className="mb-2 rounded-lg w-full max-w-[150px]"
                 />
               )}
-              {message.text && <p className="text-sm">{message.text}</p>}
+              {message.text}
             </div>
           </div>
         ))}
@@ -221,48 +234,47 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data }) => {
         </div>
       )}
 
+
       {/* Input Section */}
       {isInputVisible && (
-        <div className="flex items-center p-4 border-t border-gray-200">
-          <label htmlFor="file-upload" className="cursor-pointer mr-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="w-6 h-6 text-gray-500 hover:text-gray-700"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5v-9m4.5 4.5h-9" />
-            </svg>
+        <div className="flex items-center p-4 border-t bg-white">
+          {/* Image Upload Icon */}
+          <label
+            htmlFor="image-upload"
+            className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-full cursor-pointer hover:bg-gray-200 mr-4"
+          >
+            <AiOutlinePicture className="text-gray-500 w-6 h-6" />
             <input
-              id="file-upload"
+              id="image-upload"
               type="file"
-              className="hidden"
               accept="image/*"
-              onChange={handleImageUpload}
+              onChange={(e) => handleImageUpload(e.target.files)}
+              className="hidden"
             />
           </label>
 
-          <div className="flex-1 relative">
-            <textarea
-              placeholder="Type a message"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="w-full max-h-36 h-10 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring focus:ring-green-300 overflow-y-auto"
-            />
-          </div>
+          {/* Input Field */}
+          <input
+            type="text"
+            placeholder="Type a message"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring focus:ring-gray-200"
+          />
 
+          {/* Send Button */}
           <button
-            onClick={sendMessage}
-            className="ml-3 px-4 py-2 text-white bg-green-700 rounded-lg hover:bg-green-800"
+            onClick={handleSendMessage}
+            className="ml-4 px-4 py-2 text-green-700 hover:text-green-800 font-medium"
           >
             Send
           </button>
         </div>
       )}
+
+
       {/* NewTrans Modal */}
-      {currentStatus === "Successful" && <NewTransaction />}
+      {currentStatus === 'Successful' && <NewTransaction />}
     </div>
   )
 }

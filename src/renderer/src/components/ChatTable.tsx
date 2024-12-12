@@ -20,7 +20,7 @@ interface Transaction {
 
 interface TransactionsTableProps {
   data: Transaction[];
-  isChat?: boolean; 
+  isChat?: boolean;
   isTeam?: boolean;
 }
 
@@ -54,7 +54,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                 <td className="py-3 px-4">
                   <div>
                     <span className="font-semibold">{transaction.name}</span>
-                    <p className="text-sm text-gray-500">I want to trade $500...</p>
+                    <p className="text-sm text-gray-500 m-0">I want to trade $500...</p>
                   </div>
                 </td>
                 <td className="py-3 px-4">
@@ -67,28 +67,40 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                 <td className="py-3 px-4">{transaction.date}</td>
                 <td className="py-3 px-4">
                   <span
-                    className={`px-2 py-1 text-xs rounded-lg ${
-                      transaction.status === 'Successful'
-                        ? 'bg-green-100 text-green-700'
+                    className={`flex w-[60%] items-center gap-2 px-3 py-1 text-sm font-medium rounded-lg border 
+    ${transaction.status === 'Successful'
+                        ? 'bg-green-100 text-green-700 border-green-500'
                         : transaction.status === 'Declined'
-                          ? 'bg-red-100 text-red-700'
+                          ? 'bg-red-100 text-red-700 border-red-500'
                           : transaction.status === 'Pending'
-                            ? 'bg-yellow-100 text-yellow-700'
+                            ? 'bg-yellow-100 text-yellow-700 border-yellow-500'
                             : transaction.status === 'Unanswered'
-                              ? 'bg-gray-100 text-gray-500'
-                              : 'bg-purple-100 text-purple-700'
-                    }`}
+                              ? 'bg-gray-100 text-gray-500 border-gray-500'
+                              : 'bg-pink-100 text-pink-700 border-pink-500'}`}
                   >
+                    <span
+                      className={`w-2 h-2 rounded-full 
+      ${transaction.status === 'Successful'
+                          ? 'bg-green-700'
+                          : transaction.status === 'Declined'
+                            ? 'bg-red-700'
+                            : transaction.status === 'Pending'
+                              ? 'bg-yellow-700'
+                              : transaction.status === 'Unanswered'
+                                ? 'bg-gray-700'
+                                : 'bg-pink-700'}`}
+                    ></span>
                     {transaction.status}
                   </span>
+
                 </td>
                 <td className="py-3 px-4 flex justify-center items-center h-full relative">
-                  <div className='absolute top-[39px]'>
+                  <div className="absolute top-[20px]">
                     <div className="flex items-center space-x-5">
                       {/* Button to Open Chat */}
                       <button
                         className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                        onClick={() => setIsChatOpen(true)}
+                        onClick={() => setIsChatOpen(transaction.id)} // Pass the transaction ID here
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -114,13 +126,14 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                       </button>
                     </div>
 
-                    {isChatOpen && (
+                    {/* ChatApplication Component */}
+                    {isChatOpen === transaction.id && ( // Check if the open chat matches the transaction ID
                       <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
                         <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative">
                           {/* Close Button */}
                           <button
                             className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
-                            onClick={() => setIsChatOpen(false)}
+                            onClick={() => setIsChatOpen(null)} // Close the chat
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -137,11 +150,10 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                               />
                             </svg>
                           </button>
-                          {/* ChatApplication Component */}
                           <ChatApplication
-                            data={data}
-                            id={transaction.id}
-                            onClose={() => setIsChatOpen(false)}
+                            data={transaction} // Pass the correct transaction data
+                            id={transaction.id} // Pass the correct transaction ID
+                            onClose={() => setIsChatOpen(null)} // Close the chat
                           />
                         </div>
                       </div>
@@ -154,18 +166,19 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                           boxShadow: '0px 4px 6px #00000040' // Custom drop shadow
                         }}
                       >
-                        <button
+                        {/* <button
                           onClick={() => console.log('View Chat Details')}
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                         >
                           View Chat Details
-                        </button>
+                        </button> */}
                       </div>
                     )}
                   </div>
                 </td>
               </tr>
             ))}
+
           </tbody>
         </table>
       </div>
@@ -197,9 +210,8 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                       <p className="m-0 text-sm text-gray-500">{member.username}</p>
                     </div>
                     <span
-                      className={`w-3 h-3 rounded-full mb-4 ${
-                        member.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
-                      }`}
+                      className={`w-3 h-3 rounded-full mb-4 ${member.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
+                        }`}
                     ></span>
                   </div>
                 </td>
@@ -247,7 +259,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
           <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center z-50">
             <div className="bg-white ms-10 w-full max-w-3xl rounded-lg shadow-lg relative">
               {/* Close Button */}
-              <button
+              {/* <button
                 className="absolute top-3 right-[-36.3rem] text-gray-500 hover:text-gray-700 focus:outline-none"
                 onClick={() => setIsTeamChatOpen(false)}
               >
@@ -261,8 +273,8 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
-              </button>
-              <TeamChat />
+              </button> */}
+              <TeamChat onClose={() => setIsTeamChatOpen(false)} />
             </div>
           </div>
         )}
@@ -295,11 +307,10 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
               </td>
               <td className="py-3 px-4">
                 <span
-                  className={`px-2 py-1 text-xs rounded-lg ${
-                    transaction.status === 'Successful'
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-700'
-                  }`}
+                  className={`px-2 py-1 text-xs rounded-lg ${transaction.status === 'Successful'
+                    ? 'bg-green-100 text-green-700'
+                    : 'bg-red-100 text-red-700'
+                    }`}
                 >
                   {transaction.status}
                 </span>

@@ -101,8 +101,6 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
             </option>
           ))}
         </select>
-
-        {/* Search Bar */}
         <div className="flex items-center border bg-white border-gray-300 rounded-full px-4 py-2 w-[250px] shadow-sm">
           <FiSearch className="h-5 w-5 text-gray-400 mr-2" /> {/* React Icon */}
           <input

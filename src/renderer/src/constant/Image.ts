@@ -6,8 +6,12 @@ import admin from '../assets/images/admin.png'
 import tick from '../assets/images/tick.svg'
 import chatImage from '../assets/images/chat-image.png'
 import galleryImg from '../assets/images/galleryImage.png'
+import tableImg from '../assets/images/table-img.png'
+import galley from '../assets/images/galleryPic.png'
 export const Images = {
   logo,
+  galley,
+  tableImg,
   agent1,
   galleryImg,
   agent2,

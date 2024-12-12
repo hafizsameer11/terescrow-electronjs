@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
 import NotificationFilters from './NotificationFilters'
-import ChatConfirmModal from './ChatConfirmModal'
 import WelcomeModal from './WelcomeModal'
+import { Images } from '@renderer/constant/Image'
+import AppBanner from './modal/AppBanner'
 
 interface Transaction {
   message: string
@@ -11,17 +12,32 @@ interface Transaction {
   deliveryStatus: string
 }
 
-const TransactionsTable: React.FC = () => {
+const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: string) => void }> = ({
+  textMsg,
+  onTitleChange
+}) => {
   const [statusFilter, setStatusFilter] = useState<string>('All')
-  const [notificationType, setNotificationType] = useState<string>('Banner')
+  const [notificationType, setNotificationType] = useState<string>('Notification')
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false)
+  const [isAppBannerOpen, setIsAppBannerOpen] = useState(false)
 
   const handleOpenModal = () => {
-    setIsWelcomeModalOpen(true)
+    if (notificationType === 'Notification') {
+      setIsWelcomeModalOpen(true)
+    } else {
+      setIsAppBannerOpen(true)
+    }
   }
+
   const handleCloseModal = () => {
     setIsWelcomeModalOpen(false)
+    setIsAppBannerOpen(false)
   }
+
+  useEffect(() => {
+    const title = notificationType === 'Notification' ? 'Notifications' : 'In-App Banner'
+    onTitleChange(title)
+  }, [notificationType, onTitleChange])
 
   // Hardcoded data to match the image
   const data: Transaction[] = [
@@ -102,7 +118,13 @@ const TransactionsTable: React.FC = () => {
         <tbody>
           {filteredData.map((transaction, index) => (
             <tr key={index} className="border-b">
-              <td className="px-4 py-2">{transaction.message}</td>
+              {textMsg && notificationType === 'Notification' ? (
+                <td className="px-4 py-2">{transaction.message}</td>
+              ) : (
+                <td className="px-4 py-2">
+                  <img src={Images.tableImg} alt="" />
+                </td>
+              )}
               <td className="px-4 py-2">{transaction.date}</td>
               <td className="px-4 py-2">{transaction.createdBy}</td>
               <td className="px-4 py-2">
@@ -136,7 +158,15 @@ const TransactionsTable: React.FC = () => {
           ))}
         </tbody>
       </table>
+
       {isWelcomeModalOpen && <WelcomeModal onClose={handleCloseModal} />}
+      {isAppBannerOpen && (
+        <AppBanner
+          onSend={handleCloseModal}
+          modalVisible={isAppBannerOpen}
+          setModalVisible={setIsAppBannerOpen}
+        />
+      )}
     </div>
   )
 }
