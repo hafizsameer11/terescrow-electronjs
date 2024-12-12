@@ -1,62 +1,90 @@
-import React, { useState } from "react";
+import React, { useState } from 'react'
+import TeamGroupModal from './TeamGroupModal'
 
 interface NewNotificationModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
   onSubmit: (formData: {
-    title: string;
-    message: string;
-    image: File | null;
-  }) => void;
+    title: string
+    message: string
+    image: File | null
+    recipientType: string
+    customerSelection: string[]
+  }) => void
 }
 
 const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   isOpen,
   onClose,
-  onSubmit,
+  onSubmit
 }) => {
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-  const [image, setImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{ title?: string; message?: string }>({});
+  const [title, setTitle] = useState('')
+  const [message, setMessage] = useState('')
+  const [image, setImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [recipientType, setRecipientType] = useState('customer')
+  const [customerSelection, setCustomerSelection] = useState<string[]>(['All'])
+  const [errors, setErrors] = useState<{ title?: string; message?: string }>({})
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false) // State to control modal visibility
+
+  // Open modal
+  const handleOpenModal = () => setIsCustomerModalOpen(true)
+
+  // Close modal
+  const handleCloseModal = () => setIsCustomerModalOpen(false)
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedImage = e.target.files[0];
-      setImage(selectedImage);
-      setImagePreview(URL.createObjectURL(selectedImage)); // Generate a preview URL for the selected image
+      const selectedImage = e.target.files[0]
+      setImage(selectedImage)
+      setImagePreview(URL.createObjectURL(selectedImage))
     }
-  };
+  }
+
+  const handleRecipientTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setRecipientType(e.target.value)
+  }
+
+  const handleCustomerSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value)
+    setCustomerSelection(selectedOptions)
+
+    if (selectedOptions.includes('All')) {
+      setCustomerSelection(['All'])
+      handleOpenModal()
+    }
+  }
 
   const validate = () => {
-    const validationErrors: { title?: string; message?: string } = {};
+    const validationErrors: { title?: string; message?: string } = {}
     if (!title.trim()) {
-      validationErrors.title = "Title is required.";
+      validationErrors.title = 'Title is required.'
     }
     if (!message.trim()) {
-      validationErrors.message = "Message is required.";
+      validationErrors.message = 'Message is required.'
     }
-    return validationErrors;
-  };
+    return validationErrors
+  }
 
   const handleSubmit = () => {
-    const validationErrors = validate();
+    const validationErrors = validate()
     if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
+      setErrors(validationErrors)
+      return
     }
 
     const formData = {
       title,
       message,
       image,
-    };
-    onSubmit(formData);
-    onClose();
-  };
+      recipientType,
+      customerSelection
+    }
+    onSubmit(formData)
+    onClose()
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
@@ -64,16 +92,14 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-3xl"
         >
           &times;
         </button>
-        {/* Modal Title */}
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">
-          New Notification
-        </h2>
 
-        {/* Form Fields */}
+        {/* Modal Title */}
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">New Notification</h2>
+
         <div className="space-y-4">
           {/* Title Input */}
           <div className="relative">
@@ -81,28 +107,26 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
               type="text"
               value={title}
               onChange={(e) => {
-                setTitle(e.target.value);
-                setErrors((prev) => ({ ...prev, title: undefined }));
+                setTitle(e.target.value)
+                setErrors((prev) => ({ ...prev, title: undefined }))
               }}
               placeholder=" "
               className={`peer w-full border ${
-                errors.title ? "border-red-500" : "border-gray-300"
+                errors.title ? 'border-red-500' : 'border-gray-300'
               } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${
                 errors.title
-                  ? "focus:ring-red-500 focus:border-red-500"
-                  : "focus:ring-[#147341] focus:border-[#147341]"
+                  ? 'focus:ring-red-500 focus:border-red-500'
+                  : 'focus:ring-[#147341] focus:border-[#147341]'
               }`}
             />
             <label
               className={`absolute text-sm ${
-                errors.title ? "text-red-500" : "text-gray-500"
+                errors.title ? 'text-red-500' : 'text-gray-500'
               } duration-300 transform -translate-y-4 scale-75 top-0 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
             >
               Title
             </label>
-            {errors.title && (
-              <p className="text-red-500 text-sm mt-1">{errors.title}</p>
-            )}
+            {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
           </div>
 
           {/* Message Input */}
@@ -110,35 +134,33 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
             <textarea
               value={message}
               onChange={(e) => {
-                setMessage(e.target.value);
-                setErrors((prev) => ({ ...prev, message: undefined }));
+                setMessage(e.target.value)
+                setErrors((prev) => ({ ...prev, message: undefined }))
               }}
               placeholder=" "
               className={`peer w-full border ${
-                errors.message ? "border-red-500" : "border-gray-300"
+                errors.message ? 'border-red-500' : 'border-gray-300'
               } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${
                 errors.message
-                  ? "focus:ring-red-500 focus:border-red-500"
-                  : "focus:ring-[#147341] focus:border-[#147341]"
+                  ? 'focus:ring-red-500 focus:border-red-500'
+                  : 'focus:ring-[#147341] focus:border-[#147341]'
               }`}
             />
             <label
               className={`absolute text-sm ${
-                errors.message ? "text-red-500" : "text-gray-500"
+                errors.message ? 'text-red-500' : 'text-gray-500'
               } duration-300 transform -translate-y-4 scale-75 top-0 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
             >
               Message
             </label>
-            {errors.message && (
-              <p className="text-red-500 text-sm mt-1">{errors.message}</p>
-            )}
+            {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
           </div>
 
           {/* Image Upload */}
           <div className="flex flex-col items-start space-y-2">
             <label
               htmlFor="imageInput"
-              className="w-[80px] h-[80px] flex items-center justify-center border border-gray-300 rounded-lg cursor-pointer"
+              className="w-[50px] h-[50px] flex items-center justify-center border border-gray-300 rounded-lg cursor-pointer"
             >
               {imagePreview ? (
                 <img
@@ -156,11 +178,7 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
                     stroke="currentColor"
                     strokeWidth={2}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M12 4v16m8-8H4"
-                    />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                   </svg>
                 </span>
               )}
@@ -172,22 +190,67 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
               onChange={handleImageChange}
               className="hidden"
             />
-            <p className="text-sm text-gray-500">Image (optional)</p>
           </div>
+
+          {/* Recipient Type Selection */}
+          <div className="flex items-center space-x-4">
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                value="customer"
+                checked={recipientType === 'customer'}
+                onChange={handleRecipientTypeChange}
+                className="form-radio"
+              />
+              <span>Customer</span>
+            </label>
+            <label className="flex items-center space-x-2">
+              <input
+                type="radio"
+                value="agent"
+                checked={recipientType === 'agent'}
+                onChange={handleRecipientTypeChange}
+                className="form-radio"
+              />
+              <span>Agent</span>
+            </label>
+          </div>
+
+          {recipientType === 'customer' && (
+            <div className="relative">
+              <select
+                value={customerSelection}
+                onClick={handleOpenModal}
+                onChange={handleCustomerSelectionChange}
+                className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
+              >
+                <option value="All" className="p-4" onClick={handleOpenModal}>All</option>
+              </select>
+              <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-0 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4">
+                Customer Selection
+              </label>
+            </div>
+          )}
         </div>
 
-        {/* Submit Button */}
         <div className="mt-6">
           <button
             onClick={handleSubmit}
-            className="w-full bg-[#147341] text-white rounded-lg px-4 py-2 font-semibold hover:bg-green-700"
+            className="w-full bg-[#147341] text-white rounded-lg px-4 py-3 font-semibold hover:bg-green-700"
           >
             Send
           </button>
         </div>
       </div>
-    </div>
-  );
-};
 
-export default NewNotificationModal;
+      {/* Team Group Modal */}
+      <TeamGroupModal
+        modalVisible={isCustomerModalOpen}
+        setModalVisible={setIsCustomerModalOpen}
+        onUserSelection={(selectedUsers) => console.log(selectedUsers)} // Replace with actual logic for user selection
+      />
+    </div>
+  )
+}
+
+export default NewNotificationModal
