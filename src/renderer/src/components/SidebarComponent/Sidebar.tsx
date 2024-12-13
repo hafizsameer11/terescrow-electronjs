@@ -15,13 +15,12 @@ import {
 import { RiTeamFill } from "react-icons/ri";
 import { Images } from '@renderer/constant/Image';
 
-
 export const Sidebar = () => {
   const [activeItem, setActiveItem] = useState('dashboard');
 
   // Navigation menu data
   const menuItems = [
-    { label: 'Dashboard', icon: <FaChartPie />, href: '/', id: 'dashboard' },
+    { label: 'Dashboard', icon: <FaChartPie />, href: '/dashboard', id: 'dashboard' },
     { label: 'Customers', icon: <FaUser />, href: '/customers', id: 'customers' },
     { label: 'Chats', icon: <FaComments />, href: '/chats', id: 'chats' },
     { label: 'Transactions', icon: <FaMoneyCheckAlt />, href: '/transactions', id: 'transactions' },

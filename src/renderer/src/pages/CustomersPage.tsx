@@ -80,7 +80,7 @@ const CustomersPage: React.FC = () => {
       </div>
       <div>
         <h2 className="text-[30px] font-normal  text-black">Customers on the app</h2>
-        <p className="text-[#00000080] text-[16px] ">
+        <p className="text-[#00000080] text-[16px] mb-5">
           Manage total customers and see their activities
         </p>
       </div>

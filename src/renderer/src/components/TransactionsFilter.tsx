@@ -27,7 +27,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
             {title || "Transactions on the app"}
           </h2>
           {/* Use provided subtitle or fallback to default */}
-          <p className="text-[16px] text-gray-600">
+          <p className="text-[16px] text-gray-600 mb-5">
             {subTitle || "Manage total customers and see their activities"}
           </p>
         </div>

@@ -93,7 +93,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* Transactions Table */}
-      <div>
+      <div className='pb-5 '>
 
         <TransactionsFilter
           filters={filters}
