@@ -1,79 +1,117 @@
 import { useState } from 'react'
 import { DUMMY_USERS } from '../utils/dummyUsers.js'
 import UserStat from '@renderer/components/UserStat.js'
-import TeamsTable from '@renderer/components/TeamsTable.js'
+import ChatTable from '@renderer/components/ChatTable.js'
+import TeamFilterHeader from '@renderer/components/TeamFilterHeader.js'
+import AgentEditProfileModal from '@renderer/components/modal/AgentEditProfileModal.js'
+import { Images } from '@renderer/constant/Image.js'
+import ActivityHistory from '@renderer/components/ActivityHistory.js'
 
-const DUMMY_TEAM_MEMBERS = [
-  {
-    id: 1,
-    name: 'John Doe',
-    username: 'johndoe',
-    dateAdded: '2024-01-15',
-    role: 'Admin'
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    username: 'janesmith',
-    dateAdded: '2024-02-20',
-    role: 'Manager'
-  },
-  {
-    id: 3,
-    name: 'Mike Johnson',
-    username: 'mikejohnson',
-    dateAdded: '2024-03-10',
-    role: 'Developer'
-  },
-  {
-    id: 4,
-    name: 'Sarah Williams',
-    username: 'sarahwilliams',
-    dateAdded: '2024-04-05',
-    role: 'Designer'
-  },
-  {
-    id: 5,
-    name: 'Alex Brown',
-    username: 'alexbrown',
-    dateAdded: '2024-05-22',
-    role: 'Support'
-  }
-]
+interface Agent {
+  fullName: string
+  username: string
+  role: string
+  departments: string[]
+  password: string
+  profilePhoto?: string
+}
 
 const Teams = () => {
-  const [filters, setFilters] = useState({
-    categoryType: 'Active',
-    category: 'All',
-    search: ''
+  const sampleData = [
+    {
+      id: 1,
+      name: 'Qamardeen Abdulmalik',
+      username: 'Alucard',
+      status: 'Active', // Status will determine green or red dot
+      role: 'Manager', // Either 'Manager' or 'Agent'
+      dateAdded: 'Nov 7, 2024',
+      department: ['Sell crypto', 'Buy crypto'],
+      password: '12345',
+      avatar: Images.agent1
+    },
+    {
+      id: 2,
+      name: 'Adam Sandler',
+      username: 'Adam',
+      status: 'Active',
+      role: 'Agent',
+      dateAdded: 'Nov 7, 2024',
+      department: ['Sell crypto', 'Buy crypto'],
+      password: '12345',
+      avatar: Images.agent1
+    },
+    {
+      id: 3,
+      name: 'Sasha Sloan',
+      username: 'Sasha',
+      status: 'Inactive',
+      role: 'Agent',
+      dateAdded: 'Nov 7, 2024',
+      department: ['Sell crypto', 'Buy crypto'],
+      password: '12345',
+      avatar: Images.agent1
+    }
+  ]
+
+  const [activeTab, setActiveTab] = useState<'Active' | 'Deleted'>('Active')
+  const [selectedRole, setSelectedRole] = useState<'Manager' | 'Agent' | 'Roles'>('Roles')
+  const [searchValue, setSearchValue] = useState('')
+  const [isEditClick, setIsEditClick] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState<Agent>()
+  const [isUserViewed, setIsUserViewed] = useState(false)
+  const [selectAgentActivityId, setSelectAgentActivityId] = useState(1);
+
+  console.log(selectAgentActivityId);
+  const handleTabChange = (tab: 'Active' | 'Deleted') => {
+    setActiveTab(tab)
+  }
+
+  const handleRoleChange = (role: 'Manager' | 'Agent' | 'Roles') => {
+    setSelectedRole(role)
+  }
+
+  const handleSearchChange = (value: string) => {
+    setSearchValue(value)
+  }
+
+  const handleEditClick = (agentId: number) => {
+    const agent = sampleData.find((item) => item.id === agentId)
+    if (agent) {
+      setSelectedAgent({
+        fullName: agent.name,
+        username: agent.username,
+        role: agent.role,
+        departments: agent.department || [],
+        password: agent.password,
+        profilePhoto: agent.avatar || ''
+      })
+      setIsEditClick(true)
+    }
+  }
+
+  const changeView = ( selectedUserUd: number ) => {
+    setIsUserViewed(true)
+    setSelectAgentActivityId(selectedUserUd)
+  }
+
+  // Filter the data dynamically based on filters
+  const filteredData = sampleData.filter((member) => {
+    // Match the `activeTab` to filter by status
+    const matchesTab =
+      activeTab === 'Active' ? member.status === 'Active' : member.status === 'Inactive'
+
+    // Match the `selectedRole` to filter by role
+    const matchesRole = selectedRole === 'Roles' || member.role === selectedRole
+
+    // Match the `searchValue` to filter by name or username
+    const matchesSearch =
+      searchValue === '' ||
+      member.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      member.username.toLowerCase().includes(searchValue.toLowerCase())
+
+    return matchesTab && matchesRole && matchesSearch
   })
-
-  const categoryOptions = ['All', 'Team', 'Customer']
-
-  const userCategoryType = ['Active', 'Declined']
-
-  const handleCategoryTypeChange = (categoryType) => {
-    setFilters((prev) => ({ ...prev, categoryType }))
-  }
-
-  const handleCategoryChange = (category) => {
-    setFilters((prev) => ({ ...prev, category }))
-  }
-
-  const handleSearchChange = (search) => {
-    setFilters((prev) => ({ ...prev, search }))
-  }
-
-  const [searchTerm, setSearchTerm] = useState('')
-
-  // Filter function to search through team members
-  const filteredTeamMembers = DUMMY_TEAM_MEMBERS.filter(
-    (member) =>
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.role.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
+  console.log(isUserViewed)
   return (
     <div className="p-6 space-y-8 w-full">
       <div className="flex items-center justify-between">
@@ -96,54 +134,40 @@ const Teams = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center justify-between space-x-4">
-        <div className="flex">
-          {/* CategoryType Filters */}
-          <div className="flex me-8">
-            {userCategoryType.map((selectedFilter) => (
-              <button
-                key={selectedFilter}
-                onClick={() => handleCategoryTypeChange(selectedFilter)}
-                className={`px-4 py-2 text-sm font-medium transition ${
-                  filters.categoryType === selectedFilter
-                    ? 'bg-[#147341] text-white'
-                    : 'text-gray-600 hover:bg-gray-100'
-                } border ${selectedFilter === 'Active' ? 'rounded-l-lg' : ''} ${
-                  selectedFilter === 'Declined' ? 'rounded-r-lg' : ''
-                }`}
-              >
-                {selectedFilter}
-              </button>
-            ))}
-          </div>
 
-          {/* Category Filter */}
-          <select
-            value={filters.category}
-            onChange={(e) => handleCategoryChange(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            {categoryOptions.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Search Bar */}
-        <div className="flex items-center border bg-white border-gray-300 rounded-lg px-4 py-2 w-1/4">
-          <input
-            type="text"
-            placeholder="Search customer"
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="outline-none text-sm text-gray-600 w-full"
+      {isUserViewed ? (
+        <ActivityHistory />
+      ) : (
+        <div>
+          <TeamFilterHeader
+            activeTab={activeTab}
+            selectedRole={selectedRole}
+            searchValue={searchValue}
+            onTabChange={handleTabChange}
+            onRoleChange={handleRoleChange}
+            onSearchChange={handleSearchChange}
+          />
+          <ChatTable
+            data={filteredData}
+            isTeam={true}
+            isTeamCommunition={false}
+            onUserViewed={changeView}
+            onEditHanlder={(agentId) => handleEditClick(agentId)}
           />
         </div>
-      </div>
-
-      {/* User Table */}
-      <TeamsTable data={filteredTeamMembers} />
+      )}
+      {/* Edit Modal */}
+      {isEditClick && selectedAgent && (
+        <AgentEditProfileModal
+          isOpen={isEditClick}
+          onClose={() => setIsEditClick(false)}
+          agentData={selectedAgent}
+          onUpdate={(updatedData) => {
+            console.log('Updated Data:', updatedData)
+            setIsEditClick(false)
+          }}
+        />
+      )}
     </div>
   )
 }
