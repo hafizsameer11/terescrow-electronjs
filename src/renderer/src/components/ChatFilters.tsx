@@ -23,10 +23,10 @@ const ChatFilters: React.FC<TransactionsFilterProps> = ({ filters, onChange, tit
       <div className="m flex flex-row justify-between">
         <div className="ext">
           {/* Title and Subtitle */}
-          <h2 className="text-[30px] font-semibold text-gray-800">
+          <h2 className="text-[30px] font-semibold text-gray-800 ">
             {title || 'Transactions on the app'}
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 mb-5">
             {subtitle || 'Manage total customers and see their activities'}
           </p>
         </div>

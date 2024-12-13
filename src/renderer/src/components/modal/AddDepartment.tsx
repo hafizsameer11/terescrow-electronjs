@@ -1,56 +1,75 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 
-
-const FloatingInput = (props: {
+interface FloatingInputProps {
   label: string
   name: string
   type?: string
   value: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-}) => (
+}
+
+const FloatingInput = ({
+  label,
+  name,
+  type = 'text',
+  value,
+  onChange,
+}: FloatingInputProps) => (
   <div className="relative">
     <input
-      type={props.type || 'text'}
-      name={props.name}
-      value={props.value}
-      onChange={props.onChange}
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
       placeholder=" "
       className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
     />
     <label
-      className={`absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 z-10 ${props.value
-        ? 'scale-75 -translate-y-4'
-        : 'peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100'
+      className={`absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 z-10 ${
+        value
+          ? 'scale-75 -translate-y-4'
+          : 'peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100'
       } peer-focus:scale-75 peer-focus:-translate-y-4`}
     >
-      {props.label}
+      {label}
     </label>
   </div>
 )
+
 interface AgentEditProfileModalProps {
   isOpen: boolean
   onClose: () => void
   onUpdate: (updatedData: Record<string, any>) => void
+  actionType: 'add' | 'edit'
+  initialData?: {
+    name: string
+    status: string
+    description: string
+    profilePhoto?: string
+  }
 }
 
 const Department: React.FC<AgentEditProfileModalProps> = ({
   isOpen,
   onClose,
-  onUpdate
-}) => {
-  const [formData, setFormData] = useState<{
-    name: string,
-    status: string,
-    description: string,
-    profilePhoto?: string
-  }>({
+  onUpdate,
+  actionType,
+  initialData = {
     name: '',
     status: '',
     description: '',
-    profilePhoto: ''
-  })
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    profilePhoto: '',
+  },
+}) => {
+  const [formData, setFormData] = useState(initialData)
+
+  useEffect(() => {
+    setFormData(initialData)
+  }, [initialData, isOpen])
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
@@ -65,7 +84,7 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
         if (target && target.result) {
           setFormData((prev) => ({
             ...prev,
-            profilePhoto: target.result as string
+            profilePhoto: target.result as string,
           }))
         }
       }
@@ -81,14 +100,14 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
 
   if (!isOpen) return null
 
-  
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6">
       <div className="bg-white rounded-lg shadow-lg w-[500px] p-6">
         {/* Modal Header */}
         <div className="flex justify-between items-center pb-4 mb-4 border-b">
-          <h2 className="text-lg font-semibold text-gray-800">Add new Department</h2>
+          <h2 className="text-lg font-semibold text-gray-800">
+            {actionType === 'add' ? 'Add New Department' : 'Edit Department'}
+          </h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-4xl">
             &times;
           </button>
@@ -118,7 +137,6 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
           </div>
         </div>
 
-        {/* Form Section */}
         <div className="space-y-4">
           <FloatingInput
             label="Full Name"
@@ -126,6 +144,7 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
             value={formData.name}
             onChange={handleChange}
           />
+
           <div className="relative">
             <select
               name="status"
@@ -142,7 +161,6 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
             </label>
           </div>
 
-          {/* Description Section */}
           <div className="relative">
             <textarea
               name="description"
@@ -157,13 +175,12 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="mt-6">
           <button
             onClick={handleUpdate}
             className="w-full bg-[#147341] text-white px-4 py-2 rounded-lg hover:bg-green-700"
           >
-            Add Department
+            {actionType === 'add' ? 'Add Department' : 'Update Department'}
           </button>
         </div>
       </div>
