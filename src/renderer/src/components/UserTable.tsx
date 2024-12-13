@@ -95,7 +95,7 @@ const UserTable: React.FC<CustomerTableProps> = ({ data }) => {
           {paginatedData.map((customer) => (
             <tr key={customer.id} className="border-t hover:bg-gray-50 relative">
               <td className="py-5 ps-3 pe-2">
-                <div className='bg-gray-200 py-2 px-1 text-4xl rounded-full justify-center flex items-center'>
+                <div className='bg-gray-200 py-2 px-2 text-4xl rounded-full justify-center flex items-center'>
                   {customer.name.split('')[0]} {/* Extracts the first word */}
                 </div>
               </td>

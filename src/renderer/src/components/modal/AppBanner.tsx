@@ -35,11 +35,11 @@ const AppBanner = ({ modalVisible, setModalVisible, onSend }) => {
                 <img
                   src={selectedImage}
                   alt="Selected"
-                  className="w-full h-full object-cover rounded-full"
+                  className="w-full object-cover rounded-full"
                 />
               ) : (
                 <span className="text-gray-500 w-full text-center">
-                  <img src={Images.tableImg} className="w-full" alt="" />
+                  <img src={Images.tableImg} className="w-full object-cover" alt="" />
                 </span>
               )}
             </div>
