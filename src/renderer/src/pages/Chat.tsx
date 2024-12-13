@@ -6,40 +6,40 @@ import ChatTable from '@renderer/components/ChatTable'
 import StatsCard from '@renderer/components/StatsCard'
 import { useState } from 'react'
 
-const Chat = () => {
-  const sampleData = [
-    {
-      id: 1,
-      name: 'Qamardeen Abdulmalik',
-      username: 'Alucard',
-      status: 'Declined',
-      serviceType: 'Gift Card',
-      transactionType: 'Buy - Amazon gift card',
-      date: 'Nov 6, 2024',
-      amount: '$100'
-    },
-    {
-      id: 2,
-      name: 'Adam Sandler',
-      username: 'Adam',
-      status: 'Successful',
-      serviceType: 'Crypto',
-      transactionType: 'Sell - BTC',
-      date: 'Nov 6, 2024',
-      amount: '$100'
-    },
-    {
-      id: 3,
-      name: 'Sasha Sloan',
-      username: 'Sasha',
-      status: 'Successful',
-      serviceType: 'Crypto',
-      transactionType: 'Buy - USDT',
-      date: 'Nov 6, 2024',
-      amount: '$100'
-    }
-  ]
+const sampleData = [
+  {
+    id: 1,
+    name: 'Qamardeen Abdulmalik',
+    username: 'Alucard',
+    status: 'Declined',
+    serviceType: 'Gift Card',
+    transactionType: 'Buy - Amazon gift card',
+    date: 'Nov 6, 2024',
+    amount: '$100'
+  },
+  {
+    id: 2,
+    name: 'Adam Sandler',
+    username: 'Adam',
+    status: 'Successful',
+    serviceType: 'Crypto',
+    transactionType: 'Sell - BTC',
+    date: 'Nov 6, 2024',
+    amount: '$100'
+  },
+  {
+    id: 3,
+    name: 'Sasha Sloan',
+    username: 'Sasha',
+    status: 'Successful',
+    serviceType: 'Crypto',
+    transactionType: 'Buy - USDT',
+    date: 'Nov 6, 2024',
+    amount: '$100'
+  }
+]
 
+const Chat = () => {
   const [filters, setFilters] = useState({
     status: 'All',
     type: 'All',
@@ -122,7 +122,7 @@ const Chat = () => {
             onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
           />
 
-          <ChatTable data={filteredData} isChat={true} />
+          <ChatTable data={filteredData} isChat={true} onUserViewed={() => null} />
         </div>
       </div>
     </>

@@ -18,7 +18,7 @@ const TeamFilterHeader: React.FC<TeamFilterHeaderProps> = ({
     onSearchChange,
 }) => {
     return (
-        <div className="flex justify-between items-center bg-gray-50 py-4 px-6">
+        <div className="flex justify-between items-center bg-gray-50 py-4">
             {/* Left Section */}
             <div className="flex items-center space-x-4">
                 {/* Tabs */}
@@ -48,7 +48,7 @@ const TeamFilterHeader: React.FC<TeamFilterHeaderProps> = ({
                         onChange={(e) => onRoleChange(e.target.value as 'Manager' | 'Agent' | 'Roles')}
                         className="px-4 py-2 text-sm border rounded-lg focus:outline-none focus:ring focus:ring-green-300"
                     >
-                        <option value="Roles" disabled>
+                        <option value="Roles">
                             Roles
                         </option>
                         <option value="Manager">Manager</option>
