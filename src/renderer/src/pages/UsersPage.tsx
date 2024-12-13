@@ -74,14 +74,14 @@ const UsersPage = () => {
         ))}
       </div>
 
-      {/* Filters Component */}
-      <UsersFilter
-        filters={filters}
-        onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
-      />
+        {/* Filters Component */}
+        <UsersFilter
+          filters={filters}
+          onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
+        />
 
-      {/* User Table */}
-      <UserTable data={filteredCustomers} />
+        {/* User Table */}
+        <UserTable data={filteredCustomers} />
     </div>
   )
 }

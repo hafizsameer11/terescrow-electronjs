@@ -26,18 +26,18 @@ const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose }) => {
         </button>
         <div className="flex flex-col items-center space-y-4">
           <div className="border-b border-gray-200">
-            <h2>Welcome to tercesecrow</h2>
-            <p>
+            <h2 className="text-xl font-semibold text-gray-800 pb-2">Welcome to tercesecrow</h2>
+            <p className="pb-4">
               Welcome to tercesecrow, your no 1 hub for trading your gift card and crypto. We are
               always here to serve you.
             </p>
           </div>
         </div>
-        <div className="flex gap-4 my-3">
+        <div className="flex gap-4  my-3">
           <img src={Images.galleryImg} alt="" width={80} height={80} className="object-cover" />
           <img src={Images.galleryImg} alt="" width={80} height={80} className="object-cover" />
         </div>
-        <div className="flex justify-between text-sm border-t pt-2 items-center">
+        <div className="flex justify-between text-sm border-t py-3 items-center">
           <p>Nov 7, 2024 - 10:22 am</p>
           <p>Delivered</p>
         </div>

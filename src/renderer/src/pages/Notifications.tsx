@@ -111,7 +111,7 @@ const Notifications = () => {
               {notifications
                 .filter((n) => n.type === 'Team')
                 .map((notification, index) => (
-                  <div key={index}>
+                  <div key={index} className='py-2'>
                     <p>
                       <span className="font-bold">{notification.message}</span>
                       {notification.isImportant && (
@@ -119,7 +119,7 @@ const Notifications = () => {
                       )}
                       <span className="text-green-600 ml-2 cursor-pointer">view details</span>
                     </p>
-                    <p className="text-gray-500 text-sm">{notification.time}</p>
+                    <p className="text-gray-500 pt-2 text-sm">{notification.time}</p>
                   </div>
                 ))}
             </div>
@@ -129,12 +129,12 @@ const Notifications = () => {
               {notifications
                 .filter((n) => n.type === 'Customer')
                 .map((notification, index) => (
-                  <div key={index} className="">
-                    <p>
+                  <div key={index} className="py-2">
+                    <span>
                       <span className="font-bold">{notification.message}</span>
                       <span className="text-green-600 ml-2 cursor-pointer ">view transaction</span>
-                    </p>
-                    <p className="text-gray-500 text-sm">{notification.time}</p>
+                    </span>
+                    <p className="text-gray-500 text-sm pt-2">{notification.time}</p>
                   </div>
                 ))}
             </div>
@@ -152,6 +152,7 @@ const Notifications = () => {
         isOpen={isNotificationModalOpen}
         onClose={handleCloseNotificationModal}
         onSubmit={handleCloseNotificationModal}
+        actionType='add'
       />
 
       <NewBannerModal

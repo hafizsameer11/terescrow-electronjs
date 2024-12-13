@@ -100,7 +100,7 @@ const TeamCommunication = () => {
             onRoleChange={handleRoleChange}
             onSearchChange={handleSearchChange}
           />
-          <ChatTable data={filteredData} isTeam={true} />
+          <ChatTable data={filteredData} isTeam={true} isTeamCommunition={true}  />
         </div>
       </div>
     </>
