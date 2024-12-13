@@ -4,6 +4,7 @@ import NotificationFilters from './NotificationFilters'
 import WelcomeModal from './WelcomeModal'
 import { Images } from '@renderer/constant/Image'
 import AppBanner from './modal/AppBanner'
+import NewNotificationModal from './modal/NewNotificationModal'
 
 interface Transaction {
   message: string
@@ -19,7 +20,12 @@ const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: str
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [notificationType, setNotificationType] = useState<string>('Notification')
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false)
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
   const [isAppBannerOpen, setIsAppBannerOpen] = useState(false)
+
+  const handleOpenNotificationModal = () => {
+    setIsNotificationModalOpen(true)
+  }
 
   const handleOpenModal = () => {
     if (notificationType === 'Notification') {
@@ -147,7 +153,10 @@ const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: str
                 >
                   <AiOutlineEye size={20} />
                 </button>
-                <button className="text-gray-500 bg-gray-100 p-2 rounded-lg">
+                <button
+                  className="text-gray-500 bg-gray-100 p-2 rounded-lg"
+                  onClick={handleOpenNotificationModal}
+                >
                   <AiOutlineEdit size={20} />
                 </button>
                 <button className="text-red-500">
@@ -167,6 +176,19 @@ const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: str
           setModalVisible={setIsAppBannerOpen}
         />
       )}
+      <NewNotificationModal
+        isOpen={isNotificationModalOpen}
+        onClose={() => setIsNotificationModalOpen(false)}
+        onSubmit={() => setIsNotificationModalOpen(false)}
+        actionType="edit"
+        initialData={{
+          title: 'teresecrow Notification',
+          message: 'Sample notification message',
+          imagePreview: 'https://via.placeholder.com/150',
+          recipientType: 'customer',
+          customerSelection: ['All']
+        }}
+      />
     </div>
   )
 }

@@ -110,7 +110,7 @@ const Transactions: React.FC = () => {
 
   return (
     <div className="w-full">
-      <h2 className="text-4xl font-semibold text-gray-800">Transactions</h2>
+      <h2 className="text-4xl font-semibold text-gray-800 mb-5">Transactions</h2>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">

@@ -19,9 +19,9 @@ interface Transaction {
 }
 
 interface TransactionsTableProps {
-  data: Transaction[];
-  isChat?: boolean;
-  isTeam?: boolean;
+  data: Transaction[]
+  isChat?: boolean
+  isTeam?: boolean
 }
 
 const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isTeam = false }) => {
@@ -68,31 +68,34 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                 <td className="py-3 px-4">
                   <span
                     className={`flex w-[60%] items-center gap-2 px-3 py-1 text-sm font-medium rounded-lg border 
-    ${transaction.status === 'Successful'
-                        ? 'bg-green-100 text-green-700 border-green-500'
-                        : transaction.status === 'Declined'
-                          ? 'bg-red-100 text-red-700 border-red-500'
-                          : transaction.status === 'Pending'
-                            ? 'bg-yellow-100 text-yellow-700 border-yellow-500'
-                            : transaction.status === 'Unanswered'
-                              ? 'bg-gray-100 text-gray-500 border-gray-500'
-                              : 'bg-pink-100 text-pink-700 border-pink-500'}`}
+    ${
+      transaction.status === 'Successful'
+        ? 'bg-green-100 text-green-700 border-green-500'
+        : transaction.status === 'Declined'
+          ? 'bg-red-100 text-red-700 border-red-500'
+          : transaction.status === 'Pending'
+            ? 'bg-yellow-100 text-yellow-700 border-yellow-500'
+            : transaction.status === 'Unanswered'
+              ? 'bg-gray-100 text-gray-500 border-gray-500'
+              : 'bg-pink-100 text-pink-700 border-pink-500'
+    }`}
                   >
                     <span
                       className={`w-2 h-2 rounded-full 
-      ${transaction.status === 'Successful'
-                          ? 'bg-green-700'
-                          : transaction.status === 'Declined'
-                            ? 'bg-red-700'
-                            : transaction.status === 'Pending'
-                              ? 'bg-yellow-700'
-                              : transaction.status === 'Unanswered'
-                                ? 'bg-gray-700'
-                                : 'bg-pink-700'}`}
+      ${
+        transaction.status === 'Successful'
+          ? 'bg-green-700'
+          : transaction.status === 'Declined'
+            ? 'bg-red-700'
+            : transaction.status === 'Pending'
+              ? 'bg-yellow-700'
+              : transaction.status === 'Unanswered'
+                ? 'bg-gray-700'
+                : 'bg-pink-700'
+      }`}
                     ></span>
                     {transaction.status}
                   </span>
-
                 </td>
                 <td className="py-3 px-4 flex justify-center items-center h-full relative">
                   <div className="absolute top-[20px]">
@@ -178,7 +181,6 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                 </td>
               </tr>
             ))}
-
           </tbody>
         </table>
       </div>
@@ -210,8 +212,9 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
                       <p className="m-0 text-sm text-gray-500">{member.username}</p>
                     </div>
                     <span
-                      className={`w-3 h-3 rounded-full mb-4 ${member.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
-                        }`}
+                      className={`w-3 h-3 rounded-full mb-4 ${
+                        member.status === 'Active' ? 'bg-green-500' : 'bg-red-500'
+                      }`}
                     ></span>
                   </div>
                 </td>
@@ -307,10 +310,11 @@ const ChatTable: React.FC<TransactionsTableProps> = ({ data, isChat = false, isT
               </td>
               <td className="py-3 px-4">
                 <span
-                  className={`px-2 py-1 text-xs rounded-lg ${transaction.status === 'Successful'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-red-100 text-red-700'
-                    }`}
+                  className={`px-2 py-1 text-xs rounded-lg ${
+                    transaction.status === 'Successful'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}
                 >
                   {transaction.status}
                 </span>

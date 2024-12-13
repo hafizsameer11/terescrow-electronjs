@@ -30,6 +30,7 @@ const Departments: React.FC = () => {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onUpdate={() => {}}
+        actionType='add'
       />
     </div>
   );
