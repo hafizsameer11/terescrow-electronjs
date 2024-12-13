@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChatUser, ChatMessage } from './TeamChat';
-import { IoImageOutline, IoSend } from 'react-icons/io5'; // Importing icons from react-icons
+import { IoImageOutline, IoSend } from 'react-icons/io5';
 
 interface TeamChatSectionProps {
   user: ChatUser;
 }
 
 const TeamChatSection: React.FC<TeamChatSectionProps> = ({ user }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([...user.messages]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]); // Initialize with an empty array
   const [inputValue, setInputValue] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+
+  // Update messages when the user changes
+  useEffect(() => {
+    setMessages([...user.messages]); // Reset messages to the new user's messages
+  }, [user]);
 
   // Convert File to Base64
   const handleImageUpload = (files: FileList | null) => {
@@ -24,10 +29,21 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ user }) => {
           text: '',
           type: 'sent',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          imageUrl: base64Image, // Use Base64 string
+          imageUrl: base64Image,
         };
 
         setMessages((prevMessages) => [...prevMessages, newMessage]);
+
+        // Dummy response for image upload
+        setTimeout(() => {
+          const dummyResponse: ChatMessage = {
+            id: newMessage.id + 1,
+            text: 'Nice image! Let me check.',
+            type: 'received',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMessages((prevMessages) => [...prevMessages, dummyResponse]);
+        }, 1000);
       };
 
       reader.readAsDataURL(file); // Convert file to Base64
@@ -48,6 +64,17 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ user }) => {
 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInputValue('');
+
+    // Dummy response for text messages
+    setTimeout(() => {
+      const dummyResponse: ChatMessage = {
+        id: newMessage.id + 1,
+        text: 'Got it! Let me check.',
+        type: 'received',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prevMessages) => [...prevMessages, dummyResponse]);
+    }, 1000);
   };
 
   return (
