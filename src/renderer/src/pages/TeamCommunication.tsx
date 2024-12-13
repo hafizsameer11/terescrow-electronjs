@@ -76,10 +76,10 @@ const TeamCommunication = () => {
           {/* Title */}
           <h1 className="text-[40px] text-gray-800">Teams</h1>
 
-          {/* Button */}
+          {/* Button
           <button className="px-4 py-2 text-sm text-white bg-green-700 rounded-lg hover:bg-green-800">
             Add new Team
-          </button>
+          </button> */}
         </div>
 
         {/* Stats Cards */}
@@ -100,7 +100,7 @@ const TeamCommunication = () => {
             onRoleChange={handleRoleChange}
             onSearchChange={handleSearchChange}
           />
-          <ChatTable data={filteredData} isTeam={true} />
+          <ChatTable data={filteredData} isTeam={true} isTeamCommunition={true}  />
         </div>
       </div>
     </>

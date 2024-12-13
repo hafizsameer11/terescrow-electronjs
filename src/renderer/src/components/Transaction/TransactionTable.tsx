@@ -64,7 +64,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   // console.log("The page of");
   // console.log(data);
   return (
-    <div className="mt-6 bg-white rounded-lg shadow-md">
+    <div className="my-6 bg-white rounded-lg shadow-md">
       <table className="min-w-full text-left text-sm text-gray-700">
         <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
           <tr>

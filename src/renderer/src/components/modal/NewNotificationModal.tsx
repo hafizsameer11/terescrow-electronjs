@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import TeamGroupModal from './TeamGroupModal'
 
 interface NewNotificationModalProps {
   isOpen: boolean
+  actionType: 'add' | 'edit'
   onClose: () => void
   onSubmit: (formData: {
     title: string
@@ -11,12 +12,27 @@ interface NewNotificationModalProps {
     recipientType: string
     customerSelection: string[]
   }) => void
+  initialData?: {
+    title: string
+    message: string
+    imagePreview?: string
+    recipientType: string
+    customerSelection: string[]
+  }
 }
 
 const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   isOpen,
+  actionType,
   onClose,
-  onSubmit
+  onSubmit,
+  initialData = {
+    title: '',
+    message: '',
+    imagePreview: null,
+    recipientType: 'customer',
+    customerSelection: ['All']
+  }
 }) => {
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
@@ -25,24 +41,30 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   const [recipientType, setRecipientType] = useState('customer')
   const [customerSelection, setCustomerSelection] = useState<string[]>(['All'])
   const [errors, setErrors] = useState<{ title?: string; message?: string }>({})
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false) // State to control modal visibility
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
 
-  // Open modal
-  const handleOpenModal = () => setIsCustomerModalOpen(true)
-
-  // Close modal
-  const handleCloseModal = () => setIsCustomerModalOpen(false)
+  // Populate form fields if editing
+  useEffect(() => {
+    if (actionType === 'edit' && initialData) {
+      setTitle(initialData.title)
+      setMessage(initialData.message)
+      setImagePreview(initialData.imagePreview || null)
+      setRecipientType(initialData.recipientType)
+      setCustomerSelection(initialData.customerSelection)
+    }
+  }, [actionType, initialData])
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const file = event.target.files?.[0]
     if (file) {
-      const reader = new FileReader();
+      setImage(file)
+      const reader = new FileReader()
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file); // Convert to Base64
+        setImagePreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
     }
-  };
+  }
 
   const handleRecipientTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRecipientType(e.target.value)
@@ -51,21 +73,18 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   const handleCustomerSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value)
     setCustomerSelection(selectedOptions)
-
     if (selectedOptions.includes('All')) {
-      setCustomerSelection(['All'])
       handleOpenModal()
     }
   }
 
+  const handleOpenModal = () => setIsCustomerModalOpen(true)
+  const handleCloseModal = () => setIsCustomerModalOpen(false)
+
   const validate = () => {
     const validationErrors: { title?: string; message?: string } = {}
-    if (!title.trim()) {
-      validationErrors.title = 'Title is required.'
-    }
-    if (!message.trim()) {
-      validationErrors.message = 'Message is required.'
-    }
+    if (!title.trim()) validationErrors.title = 'Title is required.'
+    if (!message.trim()) validationErrors.message = 'Message is required.'
     return validationErrors
   }
 
@@ -75,15 +94,13 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
       setErrors(validationErrors)
       return
     }
-
-    const formData = {
+    onSubmit({
       title,
       message,
       image,
       recipientType,
       customerSelection
-    }
-    onSubmit(formData)
+    })
     onClose()
   }
 
@@ -101,7 +118,9 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
         </button>
 
         {/* Modal Title */}
-        <h2 className="text-lg font-semibold text-gray-700 mb-4">New Notification</h2>
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">
+          {actionType === 'add' ? 'New Notification' : 'Edit Notification'}
+        </h2>
 
         <div className="space-y-4">
           {/* Title Input */}
@@ -114,15 +133,18 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
                 setErrors((prev) => ({ ...prev, title: undefined }))
               }}
               placeholder=" "
-              className={`peer w-full border ${errors.title ? 'border-red-500' : 'border-gray-300'
-                } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${errors.title
+              className={`peer w-full border ${
+                errors.title ? 'border-red-500' : 'border-gray-300'
+              } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${
+                errors.title
                   ? 'focus:ring-red-500 focus:border-red-500'
                   : 'focus:ring-[#147341] focus:border-[#147341]'
-                }`}
+              }`}
             />
             <label
-              className={`absolute text-sm ${errors.title ? 'text-red-500' : 'text-gray-500'
-                } duration-300 transform -translate-y-4 scale-75 top-0 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
+              className={`absolute text-sm ${
+                errors.title ? 'text-red-500' : 'text-gray-500'
+              } duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
             >
               Title
             </label>
@@ -138,81 +160,61 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
                 setErrors((prev) => ({ ...prev, message: undefined }))
               }}
               placeholder=" "
-              className={`peer w-full border ${errors.message ? 'border-red-500' : 'border-gray-300'
-                } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${errors.message
+              className={`peer w-full border ${
+                errors.message ? 'border-red-500' : 'border-gray-300'
+              } rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 ${
+                errors.message
                   ? 'focus:ring-red-500 focus:border-red-500'
                   : 'focus:ring-[#147341] focus:border-[#147341]'
-                }`}
+              }`}
             />
             <label
-              className={`absolute text-sm ${errors.message ? 'text-red-500' : 'text-gray-500'
-                } duration-300 transform -translate-y-4 scale-75 top-0 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
+              className={`absolute text-sm ${
+                errors.message ? 'text-red-500' : 'text-gray-500'
+              } duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
             >
               Message
             </label>
             {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
           </div>
+
           {/* Image Upload */}
-          <div className="flex flex-col items-start space-y-2">
-            <label
-              htmlFor="imageInput"
-              className="w-[50px] h-[50px] flex items-center justify-center border border-gray-300 rounded-lg cursor-pointer"
-            >
-              {imagePreview ? (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-full object-cover rounded-lg"
-                />
-              ) : (
-                <span className="text-gray-500">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                  </svg>
-                </span>
-              )}
-            </label>
-            <input
-              id="imageInput"
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
+          <label htmlFor="imageInput" className="cursor-pointer">
+            <img
+              src={imagePreview || ''}
+              alt="Preview"
+              className="w-20 h-16 border object-cover rounded-lg"
             />
-          </div>
+          </label>
+          <input
+            id="imageInput"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
 
-
-          {/* Recipient Type Selection */}
-          <div className="flex items-center space-x-4">
-            <label className="flex items-center space-x-2">
+          {/* Recipient Type */}
+          <div className="space-x-4">
+            <label>
               <input
                 type="radio"
                 value="customer"
                 checked={recipientType === 'customer'}
                 onChange={handleRecipientTypeChange}
-                className="form-radio"
               />
-              <span>Customer</span>
+              Customer
             </label>
-            <label className="flex items-center space-x-2">
+            <label>
               <input
                 type="radio"
                 value="agent"
                 checked={recipientType === 'agent'}
                 onChange={handleRecipientTypeChange}
-                className="form-radio"
               />
-              <span>Agent</span>
+              Agent
             </label>
           </div>
-
           {recipientType === 'customer' && (
             <div className="relative">
               <select
@@ -221,7 +223,9 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
                 onChange={handleCustomerSelectionChange}
                 className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
               >
-                <option value="All" className="p-4" onClick={handleOpenModal}>All</option>
+                <option value="All" className="p-4" onClick={handleOpenModal}>
+                  All
+                </option>
               </select>
               <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-0 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4">
                 Customer Selection
@@ -235,16 +239,15 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
             onClick={handleSubmit}
             className="w-full bg-[#147341] text-white rounded-lg px-4 py-3 font-semibold hover:bg-green-700"
           >
-            Send
+            {actionType === 'add' ? 'Send Notification' : 'Update Notification'}
           </button>
         </div>
       </div>
 
-      {/* Team Group Modal */}
       <TeamGroupModal
         modalVisible={isCustomerModalOpen}
         setModalVisible={setIsCustomerModalOpen}
-        onUserSelection={(selectedUsers) => console.log(selectedUsers)} // Replace with actual logic for user selection
+        onUserSelection={(selectedUsers) => console.log(selectedUsers)}
       />
     </div>
   )

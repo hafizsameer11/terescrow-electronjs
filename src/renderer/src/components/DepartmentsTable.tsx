@@ -1,68 +1,71 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-import { FaUserAlt } from "react-icons/fa";
-import { MdDelete, MdEdit, MdVisibility } from "react-icons/md";
-import StatusButton from "./StatusButton";
-import { Icons } from "@renderer/constant/Icons";
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom' // Import useNavigate
+import { FaUserAlt } from 'react-icons/fa'
+import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md'
+import StatusButton from './StatusButton'
+import { Icons } from '@renderer/constant/Icons'
+import Department from './modal/AddDepartment'
 
 interface Department {
-  id: number;
-  name: string;
-  status: string;
-  noOfAgents: number;
-  description: string;
+  id: number
+  name: string
+  status: string
+  noOfAgents: number
+  description: string
 }
 
 const departmentsData: Department[] = [
   {
     id: 1,
-    name: "Buy Crypto",
-    status: "Active",
+    name: 'Buy Crypto',
+    status: 'Active',
     noOfAgents: 3,
-    description: "Buying of cryptocurrency",
+    description: 'Buying of cryptocurrency'
   },
   {
     id: 2,
-    name: "Sell Crypto",
-    status: "Active",
+    name: 'Sell Crypto',
+    status: 'Active',
     noOfAgents: 3,
-    description: "Selling of cryptocurrency",
+    description: 'Selling of cryptocurrency'
   },
   {
     id: 3,
-    name: "Buy Gift Card",
-    status: "Active",
+    name: 'Buy Gift Card',
+    status: 'Active',
     noOfAgents: 3,
-    description: "Buying of giftcard",
+    description: 'Buying of giftcard'
   },
   {
     id: 4,
-    name: "Sell Gift Card",
-    status: "Active",
+    name: 'Sell Gift Card',
+    status: 'Active',
     noOfAgents: 3,
-    description: "Selling of giftcard",
-  },
-];
+    description: 'Selling of giftcard'
+  }
+]
 
 const DepartmentsTable: React.FC = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filteredDepartments, setFilteredDepartments] = useState(departmentsData);
+  const navigate = useNavigate() // Initialize useNavigate
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filteredDepartments, setFilteredDepartments] = useState(departmentsData)
+  const [editMoalOpen, setEditMoalOpen] = useState(false)
+
+  const handleOpenModal = () => setEditMoalOpen(true)
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value.toLowerCase();
-    setSearchQuery(query);
+    const query = e.target.value.toLowerCase()
+    setSearchQuery(query)
     const filtered = departmentsData.filter((department) =>
       department.name.toLowerCase().includes(query)
-    );
-    setFilteredDepartments(filtered);
-  };
+    )
+    setFilteredDepartments(filtered)
+  }
 
   return (
     <div className="w-full">
       {/* Search Input */}
       <div className="flex justify-between items-center mb-4">
-
         <input
           type="text"
           placeholder="Search"
@@ -72,7 +75,6 @@ const DepartmentsTable: React.FC = () => {
         />
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <table className="min-w-full text-left text-sm text-gray-700">
           <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
@@ -115,6 +117,7 @@ const DepartmentsTable: React.FC = () => {
                     <MdVisibility />
                   </button>
                   <button
+                    onClick={handleOpenModal}
                     className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200"
                     title="Edit Department"
                   >
@@ -132,8 +135,20 @@ const DepartmentsTable: React.FC = () => {
           </tbody>
         </table>
       </div>
+      <Department
+        isOpen={editMoalOpen}
+        onClose={() => setEditMoalOpen(false)}
+        onUpdate={() => {}}
+        actionType="edit"
+        initialData={{
+          name: 'Crypto Department',
+          status: 'Active',
+          description: 'A sample description for this department',
+          profilePhoto: 'https://via.placeholder.com/80'
+        }}
+      />
     </div>
-  );
-};
+  )
+}
 
-export default DepartmentsTable;
+export default DepartmentsTable
