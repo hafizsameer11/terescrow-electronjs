@@ -12,12 +12,12 @@ interface TransactionDetailsModalProps {
     dollarAmount: string;
     nairaAmount: string;
     serviceType: string;
-    giftCardType?: string;
+    category?: string;
     giftCardSubType?: string;
-    quantity: number;
-    code: string;
+    quantity?: number;
+    // code: string;
     transactionId: string;
-    assignedAgent: string;
+    assignedAgent?: string;
     status: string;
     detail?:string[];
   };
@@ -74,11 +74,11 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             </span>
           </div>
 
-          {transactionData.giftCardType && (
+          {transactionData.category && (
             <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
               <span className="text-gray-600">Gift Card Type</span>
               <span className="text-[16px] font-normal text-right">
-                {transactionData.giftCardType}
+                {transactionData.category}
               </span>
             </div>
           )}
@@ -99,7 +99,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             </span>
           </div>
 
-          <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+          {/* <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">Code</span>
             <div className="flex items-center gap-2">
               <span className="text-[16px] font-normal">{transactionData.code}</span>
@@ -110,7 +110,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                 <IoCopyOutline />
               </button>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">Transaction ID</span>

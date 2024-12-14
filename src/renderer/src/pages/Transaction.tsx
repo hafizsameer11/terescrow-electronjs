@@ -1,7 +1,10 @@
+import { token } from '@renderer/api/config'
+import { getTransactions } from '@renderer/api/queries/adminqueries'
 import StatsCard from '@renderer/components/StatsCard'
 // import CustomerTransaction from '@renderer/components/Transaction/CutomerTransaction';
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable'
 import TransactionsFilter from '@renderer/components/TransactionsFilter'
+import { useQuery } from '@tanstack/react-query'
 import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -66,7 +69,11 @@ const Transactions: React.FC = () => {
       }
     ]
   }
-
+  const { data: customerTransactions, isLoading, isError, error } = useQuery({
+    queryKey: ["customerDetails"],
+    queryFn: () => getTransactions({ token }),
+    enabled: !!token,
+  });
   const [filters, setFilters] = useState({
     status: 'All',
     type: 'All',
@@ -80,16 +87,23 @@ const Transactions: React.FC = () => {
   >(null)
 
   // Filter data based on the selected filters
-  const filteredData = customerData.transactions.filter((transaction) => {
-    const matchesStatus = filters.status === 'All' || transaction.status === filters.status
-    const matchesType = filters.type === 'All' || transaction.serviceType === filters.type
-    const matchesSearch =
-      filters.search === '' ||
-      transaction.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      transaction.username.toLowerCase().includes(filters.search.toLowerCase())
+  const filteredData = Array.isArray(customerTransactions?.data)
+    ? customerTransactions?.data.filter((transaction) => {
+      const matchesStatus =
+        filters.status === 'All' || transaction.status === filters.status;
 
-    return matchesStatus && matchesType && matchesSearch
-  })
+      const matchesType =
+        filters.type === 'All' || transaction.department?.title === filters.type;
+
+      const matchesSearch =
+        filters.search === '' ||
+        transaction.category?.title
+          ?.toLowerCase()
+          .includes(filters.search.toLowerCase());
+
+      return matchesStatus && matchesType && matchesSearch;
+    })
+    : [];
 
   const handleTabChange = (tab: 'details' | 'transactions') => {
     setActiveTab(tab)

@@ -45,7 +45,7 @@ interface AgentEditProfileModalProps {
     name: string
     status: string
     description: string
-    profilePhoto?: string
+    icon?: string
   }
 }
 
@@ -58,7 +58,7 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
     name: '',
     status: '',
     description: '',
-    profilePhoto: '',
+    icon: '',
   },
 }) => {
   const [formData, setFormData] = useState(initialData)
@@ -84,7 +84,7 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
         if (target && target.result) {
           setFormData((prev) => ({
             ...prev,
-            profilePhoto: target.result as string,
+            icon: target.result as string,
           }))
         }
       }
@@ -117,19 +117,19 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
         <div className="flex flex-col items-center mb-6">
           <div className="relative">
             <img
-              src={formData.profilePhoto || 'https://via.placeholder.com/80'}
+              src={formData.icon || 'https://via.placeholder.com/80'}
               alt="Profile"
               className="w-20 h-20 object-cover rounded-full border border-gray-300"
             />
             <label
-              htmlFor="profilePhoto"
+              htmlFor="icon"
               className="mt-2 block text-sm font-medium text-[#147341] cursor-pointer border text-center rounded-lg py-1 border-green-700"
             >
               Change
             </label>
             <input
               type="file"
-              id="profilePhoto"
+              id="icon"
               accept="image/*"
               onChange={handlePhotoChange}
               className="hidden"

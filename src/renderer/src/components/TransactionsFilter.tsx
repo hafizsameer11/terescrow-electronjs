@@ -15,7 +15,7 @@ interface TransactionsFilterProps {
 }
 
 const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChange, title, subTitle }) => {
-  const statusOptions = ['All', 'Successful', 'Pending', 'Declined'];
+  const statusOptions = ['All', 'successful', 'pending', 'declined'];
   const typeOption = ['All', 'Buy', 'Sell'];
   const category = ['All', 'Crypto', 'Gift Card']
   return (

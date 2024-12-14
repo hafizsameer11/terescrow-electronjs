@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import NavItem from './NavItem'; // Import the NavItem component
+import NavItem from './NavItem'; 
 import {
   FaUser,
   FaComments,
@@ -11,6 +11,7 @@ import {
   FaUsers,
   FaBell,
   FaCog,
+  FaUserTag,
 } from 'react-icons/fa';
 import { RiTeamFill } from "react-icons/ri";
 import { Images } from '@renderer/constant/Image';
@@ -27,6 +28,7 @@ export const Sidebar = () => {
     { label: 'Rates', icon: <FaPercent />, href: '/rates', id: 'rates' },
     { label: 'Log', icon: <FaBook />, href: '/log', id: 'log' },
     { label: 'Department', icon: <FaUserTie />, href: '/departments', id: 'department' },
+    { label: 'Services', icon: <FaUserTag />, href: '/services', id: 'services' },
     { label: 'Teams', icon: <FaUsers />, href: '/teams', id: 'teams' },
     { label: 'Users', icon: <FaUser />, href: '/usersall', id: 'users' },
   ];

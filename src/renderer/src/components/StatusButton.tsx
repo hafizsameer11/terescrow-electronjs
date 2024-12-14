@@ -8,7 +8,7 @@ interface StatusButtonProps {
 
 const StatusButton: React.FC<StatusButtonProps> = ({ title, status }) => {
   return (
-    <div className={`py-1 px-2 w-[80%] text-sm font-medium flex rounded-lg gap-3 ${status === "Active"
+    <div className={`py-1 px-2 w-[80%] text-sm font-medium flex rounded-lg gap-3 ${status === "active"
       ? "bg-[#1473414D] text-[#147341] border border-[#147341]"
       : "bg-red-100 text-red-600"
       }`}>
