@@ -1,6 +1,7 @@
 import { token } from "@renderer/api/config";
 import { getRate } from "@renderer/api/queries/adminqueries";
 import { Rate } from "@renderer/api/queries/datainterfaces";
+import { formatDateTime } from "@renderer/utils/customfunctions";
 import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 
@@ -17,19 +18,6 @@ const RatesHistory: React.FC = () => {
   });
 
   // Extract date and time from createdAt
-  const formatDateTime = (createdAt: string) => {
-    const dateObj = new Date(createdAt);
-    const date = dateObj.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-    const time = dateObj.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-    return { date, time };
-  };
 
   const handleFilterData = (): Rate[] => {
     let filteredData = ratesData?.data || [];

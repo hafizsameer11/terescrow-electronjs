@@ -4,9 +4,11 @@ import { apiCall } from '../customApiCall'
 import {
   AgentByDepartmentResponse,
   AllCustomerRespone,
+  CategroiesResponse,
   CustomerTransactionResponse,
   DepartmentResponse,
-  RateResponse
+  RateResponse,
+  TeamResponse
 } from './datainterfaces'
 // import * from './index'
 export const gettAllCustomerss = async ({
@@ -66,4 +68,10 @@ export const getAgentByDepartment = async ({
 }
 export const getRate = async ({ token }: { token: string }): Promise<RateResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetRate}`, 'GET', undefined, token)
+}
+export const getTeam = async ({ token }: { token: string }): Promise<TeamResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetTeam}`, 'GET', undefined, token)
+}
+export const getCategories = async ({ token }: { token: string }): Promise<CategroiesResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetCategories}`, 'GET', undefined, token)
 }

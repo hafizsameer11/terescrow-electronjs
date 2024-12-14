@@ -1,24 +1,23 @@
+import { Agent } from '@renderer/api/queries/datainterfaces'
+import { formatDateTime } from '@renderer/utils/customfunctions'
+// import { Agent } from 'http'
 import React, { useState } from 'react'
 
 // Define the interface for the team member data
-interface TeamMember {
-  id: number
-  name: string
-  username: string
-  dateAdded: string
-  role: string
-}
+
 
 // Define props interface
 interface TeamsTableProps {
-  data: TeamMember[]
+  data: Agent[]
+  // data: AgentByDepartmentResponse[]
 }
 
 const TeamsTable: React.FC<TeamsTableProps> = ({ data }) => {
   // Pagination states
+  if(!data) return null
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
-  const totalPages = Math.ceil(data.length / itemsPerPage)
+  const totalPages = Math.ceil(data?.length / itemsPerPage)
 
   // Get paginated data
   const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
@@ -43,29 +42,32 @@ const TeamsTable: React.FC<TeamsTableProps> = ({ data }) => {
           </tr>
         </thead>
         <tbody>
-          {paginatedData.map((member) => (
+        {paginatedData?.map((member) =>
+          {
+            const { date, time } = formatDateTime(member.user.createdAt || "");
+          return(
             <tr key={member.id} className="border-t hover:bg-gray-50">
               <td className="py-4 ps-3">
                 <div className="text-center bg-gray-200 rounded-full py-4 text-xl">
-                  {member.name.split('')[0]} {/* Extracts the first word */}
+                  {member.user.firstname?.split('')[0]} {/* Extracts the first word */}
                 </div>
               </td>
               <td className="py-4 px-4">
                 <div>
-                  <div className="font-semibold">{member.name}</div>
-                  <div className="text-sm text-gray-500">({member.username})</div>
+                  <div className="font-semibold">{member.user.firstname} {member.user.lastname}</div>
+                  <div className="text-sm text-gray-500">({member.user.username})</div>
                 </div>
               </td>
-              <td className="py-4 px-4">{member.dateAdded}</td>
-              <td className="py-4 px-4">{member.role}</td>
+              <td className="py-4 px-4">{date}</td>
+              <td className="py-4 px-4">{member.user.role}</td>
               <td className="py-4 px-4 text-right">
                 {/* Placeholder for action buttons */}
                 <div className="flex justify-end space-x-2">
-                  {/* Action buttons will be added here */}
                 </div>
               </td>
             </tr>
-          ))}
+          )}
+          )}
         </tbody>
       </table>
 
