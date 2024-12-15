@@ -1,20 +1,21 @@
-import { Images } from '@renderer/constant/Image'
 import { useState } from 'react'
 
 const NewBannerModal = ({ modalVisible, setModalVisible, onSend }) => {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
 
   const handleImageSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
-      setSelectedImage(URL.createObjectURL(file))
+      setSelectedImageFile(file) // Store the file for upload
+      setPreviewImage(URL.createObjectURL(file)) // Preview the image
     }
   }
 
-  // Handle modal close
   const closeModal = () => {
     setModalVisible(false)
-    setSelectedImage(null)
+    setSelectedImageFile(null)
+    setPreviewImage(null)
   }
 
   if (!modalVisible) return null
@@ -25,7 +26,7 @@ const NewBannerModal = ({ modalVisible, setModalVisible, onSend }) => {
       onClick={closeModal}
     >
       <div
-        className="relative w-full max-w-md p-6 rounded-lg bg-white shadow-lg transition-all"
+        className="relative w-full max-w-md p-6 rounded-lg bg-white shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center">
@@ -38,32 +39,21 @@ const NewBannerModal = ({ modalVisible, setModalVisible, onSend }) => {
         <div className="mt-5 flex w-full justify-center">
           <label className="cursor-pointer w-full">
             <div className="h-20 border flex items-center justify-center w-full rounded-md">
-              {selectedImage ? (
-                <img
-                  src={selectedImage}
-                  alt="Selected"
-                  className="w-full h-full object-cover rounded-full"
-                />
+              {previewImage ? (
+                <img src={previewImage} alt="Preview" className="w-full h-full object-cover rounded-full" />
               ) : (
-                <span className="text-gray-500 w-full text-center">
-                    <img src={Images.galley} className='m-auto w-6 h-6' alt="" />
-                </span>
+                <span className="text-gray-500 text-center">Select an image</span>
               )}
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelection}
-              className="hidden"
-            />
+            <input type="file" accept="image/*" onChange={handleImageSelection} className="hidden" />
           </label>
         </div>
 
         <div className="mt-6">
           <button
-            onClick={() => onSend(selectedImage)}
-            className="w-full p-3 text-center text-white bg-green-700 rounded-lg hover:bg-green-800"
-            disabled={!selectedImage}
+            onClick={() => onSend(selectedImageFile)}
+            className="w-full p-3 text-white bg-green-700 rounded-lg hover:bg-green-800"
+            disabled={!selectedImageFile}
           >
             Send
           </button>

@@ -1,90 +1,55 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import AgentCard from "@renderer/components/AgentCard";
 import { Images } from "@renderer/constant/Image";
 import AgentEditProfileModal from "@renderer/components/modal/AgentEditProfileModal";
 import AddAgentProfileModal from "@renderer/components/modal/AddAgentProfileModal";
-
-interface Agent {
-  id: number;
-  name: string;
-  username: string;
-  avatar: string;
-  status: "Online" | "Offline";
-}
-
+import { useLocation, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { getAgentByDepartment, getAllAgents, getCustomerDetails, getDepartments } from "@renderer/api/queries/adminqueries";
+import { token } from "@renderer/api/config";
+import { Agent, Department } from "@renderer/api/queries/datainterfaces";
 const AgentsPage: React.FC = () => {
+  const location = useLocation();
+
+  // Extract the department ID from the query string
+  const queryParams = new URLSearchParams(location.search);
+  const departmentId = queryParams.get("id");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState(""); // State for search query
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
-  const agents: Agent[] = [
-    {
-      id: 1,
-      name: "Qamardeen Malik",
-      username: "Alucard",
-      avatar: Images.agent1,
-      status: "Online",
-    },
-    {
-      id: 2,
-      name: "John Doe",
-      username: "jdoe",
-      avatar: "https://randomuser.me/api/portraits/men/2.jpg",
-      status: "Offline",
-    },
-    {
-      id: 3,
-      name: "Jane Smith",
-      username: "jsmith",
-      avatar: "https://randomuser.me/api/portraits/women/3.jpg",
-      status: "Online",
-    },
-    {
-      id: 4,
-      name: "Alice Johnson",
-      username: "ajohnson",
-      avatar: "https://randomuser.me/api/portraits/women/4.jpg",
-      status: "Online",
-    },
-    {
-      id: 5,
-      name: "Bob Brown",
-      username: "bbrown",
-      avatar: "https://randomuser.me/api/portraits/men/5.jpg",
-      status: "Offline",
-    },
-    {
-      id: 6,
-      name: "Mary Lee",
-      username: "mlee",
-      avatar: "https://randomuser.me/api/portraits/women/6.jpg",
-      status: "Online",
-    },
-    {
-      id: 7,
-      name: "Chris Green",
-      username: "cgreen",
-      avatar: "https://randomuser.me/api/portraits/men/7.jpg",
-      status: "Online",
-    },
-  ];
+  const [selectedDepartment, setSelectedDepartment] = useState<Department[] | null>([]);
 
-  // Filtered agents based on search query
-  const filteredAgents = agents.filter(
+  const { data: departmentsData, isLoading: isDepartmetnLoadin, isError: isDepartmentError, error: departmenterror } = useQuery({
+    queryKey: ['departmentsData'],
+    queryFn: () => getDepartments({ token }),
+    enabled: !!token,
+  });
+
+  // Effect to Set Filtered Departments
+  useEffect(() => {
+    if (departmentsData) {
+      setSelectedDepartment(departmentsData.data)
+    }
+  }, [departmentsData]);
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: departmentId ? ['agentsData', departmentId] : ['allAgentsData'],
+    queryFn: () =>
+      departmentId
+        ? getAgentByDepartment({ token, id: departmentId })
+        : getAllAgents({ token }),
+  });
+
+
+  const filteredAgents = data?.data.filter(
     (agent) =>
-      agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      agent.username.toLowerCase().includes(searchQuery.toLowerCase())
+      agent.user.firstname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      agent.user.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const agentData = {
-    fullName: selectedAgent?.name || "",
-    username: selectedAgent?.username || "",
-    role: "Agent",
-    departments: ["Buy Crypto", "Sell Crypto"],
-    password: "password123",
-    profilePhoto: selectedAgent?.avatar || "",
-  };
+
 
   return (
     <div className="p-6 w-full">
@@ -110,26 +75,27 @@ const AgentsPage: React.FC = () => {
 
       {/* Agents Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredAgents.map((agent) => (
+        {filteredAgents?.map((agent) => (
           <AgentCard
             key={agent.id}
             agent={agent}
-            onView={() => alert(`Viewing details of ${agent.name}`)}
+            onView={() => alert(`Viewing details of ${agent.user.username}`)}
             onEdit={() => {
               setSelectedAgent(agent);
               setIsEditModalOpen(true);
             }}
-            onDelete={() => alert(`Deleting ${agent.name}`)}
+            onDelete={() => alert(`Deleting ${agent.user.username}`)}
           />
         ))}
       </div>
 
-      {/* Edit Profile Modal */}
+      Edit Profile Modal
       {isEditModalOpen && selectedAgent && (
         <AgentEditProfileModal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          agentData={agentData}
+          agentData={selectedAgent}
+          departmentData={selectedDepartment}
           onUpdate={(updatedData) =>
             console.log("Updated Data:", updatedData)
           }
@@ -137,14 +103,14 @@ const AgentsPage: React.FC = () => {
       )}
 
       {/* Add Profile Modal */}
-      {isAddModalOpen && (
+      {/* {isAddModalOpen && (
         <AddAgentProfileModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
           onUpdate={(updatedData) => console.log("Updated Data:", updatedData)}
           agentData={agentData}
         />
-      )}
+      )} */}
     </div>
   );
 };

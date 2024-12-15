@@ -2,18 +2,20 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NewNotificationModal from "./modal/NewNotificationModal";
 import NotificationHistoryModal from "./modal/NotificationHistoryModal";
-// import NotificationHistoryModal from "./NotificationHistoryModal";
-// import NewNotificationModal from "./NewNotificationModal";
 
 interface Customer {
   id: number;
-  name: string;
+  firstname: string;
+  lastname: string;
   username: string;
   email: string;
-  mobileNumber: string;
+  phoneNumber: string;
   gender: string;
   country: string;
-  kycStatus: string;
+  role: string;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface CustomerTableProps {
@@ -68,7 +70,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
   }) => {
     console.log("New Notification Data:", formData);
     setIsNewNotificationModalOpen(false);
-    // Optionally, add the new notification to the list of notifications
     setNotifications((prev) => [
       ...prev,
       {
@@ -88,7 +89,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
           <tr>
             <th className="py-3 px-4">Name, Username</th>
             <th className="py-3 px-4">Email</th>
-            <th className="py-3 px-4">Mobile</th>
+            <th className="py-3 px-4">Phone Number</th>
             <th className="py-3 px-4">Country</th>
             <th className="py-3 px-4">Gender</th>
             <th className="py-3 px-4">Status</th>
@@ -103,7 +104,9 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
             >
               <td className="py-3 px-4">
                 <div>
-                  <span className="font-semibold">{customer.name}</span>
+                  <span className="font-semibold">
+                    {customer.firstname} {customer.lastname}
+                  </span>
                   <span className="text-sm text-gray-500">
                     {" "}
                     ({customer.username})
@@ -111,20 +114,18 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
                 </div>
               </td>
               <td className="py-3 px-4">{customer.email}</td>
-              <td className="py-3 px-4">{customer.mobileNumber}</td>
+              <td className="py-3 px-4">{customer.phoneNumber}</td>
               <td className="py-3 px-4">{customer.country}</td>
               <td className="py-3 px-4">{customer.gender}</td>
               <td className="py-3 px-4">
                 <span
                   className={`px-2 py-1 text-xs rounded-lg ${
-                    customer.kycStatus === "Successful"
+                    customer.isVerified
                       ? "bg-green-100 text-green-700"
-                      : customer.kycStatus === "Pending"
-                      ? "bg-yellow-100 text-yellow-700"
                       : "bg-red-100 text-red-700"
                   }`}
                 >
-                  {customer.kycStatus}
+                  {customer.isVerified ? "Verified" : "Not Verified"}
                 </span>
               </td>
               <td className="py-3 px-4 text-right">
@@ -196,7 +197,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
         </button>
       </div>
 
-      {/* Notification History Modal */}
+      {/* Modals */}
       {isNotificationModalOpen && (
         <NotificationHistoryModal
           isOpen={isNotificationModalOpen}
@@ -205,10 +206,9 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
           onNewNotification={handleNewNotificationClick}
         />
       )}
-
-      {/* New Notification Modal */}
       {isNewNotificationModalOpen && (
         <NewNotificationModal
+        actionType="add"
           isOpen={isNewNotificationModalOpen}
           onClose={() => setIsNewNotificationModalOpen(false)}
           onSubmit={handleNewNotificationSubmit}

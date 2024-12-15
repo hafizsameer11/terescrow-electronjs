@@ -2,19 +2,9 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import NewNotificationModal from './modal/NewNotificationModal'
 import NotificationHistoryModal from './modal/NotificationHistoryModal'
+import { Customer } from '@renderer/api/queries/datainterfaces'
 // import NotificationHistoryModal from "./NotificationHistoryModal";
 // import NewNotificationModal from "./NewNotificationModal";
-
-interface Customer {
-  id: number
-  name: string
-  username: string
-  email: string
-  mobileNumber: string
-  gender: string
-  category: string
-  kycStatus: string
-}
 
 interface CustomerTableProps {
   data: Customer[]
@@ -38,8 +28,8 @@ const UserTable: React.FC<CustomerTableProps> = ({ data }) => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
-  const totalPages = Math.ceil(data.length / itemsPerPage)
-  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+  const totalPages =10
+  const paginatedData = data
 
   const toggleMenu = (id: number) => {
     setActiveMenu(activeMenu === id ? null : id)
@@ -85,36 +75,36 @@ const UserTable: React.FC<CustomerTableProps> = ({ data }) => {
             <th className="py-5 px-4">Name, Username</th>
             <th className="py-5 px-4">Email</th>
             <th className="py-5 px-4">Mobile</th>
-            <th className="py-5 px-4">Category</th>
+            <th className="py-5 px-4">Role</th>
             <th className="py-5 px-4">Gender</th>
             <th className="py-5">Status</th>
             <th className="py-5 px-1"></th>
           </tr>
         </thead>
         <tbody>
-          {paginatedData.map((customer) => (
+          {data?.map((customer) => (
             <tr key={customer.id} className="border-t hover:bg-gray-50 relative">
               <td className="py-5 ps-3 pe-2">
                 <div className='bg-gray-200 py-2 px-2 text-4xl rounded-full justify-center flex items-center'>
-                  {customer.name.split('')[0]} {/* Extracts the first word */}
+                  {customer.firstname?.split('')[0]} {/* Extracts the first word */}
                 </div>
               </td>
               <td className="py-5 px-4">
                 <div>
-                  <div className="font-semibold mb-2">{customer.name}</div>
+                  <div className="font-semibold mb-2">{customer.firstname} {customer.lastname}</div>
                   <div className="text-sm text-gray-500"> ({customer.username})</div>
                 </div>
               </td>
               <td className="py-5 px-4">{customer.email}</td>
-              <td className="py-5 px-4">{customer.mobileNumber}</td>
-              <td className="py-5 px-4">{customer.category}</td>
+              <td className="py-5 px-4">{customer.phoneNumber}</td>
+              <td className="py-5 px-4">{customer.role}</td>
               <td className="py-5 px-4">{customer.gender}</td>
               <td className="py-5">
                 <span
                   className={`px-3 py-1 text-xs rounded-full ${
-                    customer.kycStatus === 'successful'
+                    customer.isVerified ===true
                       ? 'bg-green-900'
-                      : customer.kycStatus === 'pending'
+                      : customer.isVerified === false
                         ? 'bg-yellow-900'
                         : 'bg-red-900 '
                   }`}
@@ -159,7 +149,7 @@ const UserTable: React.FC<CustomerTableProps> = ({ data }) => {
       </table>
 
       {/* Pagination Controls */}
-      <div className="flex justify-between items-center p-4">
+      {/* <div className="flex justify-between items-center p-4">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -185,7 +175,7 @@ const UserTable: React.FC<CustomerTableProps> = ({ data }) => {
         >
           Next
         </button>
-      </div>
+      </div> */}
 
       {/* Notification History Modal */}
       {isNotificationModalOpen && (
@@ -198,13 +188,13 @@ const UserTable: React.FC<CustomerTableProps> = ({ data }) => {
       )}
 
       {/* New Notification Modal */}
-      {isNewNotificationModalOpen && (
+      {/* {isNewNotificationModalOpen && (
         <NewNotificationModal
           isOpen={isNewNotificationModalOpen}
           onClose={() => setIsNewNotificationModalOpen(false)}
           onSubmit={handleNewNotificationSubmit}
         />
-      )}
+      )} */}
     </div>
   )
 }

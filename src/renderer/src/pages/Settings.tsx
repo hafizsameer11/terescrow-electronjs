@@ -135,11 +135,19 @@ const Settings = () => {
             </div>
           </div>
         </div>
-        <div className="flex justify-end items-center flex-1">
-          <button className="px-4 py-2 rounded-xl font-normal bg-red-600 text-white w-1/5">
-            Logout
-          </button>
-        </div>
+        {activeTab === 'profile' ? (
+          <div className="flex justify-end items-center flex-1">
+            <button className="px-4 py-2 rounded-xl font-normal bg-red-600 text-white w-1/5">
+              Logout
+            </button>
+          </div>
+        ) : (
+          <div className="flex justify-end items-end flex-1">
+            <button className="px-4 py-2 rounded-xl font-normal bg-green-800 text-white w-1/5">
+              Create Role
+            </button>
+          </div>
+        )}
       </div>
       {activeTab === 'profile' ? (
         <UserDetail />

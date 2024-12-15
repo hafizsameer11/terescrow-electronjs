@@ -24,6 +24,7 @@ import UsersPage from './pages/UsersPage'
 import Teams from './pages/Teams'
 import Settings from './pages/Settings'
 import Transaction from './pages/Transaction'
+import Services from './pages/Services'
 
 function App(): JSX.Element {
   const location = useLocation()
@@ -34,9 +35,9 @@ function App(): JSX.Element {
       <RootLayout>
         {!isLogin && location.pathname !== '/' && <Sidebar />}
 
-        <Content className="">
+        <Content className="  bg-[#f6f7ff]">
           {!isLogin && location.pathname !== '/' && <TopBar />}
-          <MainContent className="bg-[#f6f7ff]">
+          <MainContent className="bg-[#f6f7ff] ">
             <Routes>
               <Route path="/" element={<LoginPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -54,6 +55,7 @@ function App(): JSX.Element {
               <Route path="/transaction-details/:customerId" element={<TransactionDetails />} />
               <Route path="/details-department/:id" element={<DetailsDepartment />} />
               <Route path="/usersall" element={<UsersPage />} />
+              <Route path="/services" element={<Services />} />
               <Route path="/teams" element={<Teams />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/transactions" element={<Transaction />} />

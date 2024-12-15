@@ -2,7 +2,9 @@ import { useState } from 'react'
 import TransactionsTable from '@renderer/components/NotificationTable'
 import NewNotificationModal from '@renderer/components/modal/NewNotificationModal'
 import NewBannerModal from '@renderer/components/modal/NewBannerModal' // Import NewBannerModal
-
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { createBanner } from '@renderer/api/queries/adminqueries'
+import { token } from '@renderer/api/config'
 interface Notification {
   type: 'Team' | 'Customer'
   message: string
@@ -32,21 +34,34 @@ const Notifications = () => {
   const [activeOption, setActiveOption] = useState<'Notifications' | 'In-App Notification'>(
     'Notifications'
   )
-
+  const queryClient = useQueryClient()
+  const { mutate: uploadBanner } = useMutation({
+    mutationFn: async (file: File | null) => {
+      if (!file) throw new Error('No file selected')
+      const formData = new FormData()
+      formData.append('image', file)
+      return createBanner({ token, data: formData })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['banners'])
+      alert('Banner uploaded successfully!')
+      setIsBannerModalOpen(false)
+    },
+    onError: (error) => {
+      console.error('Failed to upload banner:', error)
+    }
+  })
+  const handleSendBanner = (file: File | null) => {
+    uploadBanner(file)
+  }
   const handleOpenNotificationModal = () => {
     setIsNotificationModalOpen(true)
   }
   const handleCloseNotificationModal = () => {
     setIsNotificationModalOpen(false)
   }
-
-  // Open the NewBannerModal when the button is clicked
   const handleOpenBannerModal = () => {
     setIsBannerModalOpen(true)
-  }
-
-  const handleCloseBannerModal = () => {
-    setIsBannerModalOpen(false)
   }
 
   const titleChange = (newTitle: string) => {
@@ -158,7 +173,7 @@ const Notifications = () => {
       <NewBannerModal
         modalVisible={isBannerModalOpen}
         setModalVisible={setIsBannerModalOpen}
-        onSend={handleCloseBannerModal}
+        onSend={handleSendBanner}
       />
     </div>
   )

@@ -1,10 +1,10 @@
 import React from 'react'
 
 interface TeamFilterHeaderProps {
-  activeTab: 'Active' | 'Deleted' | undefined
+  activeTab: 'online' | 'offline' | undefined
   selectedRole: 'Manager' | 'Agent' | 'Roles'
   searchValue: string
-  onTabChange: (tab: 'Active' | 'Deleted') => void
+  onTabChange: (tab: 'online' | 'offline') => void
   onRoleChange: (role: 'Manager' | 'Agent' | 'Roles') => void
   onSearchChange: (value: string) => void
 }
@@ -26,19 +26,19 @@ const TeamFilterHeader: React.FC<TeamFilterHeaderProps> = ({
           <div className="flex border rounded-lg overflow-hidden">
             <button
               className={`px-4 py-2 text-sm ${
-                activeTab === 'Active' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
+                activeTab === 'online' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
               } focus:outline-none`}
-              onClick={() => onTabChange('Active')}
+              onClick={() => onTabChange('online')}
             >
-              Active
+              Online
             </button>
             <button
               className={`px-4 py-2 text-sm ${
-                activeTab === 'Deleted' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
+                activeTab === 'offline' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
               } focus:outline-none`}
-              onClick={() => onTabChange('Deleted')}
+              onClick={() => onTabChange('offline')}
             >
-              Deleted
+              Offline
             </button>
           </div>
         )}

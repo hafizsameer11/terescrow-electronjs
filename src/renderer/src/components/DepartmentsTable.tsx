@@ -1,67 +1,102 @@
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom' // Import useNavigate
-import { FaUserAlt } from 'react-icons/fa'
-import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md'
-import StatusButton from './StatusButton'
-import { Icons } from '@renderer/constant/Icons'
-import Department from './modal/AddDepartment'
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { FaUserAlt } from 'react-icons/fa';
+import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md';
+import StatusButton from './StatusButton';
+import { Icons } from '@renderer/constant/Icons';
+import DepartmentModal from './modal/AddDepartment';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { token } from '@renderer/api/config';
+import { deleteDepartment, editDepartment, getDepartments } from '@renderer/api/queries/adminqueries';
+import { Department } from '@renderer/api/queries/datainterfaces';
 
-interface Department {
-  id: number
-  name: string
-  status: string
-  noOfAgents: number
-  description: string
-}
+// Define the Department interface
 
-const departmentsData: Department[] = [
-  {
-    id: 1,
-    name: 'Buy Crypto',
-    status: 'Active',
-    noOfAgents: 3,
-    description: 'Buying of cryptocurrency'
-  },
-  {
-    id: 2,
-    name: 'Sell Crypto',
-    status: 'Active',
-    noOfAgents: 3,
-    description: 'Selling of cryptocurrency'
-  },
-  {
-    id: 3,
-    name: 'Buy Gift Card',
-    status: 'Active',
-    noOfAgents: 3,
-    description: 'Buying of giftcard'
-  },
-  {
-    id: 4,
-    name: 'Sell Gift Card',
-    status: 'Active',
-    noOfAgents: 3,
-    description: 'Selling of giftcard'
-  }
-]
 
 const DepartmentsTable: React.FC = () => {
-  const navigate = useNavigate() // Initialize useNavigate
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filteredDepartments, setFilteredDepartments] = useState(departmentsData)
-  const [editMoalOpen, setEditMoalOpen] = useState(false)
+  const navigate = useNavigate();
 
-  const handleOpenModal = () => setEditMoalOpen(true)
+  // State Management
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);
+  const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
+  const [selectedDepartment, setSelectedDepartment] = useState<Department | null>(null);
 
+  const handleEditClick = (department: Department) => {
+    setSelectedDepartment(department);
+    setEditModalOpen(true);
+  };
+
+  // API Fetching with React Query
+  const { data: departmentsData, isLoading, isError, error } = useQuery({
+    queryKey: ['departmentsData'],
+    queryFn: () => getDepartments({ token }),
+    enabled: !!token,
+  });
+
+  // Effect to Set Filtered Departments
+  useEffect(() => {
+    if (departmentsData) {
+      setFilteredDepartments(departmentsData.data || []);
+    }
+  }, [departmentsData]);
+
+  // Search Filter Handler
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value.toLowerCase()
-    setSearchQuery(query)
-    const filtered = departmentsData.filter((department) =>
-      department.name.toLowerCase().includes(query)
-    )
-    setFilteredDepartments(filtered)
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+
+    const filtered = departmentsData?.data.filter((department: Department) =>
+      department.title.toLowerCase().includes(query)
+    );
+
+    setFilteredDepartments(filtered || []);
+  };
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: editDepartment,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['departmentsData']); // Refresh departments table
+      alert('Department added successfully!');
+    },
+    onError: () => {
+      alert('Failed to create department. Please try again.');
+    },
+  });
+
+
+  const deleteMutation = useMutation({
+    mutationFn: ({ id }: { id: string }) => deleteDepartment({ token, id }),
+    onSuccess: () => {
+      alert('Department deleted successfully!')
+      queryClient.invalidateQueries(['departmentsData'])
+    },
+    onError: (error) => {
+      console.error('Failed to delete Department:', error)
+      alert('Error deleting Department.')
+    },
+  })
+  const handledeletDepartment = (id: string) => {
+    if (confirm('Are you sure you want to delete this category?')) {
+      deleteMutation.mutate({ id })
+    }
   }
 
+  // Handle form submission
+  const handleUpdate = (data: Record<string, any>) => {
+    mutation.mutate({
+      token,
+      id:data.id,
+      data: {
+        title: data.name,
+        description: data.description,
+        status: data.status,
+        Type: data.Type || 'buy',
+        niche: data.niche || 'crypto',
+        icon: data.icon || '',
+      },
+    });
+  };
   return (
     <div className="w-full">
       {/* Search Input */}
@@ -81,6 +116,7 @@ const DepartmentsTable: React.FC = () => {
             <tr>
               <th className="py-3 px-4">Name</th>
               <th className="py-3 px-4">Status</th>
+              <th className="py-3 px-4">Niche</th>
               <th className="py-3 px-4">No of Agents</th>
               <th className="py-3 px-4">Description</th>
               <th className="py-3 px-4 text-center">Action</th>
@@ -88,67 +124,77 @@ const DepartmentsTable: React.FC = () => {
           </thead>
           <tbody>
             {filteredDepartments.map((department) => (
-              <tr key={department.id} className="border-t hover:bg-gray-50">
-                <td className="pt-2 pb-0 px-4 flex items-center gap-3">
-                  <div className="bg-gray-300 rounded-full p-2">
-                    {/* Use your Icons.crypto */}
-                    <img src={Icons.crypto} alt="" />
-                  </div>
-                  <span>{department.name}</span>
-                </td>
-                <td>
-                  <StatusButton title="Active" status={department.status} />
-                </td>
-                <td className="py-3 px-4">{department.noOfAgents}</td>
-                <td className="py-3 px-4">{department.description}</td>
-                <td className="py-3 px-4 text-center flex justify-center gap-2">
-                  <button
-                    onClick={() => navigate(`/department-agent?id=${department.id}`)}
-                    className="bg-green-100 text-green-600 px-3 py-2 rounded-lg text-sm flex items-center gap-2"
-                    title="Assign Agents"
-                  >
-                    <FaUserAlt /> Assign Agents
-                  </button>
-                  <button
-                    onClick={() => navigate(`/details-department/${department.id}`)}
-                    className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200"
-                    title="View Details"
-                  >
-                    <MdVisibility />
-                  </button>
-                  <button
-                    onClick={handleOpenModal}
-                    className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200"
-                    title="Edit Department"
-                  >
-                    <MdEdit />
-                  </button>
-                  <button
-                    className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200"
-                    title="Delete Department"
-                  >
-                    <MdDelete />
-                  </button>
-                </td>
-              </tr>
+              <>
+                <tr key={department.id} className="border-t hover:bg-gray-50">
+                  <td className="pt-2 pb-0 px-4 flex items-center gap-3">
+                    <div className="bg-gray-300 rounded-full p-2">
+                      <img src={Icons.crypto} alt="Icon" />
+                    </div>
+                    <span>{department.title}</span>
+                  </td>
+                  <td>
+                    <StatusButton title="Active" status={department.status || ''} />
+                  </td>
+                  <td className="py-3 px-4">{department.niche?.toUpperCase() }</td>
+                  <td className="py-3 px-4">{department.noOfAgents || 0}</td>
+                  <td className="py-3 px-4">{department.description || 'N/A'}</td>
+                  <td className="py-3 px-4 text-center flex justify-center gap-2">
+                    <button
+                      onClick={() => navigate(`/department-agent?id=${department.id}`)}
+                      className="bg-green-100 text-green-600 px-3 py-2 rounded-lg text-sm flex items-center gap-2"
+                      title="Assign Agents"
+                    >
+                      <FaUserAlt /> Assign Agents
+                    </button>
+                    <button
+                      onClick={() => navigate(`/details-department/${department.id}`)}
+                      className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200"
+                      title="View Details"
+                    >
+                      <MdVisibility />
+                    </button>
+                    <button
+                      onClick={() => handleEditClick(department)}
+                      className="bg-gray-100 text-gray-600 p-2 rounded-lg hover:bg-gray-200"
+                      title="Edit Department"
+                    >
+                      <MdEdit />
+                    </button>
+                    <button
+                    onClick={()=>handledeletDepartment(department.id)}
+                      className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200"
+                      title="Delete Department"
+                    >
+                      <MdDelete />
+                    </button>
+                  </td>
+                </tr>
+                {selectedDepartment && (
+                  <DepartmentModal
+                    isOpen={editModalOpen}
+                    onClose={() => setEditModalOpen(false)}
+                    onUpdate={handleUpdate}
+                    actionType="edit"
+                    initialData={{
+                      id: selectedDepartment.id,
+                      name: selectedDepartment.title,
+                      status: selectedDepartment.status || 'active',
+                      description: selectedDepartment.description || '',
+                      icon: selectedDepartment.icon,
+                      niche: selectedDepartment.niche,
+                      Type: selectedDepartment.Type
+                    }}
+                  />
+                )}
+              </>
             ))}
           </tbody>
         </table>
       </div>
-      <Department
-        isOpen={editMoalOpen}
-        onClose={() => setEditMoalOpen(false)}
-        onUpdate={() => {}}
-        actionType="edit"
-        initialData={{
-          name: 'Crypto Department',
-          status: 'Active',
-          description: 'A sample description for this department',
-          profilePhoto: 'https://via.placeholder.com/80'
-        }}
-      />
-    </div>
-  )
-}
 
-export default DepartmentsTable
+
+    </div>
+  );
+};
+
+export default DepartmentsTable;

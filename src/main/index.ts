@@ -13,12 +13,12 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false,
-      // Relaxing security policies for development and enabling remote images
-      webSecurity: true, // Ensures CSP works while still allowing secure changes
-      contextIsolation: true, // Keeps context secure
+      sandbox: false, // Disable sandbox for advanced IPC
+      webSecurity: false, // Disable CSP for development (Secure in production)
+      contextIsolation: true, // Isolate context for security
+       // Disable remote module for extra security
     },
-  });
+  });;
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show();
@@ -30,7 +30,6 @@ function createWindow(): void {
   });
 
   // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local HTML file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {

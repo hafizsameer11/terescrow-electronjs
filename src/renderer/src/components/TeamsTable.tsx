@@ -1,104 +1,130 @@
 import React, { useState } from 'react'
+// import ChatApplication from '../ChatApplication';
+import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
+import TeamChat from './TeamChat'
+import ChatApplication from './ChatApplication'
+import { Agent } from '@renderer/api/queries/datainterfaces'
+// import TeamChat from '../TeamChat';
 
-// Define the interface for the team member data
-interface TeamMember {
+interface Transaction {
   id: number
   name: string
   username: string
-  dateAdded: string
-  role: string
+  status: string
+  serviceType?: string
+  transactionType?: string
+  date?: string
+  amount?: string
+  dateAdded?: string
+  role?: string
 }
 
-// Define props interface
-interface TeamsTableProps {
-  data: TeamMember[]
+interface TransactionsTableProps {
+data:Agent[]
+onEditHanlder?: (agentId: number) => void
+userViewState?: boolean
+onUserViewed: (selectedId: number) => void
 }
 
-const TeamsTable: React.FC<TeamsTableProps> = ({ data }) => {
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1)
-  const itemsPerPage = 5
-  const totalPages = Math.ceil(data.length / itemsPerPage)
+const TeamTable: React.FC<TransactionsTableProps> = ({
+  data,
+onEditHanlder,
+userViewState,
+onUserViewed
+}) => {
+  const [activeMenu, setActiveMenu] = useState<number | null>(null)
 
-  // Get paginated data
-  const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-
-  // Page change handler
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage)
-    }
+  const toggleMenu = (id: number) => {
+    setActiveMenu(activeMenu === id ? null : id)
   }
 
-  return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <table className="min-w-full text-left text-sm text-gray-700">
-        <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
-          <tr>
-            <th className="py-4 px-2"></th>
-            <th className="py-4 px-4">Name, Username</th>
-            <th className="py-4 px-4">Date Added</th>
-            <th className="py-4 px-4">Role</th>
-            <th className="py-4 px-4 text-right">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {paginatedData.map((member) => (
-            <tr key={member.id} className="border-t hover:bg-gray-50">
-              <td className="py-4 ps-3">
-                <div className="text-center bg-gray-200 rounded-full py-4 text-xl">
-                  {member.name.split('')[0]} {/* Extracts the first word */}
-                </div>
-              </td>
-              <td className="py-4 px-4">
-                <div>
-                  <div className="font-semibold">{member.name}</div>
-                  <div className="text-sm text-gray-500">({member.username})</div>
-                </div>
-              </td>
-              <td className="py-4 px-4">{member.dateAdded}</td>
-              <td className="py-4 px-4">{member.role}</td>
-              <td className="py-4 px-4 text-right">
-                {/* Placeholder for action buttons */}
-                <div className="flex justify-end space-x-2">
-                  {/* Action buttons will be added here */}
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isTeamChatOpen, setIsTeamChatOpen] = useState(false)
 
-      {/* Pagination Controls */}
-      <div className="flex justify-between items-center p-4 border-t">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg text-sm ${
-            currentPage === 1
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
-          }`}
-        >
-          Previous
-        </button>
-        <span className="text-sm text-gray-600">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg text-sm ${
-            currentPage === totalPages
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : 'bg-white text-gray-700 hover:bg-gray-100'
-          }`}
-        >
-          Next
-        </button>
+
+
+
+    // Render Team Members Table
+    return (
+      <div className="mt-6 bg-white rounded-lg shadow-md">
+        <table className="min-w-full text-left text-sm text-gray-700">
+          <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+            <tr>
+              <th className="py-3 px-4">Name, Username</th>
+              <th className="py-3 px-4">Date Added</th>
+              <th className="py-3 px-4">Role</th>
+              <th className="py-3 px-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.map((member) => (
+              <tr key={member.id} className="border-t hover:bg-gray-50">
+                {/* Name and Username */}
+                <td className="py-3 px-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full flex-shrink-0"></div>
+                    <div>
+                      <span className="font-semibold text-gray-800">{member.user.firstname}</span>
+                      <p className="m-0 text-sm text-gray-500">{member.user.username}</p>
+                    </div>
+                    <span
+                      className={`w-3 h-3 rounded-full mb-4 ${member.AgentStatus === 'online' ? 'bg-green-500' : 'bg-red-500'
+                        }`}
+                    ></span>
+                  </div>
+                </td>
+
+                {/* Date Added */}
+                <td className="py-3 px-4">{member.user.createdAt}</td>
+
+                {/* Role */}
+                <td className="py-3 px-4">{member.user.role}</td>
+
+                {/* Action */}
+                <td className="py-3 px-4 text-center">
+                  <div className="flex justify-center space-x-2">
+                    {/* View Button */}
+                    <button
+                      className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      onClick={() =>
+                   onUserViewed(member.id)
+                      }
+                    >
+                      <AiOutlineEye className="text-gray-700 w-5 h-5" />
+                    </button>
+
+                    {/* Edit Button */}
+                    <button
+                      className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      onClick={() => onEditHanlder && onEditHanlder(member.id)}
+                    >
+                      <AiOutlineEdit className="text-gray-700 w-5 h-5" />
+                    </button>
+
+                    {/* Delete Button */}
+                    <button
+                      className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+                      onClick={() => console.log('Delete', member.id)}
+                    >
+                      <AiOutlineDelete className="text-red-500 w-5 h-5" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {/* Chat Application */}
+        {isTeamChatOpen && (
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center z-50">
+            <div className="bg-white ms-10 w-full max-w-3xl rounded-lg shadow-lg relative">
+              <TeamChat onClose={() => setIsTeamChatOpen(false)} />
+            </div>
+          </div>
+        )}
       </div>
-    </div>
-  )
+    )
+
 }
 
-export default TeamsTable
+export default TeamTable
