@@ -28,7 +28,7 @@ import Transaction from './pages/Transaction'
 function App(): JSX.Element {
   const location = useLocation()
   const [isLogin, setIsLogin] = useState(false)
-
+  
   return (
     <>
       <RootLayout>
