@@ -11,9 +11,11 @@ const API_ENDPOINT = {
     AgentByDepartment: API_DOMAIN + '/admin/get-agent-by-department',
     GetRate: API_DOMAIN + '/admin/get-rate',
     GetTeam: API_DOMAIN + '/admin/get-team-members',
-    GetCategories: API_DOMAIN + '/admin/get-all-categories',
-    GetSubCategories: API_DOMAIN + '/admin/get-all-subcategories',
     GetAllUsers: API_DOMAIN + '/admin/get-all-users',
+    GetCategories: API_DOMAIN + '/admin/get-all-categories',
+
+
+    GetSubCategories: API_DOMAIN + '/admin/get-all-subcategories',
     GetBanner: API_DOMAIN + '/admin/get-all-banners',
     CreateBanner: API_DOMAIN + '/admin/create-banner',
     UpdateBanner: API_DOMAIN + '/admin/update-banner',
@@ -22,12 +24,14 @@ const API_ENDPOINT = {
     UpdateDepartment: API_DOMAIN + '/admin/update-department',
     DeleteDepartment: API_DOMAIN + '/admin/delete-department',
 
+    UpdateCustomer: API_DOMAIN + '/admin/update-customer',
     CreateAgent: API_DOMAIN + '/admin/create-agent',
     UpdateAgent: API_DOMAIN + '/admin/update-agent',
 
     CreateCategory: API_DOMAIN + '/admin/create-category',
     UpdateCategory: API_DOMAIN + '/admin/update-category',
     DeleteCategory: API_DOMAIN + '/admin/delete-category',
+    GetSingleCategory: API_DOMAIN + '/admin/get-single-category',
     CreateSubCategory: API_DOMAIN + '/admin/create-subcategory',
     UpdateSubCategory: API_DOMAIN + '/admin/update-subcategory'
   }

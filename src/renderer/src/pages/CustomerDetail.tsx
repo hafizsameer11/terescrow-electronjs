@@ -217,12 +217,16 @@ const CustomerDetails: React.FC = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         userData={{
-          fullName: `${customer?.firstname || ""} ${customer?.lastname || ""}`,
+          firstname: customer?.firstname || "",
+          lastname: customer?.lastname || "",
           username: customer?.username || "",
           email: customer?.email || "",
           phoneNumber: customer?.phoneNumber || "",
           gender: customer?.gender || "",
           password: customer?.password || "",
+          country: customer?.country || "",
+          profilePhoto: customer?.profilePicture || "",
+          id: customer?.id.toString() || "",
         }}
         onUpdate={handleEditProfile}
       />

@@ -28,6 +28,8 @@ export interface Department {
   noOfAgents?: number
   createdAt?: string
   updatedAt?: string
+  Type?: string
+  niche?: string
 }
 export interface CategoryDepartment {
   id: number
@@ -153,4 +155,51 @@ export interface AlluserResponse {
   status: string
   message: string
   data:Customer[]
+}
+export interface PostCustomerData{
+  id: number
+  username: string
+  email?: string
+  firstname?: string
+  lastname?: string
+  country?: string
+  phoneNumber?: string
+  profilePicture?: string | null
+  gender?: string
+  role?: string
+
+  password?: string
+}
+
+export interface UPdateCustomerResponse{
+  status: string
+  message: string
+  datta:any
+}
+
+export interface CreateCategoryResponse{
+  status: string
+  message: string
+  datta:Category
+}
+export interface CategoryDepartment {
+  department: Department;
+}
+
+// Define Single Category Interface
+export interface SingleCategory {
+  id: number;
+  title: string;
+  subTitle: string;
+  image: string;
+  createdAt: string;
+  updatedAt: string;
+  departments: CategoryDepartment[];
+}
+
+
+export interface SingleCategoryResponse {
+  status: string;
+  message: string;
+  data: SingleCategory;
 }

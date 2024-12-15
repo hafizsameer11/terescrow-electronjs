@@ -1,35 +1,49 @@
 import React, { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { updateCustomer } from "@renderer/api/queries/adminqueries"; // Adjust import path
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { token } from "@renderer/api/config";
 
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   userData: {
-    fullName: string;
+    id: string;
     username: string;
     email: string;
     phoneNumber: string;
     gender: string;
+    firstname: string;
+    lastname: string;
+    country: string;
     password: string;
     profilePhoto?: string;
   };
-  onUpdate: (updatedData: Record<string, string | undefined>) => void;
 }
 
 const EditProfileModal: React.FC<EditProfileModalProps> = ({
   isOpen,
   onClose,
   userData,
-  onUpdate,
 }) => {
   const [formData, setFormData] = useState({ ...userData });
   const [showPassword, setShowPassword] = useState(false);
 
-  // Sync formData only when modal is opened or userData changes
+  // Mutation for updating customer
+  const mutation = useMutation({
+    mutationFn: updateCustomer,
+    onSuccess: () => {
+      alert("Customer updated successfully!");
+      onClose(); // Close modal on success
+    },
+    onError: (error) => {
+      console.error("Error updating customer:", error);
+      alert("Failed to update customer.");
+    },
+  });
+
   useEffect(() => {
-    if (isOpen) {
-      setFormData(userData);
-    }
+    if (isOpen) setFormData(userData); // Sync when modal opens
   }, [isOpen, userData]);
 
   const handleChange = (
@@ -43,12 +57,11 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const reader = new FileReader();
-
       reader.onload = (event) => {
         if (event.target?.result) {
           setFormData((prev) => ({
             ...prev,
-            profilePhoto: event.target?.result as string,
+            profilePhoto: event.target.result as string,
           }));
         }
       };
@@ -57,8 +70,21 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   };
 
   const handleUpdate = () => {
-    onUpdate(formData);
-    onClose();
+    mutation.mutate({
+      token: token, // Replace with actual token logic
+      id: formData.id,
+      data: {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        phoneNumber: formData.phoneNumber,
+        gender: formData.gender,
+        firstname: formData.firstname,
+        lastname: formData.lastname,
+        country: formData.country,
+        profilePicture: formData.profilePhoto || "",
+      },
+    });
   };
 
   if (!isOpen) return null;
@@ -75,42 +101,27 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             &times;
           </button>
         </div>
-
-        <div className="flex flex-col items-center mb-6">
-          <div className="relative">
-            <img
-              src={formData.profilePhoto || "https://via.placeholder.com/80"}
-              alt="Profile"
-              className="w-20 h-20 object-cover rounded-full border border-gray-300"
-            />
-            <label
-              htmlFor="profilePhoto"
-              className="mt-5 border border-[#147341] text-[#147341] text-xs px-6 py-1 rounded-lg cursor-pointer"
-            >
-              Change
-            </label>
-            <input
-              type="file"
-              id="profilePhoto"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="hidden"
-            />
-          </div>
-        </div>
-
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
           <label className="block">
             <span className="block text-sm font-medium text-gray-700">Full Name</span>
             <input
               type="text"
-              name="fullName"
-              value={formData.fullName}
+              name="firstname"
+              value={formData.firstname}
               onChange={handleChange}
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2"
             />
           </label>
-
+          <label className="block">
+            <span className="block text-sm font-medium text-gray-700">Last Name</span>
+            <input
+              type="text"
+              name="lastname"
+              value={formData.lastname}
+              onChange={handleChange}
+              className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2"
+            />
+          </label>
           <label className="block">
             <span className="block text-sm font-medium text-gray-700">Username</span>
             <input
@@ -121,7 +132,6 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2"
             />
           </label>
-
           <label className="block">
             <span className="block text-sm font-medium text-gray-700">Email</span>
             <input
@@ -132,7 +142,6 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2"
             />
           </label>
-
           <label className="block">
             <span className="block text-sm font-medium text-gray-700">Phone Number</span>
             <input
@@ -152,8 +161,8 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               onChange={handleChange}
               className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2"
             >
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
             </select>
           </label>
 

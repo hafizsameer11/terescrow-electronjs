@@ -1,59 +1,86 @@
-import React, { useState } from 'react'
-import Select from 'react-select'
+import React, { useState } from 'react';
+import Select from 'react-select';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { createCategory, getDepartments } from '@renderer/api/queries/adminqueries';
+import { token } from '@renderer/api/config';
 
-interface EditServicesModalProps {
-  isOpen: boolean
-  onClose: () => void
+interface AddNewServiceProps {
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const departmentOptions = [
-  { value: 'Marketing', label: 'Marketing' },
-  { value: 'Sales', label: 'Sales' },
-  { value: 'Human Resources', label: 'Human Resources' },
-  { value: 'IT Support', label: 'IT Support' },
-  { value: 'Finance', label: 'Finance' }
-]
+const AddNewService: React.FC<AddNewServiceProps> = ({ isOpen, onClose }) => {
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [departments, setDepartments] = useState<{ value: number; label: string }[]>([]);
 
-const AddNewService: React.FC<EditServicesModalProps> = ({ isOpen, onClose }) => {
-  const [title, setTitle] = useState('')
-  const [subtitle, setSubtitle] = useState('')
-  const [image, setImage] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>('https://via.placeholder.com/150')
-  const [role, setRole] = useState<string>('')
-  const [departments, setDepartments] = useState<{ value: string; label: string }[]>([])
+  // Fetch departments from backend
+  const { data: departmentsData, isLoading, isError, error } = useQuery({
+    queryKey: ['departmentsData'],
+    queryFn: () => getDepartments({ token }),
+    enabled: !!token,
+  });
+
+  // Mutation for creating category
+  const mutation = useMutation({
+    mutationFn: createCategory,
+    onSuccess: () => {
+      alert('Category created successfully!');
+      resetForm();
+      onClose();
+    },
+    onError: (error) => {
+      console.error('Error creating category:', error);
+      alert('Failed to create category.');
+    }
+  });
+
+  // Reset form after submission
+  const resetForm = () => {
+    setTitle('');
+    setSubtitle('');
+    setImage(null);
+    setImagePreview(null);
+    setDepartments([]);
+  };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
+    const file = event.target.files?.[0];
     if (file) {
-      setImage(file)
-      const reader = new FileReader()
+      setImage(file);
+      const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
-      reader.readAsDataURL(file)
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
-  }
-
-  const handleRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setRole(event.target.value)
-  }
+  };
 
   const handleDepartmentsChange = (selectedOptions: any) => {
-    setDepartments(selectedOptions || [])
-  }
+    setDepartments(selectedOptions || []);
+  };
 
   const handleSubmit = () => {
-    console.log({
-      title,
-      subtitle,
-      image,
-      role,
-      departments
-    })
-    onClose() // Close the modal after submission
-  }
+    if (!title || !image || departments.length === 0) {
+      alert('Please fill all required fields.');
+      return;
+    }
 
-  if (!isOpen) return null
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('subtitle', subtitle);
+    formData.append('image', image);
+    formData.append('departmentIds', JSON.stringify(departments.map((d) => d.value)));
+
+    mutation.mutate({
+      token: token,
+      data: formData
+    });
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
@@ -73,7 +100,7 @@ const AddNewService: React.FC<EditServicesModalProps> = ({ isOpen, onClose }) =>
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value || '')}
+              onChange={(e) => setTitle(e.target.value)}
               placeholder=" "
               className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
             />
@@ -86,7 +113,7 @@ const AddNewService: React.FC<EditServicesModalProps> = ({ isOpen, onClose }) =>
           <div className="relative">
             <textarea
               value={subtitle}
-              onChange={(e) => setSubtitle(e.target.value || '')}
+              onChange={(e) => setSubtitle(e.target.value)}
               placeholder=" "
               className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
             />
@@ -98,7 +125,7 @@ const AddNewService: React.FC<EditServicesModalProps> = ({ isOpen, onClose }) =>
           {/* Image Upload */}
           <label htmlFor="imageInput" className="cursor-pointer">
             <img
-              src={imagePreview || ''}
+              src={imagePreview || 'https://via.placeholder.com/150'}
               alt="Preview"
               className="w-20 h-16 border object-cover rounded-lg"
             />
@@ -110,15 +137,26 @@ const AddNewService: React.FC<EditServicesModalProps> = ({ isOpen, onClose }) =>
             onChange={handleImageChange}
             className="hidden"
           />
+
+          {/* Departments Dropdown */}
           <div className="relative">
-            <Select
-              isMulti
-              options={departmentOptions}
-              value={departments}
-              onChange={handleDepartmentsChange}
-              placeholder="Select Departments"
-              className="text-sm"
-            />
+            {isLoading ? (
+              <p>Loading departments...</p>
+            ) : isError ? (
+              <p className="text-red-500">Failed to load departments.</p>
+            ) : (
+              <Select
+                isMulti
+                options={departmentsData?.data.map((dept: any) => ({
+                  value: dept.id,
+                  label: dept.title,
+                }))}
+                value={departments}
+                onChange={handleDepartmentsChange}
+                placeholder="Select Departments"
+                className="text-sm"
+              />
+            )}
           </div>
         </div>
 
@@ -132,7 +170,7 @@ const AddNewService: React.FC<EditServicesModalProps> = ({ isOpen, onClose }) =>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AddNewService
+export default AddNewService;
