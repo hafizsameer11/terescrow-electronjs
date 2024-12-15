@@ -5,6 +5,8 @@ import WelcomeModal from './WelcomeModal'
 import { Images } from '@renderer/constant/Image'
 import AppBanner from './modal/AppBanner'
 import NewNotificationModal from './modal/NewNotificationModal'
+import { useMutation } from '@tanstack/react-query'
+import { createNotification } from '@renderer/api/queries/adminqueries'
 
 interface Transaction {
   message: string
@@ -100,6 +102,39 @@ const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: str
     setStatusFilter(updatedFilter)
     setNotificationType(updatedNotificationType)
   }
+  const { mutate, isLoading, isError, error } = useMutation({
+    mutationFn: async (formData: FormData) => {
+      const token = 'your-auth-token'; // Replace this with actual token logic
+      return await createNotification({ token, data: formData });
+    },
+    onSuccess: (data) => {
+      console.log('Notification created successfully:', data);
+      setIsNotificationModalOpen(false);
+    },
+    onError: (err) => {
+      console.error('Error creating notification:', err);
+    },
+  });
+
+  // Handle Form Submission
+  const handleCreateNotification = (formData: {
+    title: string;
+    message: string;
+    image: File | null;
+    type: string;
+    customerSelection: string[];
+  }) => {
+    const notificationData = new FormData();
+    notificationData.append('title', formData.title);
+    notificationData.append('message', formData.message);
+    notificationData.append('type', formData.type);
+
+    if (formData.image) {
+      notificationData.append('image', formData.image);
+    }
+
+    mutate(notificationData);
+  };
 
   return (
     <div className="overflow-x-auto">

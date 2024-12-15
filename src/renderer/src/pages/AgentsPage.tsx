@@ -5,18 +5,9 @@ import AgentEditProfileModal from "@renderer/components/modal/AgentEditProfileMo
 import AddAgentProfileModal from "@renderer/components/modal/AddAgentProfileModal";
 import { useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getAgentByDepartment, getCustomerDetails, getDepartments } from "@renderer/api/queries/adminqueries";
+import { getAgentByDepartment, getAllAgents, getCustomerDetails, getDepartments } from "@renderer/api/queries/adminqueries";
 import { token } from "@renderer/api/config";
-import { Agent } from "@renderer/api/queries/datainterfaces";
-import { Department } from "@renderer/components/DepartmentsTable";
-// interface Agent {
-//   id: number;
-//   name: string;
-//   username: string;
-//   avatar: string;
-//   status: "Online" | "Offline";
-// }
-
+import { Agent, Department } from "@renderer/api/queries/datainterfaces";
 const AgentsPage: React.FC = () => {
   const location = useLocation();
 
@@ -30,24 +21,25 @@ const AgentsPage: React.FC = () => {
 
   const [selectedDepartment, setSelectedDepartment] = useState<Department[] | null>([]);
 
-//fetching all depart
-const { data: departmentsData, isLoading:isDepartmetnLoadin, isError: isDepartmentError, error: departmenterror } = useQuery({
-  queryKey: ['departmentsData'],
-  queryFn: () => getDepartments({ token }),
-  enabled: !!token,
-});
+  const { data: departmentsData, isLoading: isDepartmetnLoadin, isError: isDepartmentError, error: departmenterror } = useQuery({
+    queryKey: ['departmentsData'],
+    queryFn: () => getDepartments({ token }),
+    enabled: !!token,
+  });
 
-// Effect to Set Filtered Departments
-useEffect(() => {
-  if (departmentsData) {
-    setSelectedDepartment(departmentsData.data)
-  }
-}, [departmentsData]);
+  // Effect to Set Filtered Departments
+  useEffect(() => {
+    if (departmentsData) {
+      setSelectedDepartment(departmentsData.data)
+    }
+  }, [departmentsData]);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["agentsData", departmentId],
-    queryFn: () => getAgentByDepartment({ token, id: departmentId! }),
-    enabled: !!departmentId,
+    queryKey: departmentId ? ['agentsData', departmentId] : ['allAgentsData'],
+    queryFn: () =>
+      departmentId
+        ? getAgentByDepartment({ token, id: departmentId })
+        : getAllAgents({ token }),
   });
 
 

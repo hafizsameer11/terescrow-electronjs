@@ -2,6 +2,9 @@ import { AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
 import { useState } from 'react'
 import AppBanner from './modal/AppBanner'
 import EditSubServicesModal from './modal/EditSubServicesModal'
+import { useQuery } from '@tanstack/react-query'
+import { getCategories, getSubCategories } from '@renderer/api/queries/adminqueries'
+import { token } from '@renderer/api/config'
 // import EditServicesModal from './modal/EditServicesModal'
 // import EditSubServicesModal from './modal/EditSubServicesModal'
 // import EditServicesModal from './modal/EditServicesModal'
@@ -36,7 +39,11 @@ const SubServicesTable = () => {
   const handleOpenEditModal = () => {
     setIsEditModalOpen(true)
   }
-
+  const { data: subcategories, isLoading: isCategoriesLoading } = useQuery({
+    queryKey: ['subcategories'],
+    queryFn: () => getSubCategories({ token }),
+    enabled: !!token,
+  })
   const handleCloseEditModal = () => {
     setIsEditModalOpen(false)
   }
@@ -51,18 +58,17 @@ const SubServicesTable = () => {
           <tr className="bg-gray-100 text-left">
             <th className="px-4 py-2">Price</th>
             <th className="px-4 py-2">Title</th>
-            <th className="px-4 py-2">Subtitle</th>
             <th className="px-4 py-2">Action</th>
           </tr>
         </thead>
         <tbody>
-          {data.map((transaction, index) => (
+          {subcategories?.data.map((transaction, index) => (
             <tr key={index} className="border-b">
               <td className="px-4 py-2">
                 <td className="px-4 py-2">{transaction.price}</td>
               </td>
               <td className="px-4 py-2">{transaction.title}</td>
-              <td className="px-4 py-2">{transaction.subtitle}</td>
+
               <td className="px-4 py-2 space-x-2">
                 <button
                   className="text-gray-500 bg-gray-100 p-2 rounded-lg"

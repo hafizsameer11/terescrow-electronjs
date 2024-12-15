@@ -12,20 +12,16 @@
     http-equiv="Content-Security-Policy"
     content="default-src 'self'; img-src 'self' https: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
   /> -->
-  <meta
-  http-equiv="Content-Security-Policy"
-  content="
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
     default-src 'self' http://localhost:8000 http://localhost:3000 https://your-custom-api-domain.com;
     connect-src 'self' http://localhost:8000 http://localhost:3000 https://your-custom-api-domain.com;
-    img-src 'self' data: https://via.placeholder.com http://localhost:8000 https://your-custom-api-domain.com;
+    img-src 'self' data: blob: https://via.placeholder.com http://localhost:8000 https://your-custom-api-domain.com;
     script-src 'self' 'unsafe-inline';
     style-src 'self' 'unsafe-inline';
   "
-/>
-
-
-
-
+    />
   </head>
 
   <body>

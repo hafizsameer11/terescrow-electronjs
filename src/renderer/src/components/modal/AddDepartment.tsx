@@ -46,6 +46,9 @@ interface AgentEditProfileModalProps {
     status: string
     description: string
     icon?: string
+    Type?: string
+    niceh?: string
+    id?: number
   }
 }
 
@@ -59,13 +62,13 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
     status: '',
     description: '',
     icon: '',
+    Type:'buy',
+    niche: 'crypto',
+    id: 0
   },
 }) => {
   const [formData, setFormData] = useState(initialData)
-
-  useEffect(() => {
-    setFormData(initialData)
-  }, [initialData, isOpen])
+  const [iconFile, setIconFile] = useState<File | null>(null); // New state for file
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -76,25 +79,21 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      const reader = new FileReader()
+      const file = e.target.files[0];
+      setIconFile(file); // Save file for upload
+      const reader = new FileReader();
 
       reader.onload = (event) => {
-        const target = event.target
-        if (target && target.result) {
-          setFormData((prev) => ({
-            ...prev,
-            icon: target.result as string,
-          }))
-        }
-      }
-
-      reader.readAsDataURL(file)
+        setFormData((prev) => ({ ...prev, icon: event.target?.result as string })); // Set preview
+      };
+      reader.readAsDataURL(file);
     }
-  }
+  };
+
 
   const handleUpdate = () => {
     onUpdate(formData)
+    console.log('Updated Data:', formData)
     onClose()
   }
 
@@ -153,8 +152,38 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
               className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341] bg-white"
             >
               <option value="">Select Status</option>
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4">
+              Status
+            </label>
+          </div>
+          <div className="relative">
+            <select
+              name="Type"
+              value={formData.Type}
+              onChange={handleChange}
+              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341] bg-white"
+            >
+              <option value="">Select Status</option>
+              <option value="sell">Sell</option>
+              <option value="buy">Buy</option>
+            </select>
+            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4">
+              Status
+            </label>
+          </div>
+          <div className="relative">
+            <select
+              name="niche"
+              value={formData.niche}
+              onChange={handleChange}
+              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341] bg-white"
+            >
+              <option value="">Select Niche</option>
+              <option value="crypto">Crypto</option>
+              <option value="giftCard">Gift CarD</option>
             </select>
             <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4">
               Status

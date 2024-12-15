@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { DUMMY_USERS } from '../utils/dummyUsers.js'
 import UserStat from '@renderer/components/UserStat.js'
 import ChatTable from '@renderer/components/ChatTable.js'
@@ -6,13 +6,19 @@ import TeamFilterHeader from '@renderer/components/TeamFilterHeader.js'
 import AgentEditProfileModal from '@renderer/components/modal/AgentEditProfileModal.js'
 import { Images } from '@renderer/constant/Image.js'
 import ActivityHistory from '@renderer/components/ActivityHistory.js'
-import { Agent } from '@renderer/api/queries/datainterfaces.js'
-import { getDepartments, getTeam } from '@renderer/api/queries/adminqueries.js'
+import TeamTable from '@renderer/components/TeamsTable.js'
+import { getTeam } from '@renderer/api/queries/adminqueries.js'
 import { token } from '@renderer/api/config.js'
 import { useQuery } from '@tanstack/react-query'
-import TeamsTable from '@renderer/components/TeamsTable.js'
 
-
+interface Agent {
+  fullName: string
+  username: string
+  role: string
+  departments: string[]
+  password: string
+  profilePhoto?: string
+}
 
 const Teams = () => {
   const sampleData = [
@@ -51,7 +57,7 @@ const Teams = () => {
     }
   ]
 
-  const [activeTab, setActiveTab] = useState<'online' | 'offline'>('online')
+  const [activeTab, setActiveTab] = useState<'Active' | 'Deleted'>('Active')
   const [selectedRole, setSelectedRole] = useState<'Manager' | 'Agent' | 'Roles'>('Roles')
   const [searchValue, setSearchValue] = useState('')
   const [isEditClick, setIsEditClick] = useState(false)
@@ -60,9 +66,14 @@ const Teams = () => {
   const [selectAgentActivityId, setSelectAgentActivityId] = useState(1);
 
   console.log(selectAgentActivityId);
-  const handleTabChange = (tab: 'online' | 'offline') => {
+  const handleTabChange = (tab: 'Active' | 'Deleted') => {
     setActiveTab(tab)
   }
+  const { data: teamData, isLoading, isError, error } = useQuery({
+    queryKey: ['teamData'],
+    queryFn: () => getTeam({ token }),
+    enabled: !!token,
+  });
 
   const handleRoleChange = (role: 'Manager' | 'Agent' | 'Roles') => {
     setSelectedRole(role)
@@ -71,35 +82,30 @@ const Teams = () => {
   const handleSearchChange = (value: string) => {
     setSearchValue(value)
   }
-  const { data: teamData, isLoading, isError, error } = useQuery({
-    queryKey: ['teamData'],
-    queryFn: () => getTeam({ token }),
-    enabled: !!token,
-  });
 
-  // const handleEditClick = (agentId: number) => {
-  //   const agent = sampleData.find((item) => item.id === agentId)
-  //   if (agent) {
-  //     setSelectedAgent({
-  //       user.firtName: agent.name,
-  //       username: agent.username,
-  //       role: agent.role,
-  //       departments: agent.department || [],
-  //       password: agent.password,
-  //       profilePhoto: agent.avatar || ''
-  //     })
-  //     setIsEditClick(true)
-  //   }
-  // }
+  const handleEditClick = (agentId: number) => {
+    const agent = sampleData.find((item) => item.id === agentId)
+    if (agent) {
+      setSelectedAgent({
+        fullName: agent.name,
+        username: agent.username,
+        role: agent.role,
+        departments: agent.department || [],
+        password: agent.password,
+        profilePhoto: agent.avatar || ''
+      })
+      setIsEditClick(true)
+    }
+  }
 
   const changeView = ( selectedUserUd: number ) => {
     setIsUserViewed(true)
     setSelectAgentActivityId(selectedUserUd)
   }
-  let filteredData = teamData?.data.filter((member) => {
-    const matchesTab =
-      activeTab === 'online' ? member.AgentStatus === 'online' : member.AgentStatus === 'offline'
 
+  const filteredData = teamData?.data.filter((member) => {
+    const matchesTab =
+      activeTab === 'Active' ? member.AgentStatus === 'online' : member.AgentStatus === 'offline'
     const matchesRole = selectedRole === 'Roles' || member.user.role === selectedRole
     const matchesSearch =
       searchValue === '' ||
@@ -108,13 +114,6 @@ const Teams = () => {
 
     return matchesTab && matchesRole && matchesSearch
   })
-  useEffect(() => {
-    if(teamData?.data){
-      // filteredData = teamData?.data
-      console.log(teamData?.data)
-    }
-  })
-
   console.log(isUserViewed)
   return (
     <div className="p-6 space-y-8 w-full">
@@ -124,6 +123,8 @@ const Teams = () => {
 
         <button className="bg-green-800 text-white py-2 px-3 rounded-lg">Add team member</button>
       </div>
+
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
         <UserStat
           title="Total Team Members"
@@ -134,6 +135,9 @@ const Teams = () => {
         <UserStat title="Online" value="15" />
         <UserStat title="Offline" value="5" />
       </div>
+
+      {/* Filters */}
+
       {isUserViewed ? (
         <ActivityHistory />
       ) : (
@@ -146,9 +150,12 @@ const Teams = () => {
             onRoleChange={handleRoleChange}
             onSearchChange={handleSearchChange}
           />
-          <TeamsTable
+          <TeamTable
             data={filteredData}
-
+            isTeam={true}
+            isTeamCommunition={false}
+            onUserViewed={changeView}
+            onEditHanlder={(agentId) => handleEditClick(agentId)}
           />
         </div>
       )}

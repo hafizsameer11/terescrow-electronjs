@@ -20,7 +20,7 @@ export interface Customer {
 
 // export intergac
 export interface Department {
-  id: number
+  id?: number
   title: string
   description?: string
   icon?: string
@@ -202,4 +202,54 @@ export interface SingleCategoryResponse {
   status: string;
   message: string;
   data: SingleCategory;
+}
+export interface CreateSubCategoryResponse {
+  status: string;
+  message: string;
+  data: SubCategory;
+}
+// export interface
+
+export interface CreateDepartmentResponse{
+  status: string
+  message: string
+  datta:Department
+}
+export interface Banner{
+  id: number
+  imgae: string
+}
+export interface CreateBannerResponse{
+  status: string
+  message: string
+  datta:Banner
+}
+export interface AllBannerResponse{
+  status: string
+  message: string
+  datta:Banner[]
+}
+
+export interface DeleteBannerResponse{
+  status: string
+  message: string
+}
+
+// Notification Interface
+export interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: 'customer' | 'agent' | string;
+  isSingle: boolean;
+  image: string;
+  userId?: number | null;
+  createdAt?: string;
+}
+
+// API Response Interface
+export interface NotificationsResponse {
+  status: string;
+  message: string;
+  data: Notification[];
 }

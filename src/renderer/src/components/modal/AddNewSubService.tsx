@@ -1,3 +1,6 @@
+import { token } from '@renderer/api/config'
+import { getCategories, createSubCategory } from '@renderer/api/queries/adminqueries'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import React, { useState } from 'react'
 import Select from 'react-select'
 
@@ -6,32 +9,63 @@ interface AddNewSubServiceProps {
   onClose: () => void
 }
 
-const serviceOptions = [
-  { value: 'Web Development', label: 'Web Development' },
-  { value: 'App Development', label: 'App Development' },
-  { value: 'Graphic Design', label: 'Graphic Design' },
-  { value: 'Content Writing', label: 'Content Writing' },
-  { value: 'Digital Marketing', label: 'Digital Marketing' }
-]
-
 const AddNewSubService: React.FC<AddNewSubServiceProps> = ({ isOpen, onClose }) => {
+  const queryClient = useQueryClient()
   const [title, setTitle] = useState('')
   const [subtitle, setSubtitle] = useState('')
   const [price, setPrice] = useState<number | ''>('')
-  const [services, setServices] = useState<{ value: string; label: string }[]>([])
+  const [selectedCategories, setSelectedCategories] = useState<{ value: number; label: string }[]>([])
 
-  const handleServicesChange = (selectedOptions: any) => {
-    setServices(selectedOptions || [])
+  // Fetch categories
+  const { data: categoriesData, isLoading, isError } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => getCategories({ token }),
+    enabled: !!token,
+  })
+
+  // Create SubCategory Mutation
+  const mutation = useMutation({
+    mutationFn: createSubCategory,
+    onSuccess: () => {
+      alert('Sub-category created successfully!')
+      // invalidateQueries(['subcategories'])
+      queryClient.invalidateQueries(['subcategories'])
+      resetForm()
+      onClose()
+    },
+    onError: (error) => {
+      console.error('Error creating sub-category:', error)
+      alert('Failed to create sub-category.')
+    }
+  })
+
+  const resetForm = () => {
+    setTitle('')
+    setSubtitle('')
+    setPrice('')
+    setSelectedCategories([])
+  }
+
+  const handleCategoriesChange = (selectedOptions: any) => {
+    setSelectedCategories(selectedOptions || [])
   }
 
   const handleSubmit = () => {
-    console.log({
+    if (!title || !price || selectedCategories.length === 0) {
+      alert('Please fill all required fields.')
+      return
+    }
+
+    const data = {
       title,
-      subtitle,
       price,
-      services
+      catIds: selectedCategories.map((cat) => cat.value)
+    }
+
+    mutation.mutate({
+      token: token,
+      data
     })
-    onClose() // Close the modal after submission
   }
 
   if (!isOpen) return null
@@ -63,19 +97,6 @@ const AddNewSubService: React.FC<AddNewSubServiceProps> = ({ isOpen, onClose }) 
             </label>
           </div>
 
-          {/* Subtitle Input */}
-          <div className="relative">
-            <textarea
-              value={subtitle}
-              onChange={(e) => setSubtitle(e.target.value)}
-              placeholder=" "
-              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
-            />
-            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4">
-              Subtitle
-            </label>
-          </div>
-
           {/* Price Input */}
           <div className="relative">
             <input
@@ -91,15 +112,19 @@ const AddNewSubService: React.FC<AddNewSubServiceProps> = ({ isOpen, onClose }) 
             </label>
           </div>
 
-          {/* Services Selection */}
+          {/* Categories Selection */}
           <div className="relative">
             <Select
               isMulti
-              options={serviceOptions}
-              value={services}
-              onChange={handleServicesChange}
-              placeholder="Select Services"
+              options={categoriesData?.data.map((cat: any) => ({
+                value: cat.id,
+                label: cat.title
+              }))}
+              value={selectedCategories}
+              onChange={handleCategoriesChange}
+              placeholder="Select Categories"
               className="text-sm"
+              isLoading={isLoading}
             />
           </div>
         </div>

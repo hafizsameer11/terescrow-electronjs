@@ -5,21 +5,13 @@ import { MdDelete, MdEdit, MdVisibility } from 'react-icons/md';
 import StatusButton from './StatusButton';
 import { Icons } from '@renderer/constant/Icons';
 import DepartmentModal from './modal/AddDepartment';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { token } from '@renderer/api/config';
-import { getDepartments } from '@renderer/api/queries/adminqueries';
+import { deleteDepartment, editDepartment, getDepartments } from '@renderer/api/queries/adminqueries';
+import { Department } from '@renderer/api/queries/datainterfaces';
 
 // Define the Department interface
-export interface Department {
-  id: number;
-  title: string;
-  description?: string;
-  icon?: string;
-  status?: string;
-  noOfAgents?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
+
 
 const DepartmentsTable: React.FC = () => {
   const navigate = useNavigate();
@@ -60,7 +52,51 @@ const DepartmentsTable: React.FC = () => {
 
     setFilteredDepartments(filtered || []);
   };
+  const queryClient = useQueryClient();
+  const mutation = useMutation({
+    mutationFn: editDepartment,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['departmentsData']); // Refresh departments table
+      alert('Department added successfully!');
+    },
+    onError: () => {
+      alert('Failed to create department. Please try again.');
+    },
+  });
 
+
+  const deleteMutation = useMutation({
+    mutationFn: ({ id }: { id: string }) => deleteDepartment({ token, id }),
+    onSuccess: () => {
+      alert('Department deleted successfully!')
+      queryClient.invalidateQueries(['departmentsData'])
+    },
+    onError: (error) => {
+      console.error('Failed to delete Department:', error)
+      alert('Error deleting Department.')
+    },
+  })
+  const handledeletDepartment = (id: string) => {
+    if (confirm('Are you sure you want to delete this category?')) {
+      deleteMutation.mutate({ id })
+    }
+  }
+
+  // Handle form submission
+  const handleUpdate = (data: Record<string, any>) => {
+    mutation.mutate({
+      token,
+      id:data.id,
+      data: {
+        title: data.name,
+        description: data.description,
+        status: data.status,
+        Type: data.Type || 'buy',
+        niche: data.niche || 'crypto',
+        icon: data.icon || '',
+      },
+    });
+  };
   return (
     <div className="w-full">
       {/* Search Input */}
@@ -80,6 +116,7 @@ const DepartmentsTable: React.FC = () => {
             <tr>
               <th className="py-3 px-4">Name</th>
               <th className="py-3 px-4">Status</th>
+              <th className="py-3 px-4">Niche</th>
               <th className="py-3 px-4">No of Agents</th>
               <th className="py-3 px-4">Description</th>
               <th className="py-3 px-4 text-center">Action</th>
@@ -98,6 +135,7 @@ const DepartmentsTable: React.FC = () => {
                   <td>
                     <StatusButton title="Active" status={department.status || ''} />
                   </td>
+                  <td className="py-3 px-4">{department.niche?.toUpperCase() }</td>
                   <td className="py-3 px-4">{department.noOfAgents || 0}</td>
                   <td className="py-3 px-4">{department.description || 'N/A'}</td>
                   <td className="py-3 px-4 text-center flex justify-center gap-2">
@@ -123,6 +161,7 @@ const DepartmentsTable: React.FC = () => {
                       <MdEdit />
                     </button>
                     <button
+                    onClick={()=>handledeletDepartment(department.id)}
                       className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200"
                       title="Delete Department"
                     >
@@ -134,13 +173,16 @@ const DepartmentsTable: React.FC = () => {
                   <DepartmentModal
                     isOpen={editModalOpen}
                     onClose={() => setEditModalOpen(false)}
-                    onUpdate={() => { }}
+                    onUpdate={handleUpdate}
                     actionType="edit"
                     initialData={{
+                      id: selectedDepartment.id,
                       name: selectedDepartment.title,
                       status: selectedDepartment.status || 'active',
                       description: selectedDepartment.description || '',
                       icon: selectedDepartment.icon,
+                      niche: selectedDepartment.niche,
+                      Type: selectedDepartment.Type
                     }}
                   />
                 )}

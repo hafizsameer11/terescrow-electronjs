@@ -215,23 +215,7 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
               Agent
             </label>
           </div>
-          {recipientType === 'customer' && (
-            <div className="relative">
-              <select
-                value={customerSelection}
-                onClick={handleOpenModal}
-                onChange={handleCustomerSelectionChange}
-                className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
-              >
-                <option value="All" className="p-4" onClick={handleOpenModal}>
-                  All
-                </option>
-              </select>
-              <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-0 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4">
-                Customer Selection
-              </label>
-            </div>
-          )}
+          
         </div>
 
         <div className="mt-6">

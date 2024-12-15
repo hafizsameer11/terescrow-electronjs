@@ -226,7 +226,7 @@ const CustomerDetails: React.FC = () => {
           password: customer?.password || "",
           country: customer?.country || "",
           profilePhoto: customer?.profilePicture || "",
-          id: customer?.id.toString() || "",
+          id: customer?.id || "",
         }}
         onUpdate={handleEditProfile}
       />

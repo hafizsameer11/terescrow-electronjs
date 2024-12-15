@@ -3,6 +3,9 @@ import UserTable from '@renderer/components/UserTable'
 import { useState } from 'react'
 import { DUMMY_USERS } from '../utils/dummyUsers.js'
 import UserStat from '@renderer/components/UserStat.js'
+import { useQuery } from '@tanstack/react-query'
+import { getAllUsers } from '@renderer/api/queries/adminqueries.js'
+import { token } from '@renderer/api/config.js'
 
 const UsersPage = () => {
   const [filters, setFilters] = useState({
@@ -12,7 +15,16 @@ const UsersPage = () => {
   })
 
   const userCategory = ['All', 'Customer', 'Team']
-
+  // const { data: teamData, isLoading, isError, error } = useQuery({
+  //   queryKey: ['teamData'],
+  //   queryFn: () => getTeam({ token }),
+  //   enabled: !!token,
+  // });
+  const {data:userData, isLoading, isError, error} = useQuery({
+    queryKey: ['userData'],
+    queryFn: () => getAllUsers({ token }),
+    enabled: !!token,
+  })
   const handleCategoryChange = (category) => {
     setFilters({ ...filters, category })
   }
@@ -80,8 +92,7 @@ const UsersPage = () => {
           onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
         />
 
-        {/* User Table */}
-        <UserTable data={filteredCustomers} />
+        <UserTable data={userData?.data} />
     </div>
   )
 }
