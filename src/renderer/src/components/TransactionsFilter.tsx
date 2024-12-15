@@ -23,11 +23,11 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
       <div className="m flex flex-row justify-between">
         <div className="ext">
           {/* Use provided title or fallback to default */}
-          <h2 className="text-[36px] font-semibold text-gray-800">
+          <h2 className="text-xl lg:text-2xl xl:text-3xl mb-3 font-semibold text-gray-800">
             {title || "Transactions on the app"}
           </h2>
           {/* Use provided subtitle or fallback to default */}
-          <p className="text-[16px] text-gray-600 mb-5">
+          <p className="text-sm text-gray-600 mb-5">
             {subTitle || "Manage total customers and see their activities"}
           </p>
         </div>
@@ -35,7 +35,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
           {category.map((status, index) => (
             <button
               key={status}
-              className={`px-6 py-2 text-sm font-medium transition ${filters.status === status
+              className={`px-4 py-2 text-sm font-medium transition ${filters.status === status
                 ? 'bg-[#147341] text-white'
                 : 'bg- text-gray-600 hover:bg-gray-100 border-gray-300'
                 } ${index === 0 ? 'rounded-l-lg' : 'border-l'
@@ -55,7 +55,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
           {statusOptions.map((status, index) => (
             <button
               key={status}
-              className={`px-6 py-2 text-sm font-medium transition ${filters.status === status
+              className={`px-4 py-2 text-sm font-medium transition ${filters.status === status
                 ? 'bg-[#147341] text-white'
                 : 'bg- text-gray-600 hover:bg-gray-100 border-gray-300'
                 } ${index === 0 ? 'rounded-l-lg' : 'border-l'
@@ -75,7 +75,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({ filters, onChan
           {typeOption.map((serviceType, index) => (
             <button
               key={serviceType}
-              className={`px-6 py-2 text-sm font-medium transition ${filters.type === serviceType
+              className={`px-4 py-2 text-sm font-medium transition ${filters.type === serviceType
                 ? 'bg-[#147341] text-white'
                 : 'bg- text-gray-600 hover:bg-gray-100 border-gray-300'
                 } ${index === 0 ? 'rounded-l-lg' : 'border-l'

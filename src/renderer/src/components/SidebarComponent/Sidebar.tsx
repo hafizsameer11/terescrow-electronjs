@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import NavItem from './NavItem'; 
+import { useState } from 'react'
+import NavItem from './NavItem' // Import the NavItem component
 import {
   FaUser,
   FaComments,
@@ -12,12 +12,12 @@ import {
   FaBell,
   FaCog,
   FaUserTag,
-} from 'react-icons/fa';
-import { RiTeamFill } from "react-icons/ri";
-import { Images } from '@renderer/constant/Image';
+} from 'react-icons/fa'
+import { RiTeamFill } from 'react-icons/ri'
+import { Images } from '@renderer/constant/Image'
 
 export const Sidebar = () => {
-  const [activeItem, setActiveItem] = useState('dashboard');
+  const [activeItem, setActiveItem] = useState('dashboard')
 
   // Navigation menu data
   const menuItems = [
@@ -30,25 +30,30 @@ export const Sidebar = () => {
     { label: 'Department', icon: <FaUserTie />, href: '/departments', id: 'department' },
     { label: 'Services', icon: <FaUserTag />, href: '/services', id: 'services' },
     { label: 'Teams', icon: <FaUsers />, href: '/teams', id: 'teams' },
-    { label: 'Users', icon: <FaUser />, href: '/usersall', id: 'users' },
-  ];
+    { label: 'Users', icon: <FaUser />, href: '/usersall', id: 'users' }
+  ]
 
   const bottomMenuItems = [
     { label: 'Notifications', icon: <FaBell />, href: '/notifications', id: 'notifications' },
     { label: 'Settings', icon: <FaCog />, href: '/settings', id: 'settings' },
-    { label: 'Team Communication', icon: <RiTeamFill />, href: '/team-communication', id: 'team-communication' },
-  ];
+    {
+      label: 'Team Communication',
+      icon: <RiTeamFill />,
+      href: '/team-communication',
+      id: 'team-communication'
+    }
+  ]
 
   return (
-    <aside className="w-[280px] h-screen bg-white text-gray-800 flex flex-col border-r border-[#989898] overflow-auto">
+    <aside className="lg:w-[280px] h-screen bg-white px-[20px] lg:px-[30px] text-gray-800 flex flex-col border-r border-[#989898] overflow-auto">
       {/* Logo Section */}
-      <div className="flex items-start justify-start py-6 px-8">
-        <img src={Images.logo} alt="Logo" className=" h-14 object-contain" />
+      <div className="flex items-start justify-start py-6">
+        <img src={Images.logo} alt="Logo" className="h-8 lg:h-14 object-contain" />
         {/* <span className="ml-2 text-lg font-bold">Terescrow</span> */}
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-[30px] mt-4">
+      <nav className="mt-4">
         <ul className="space-y-1">
           {menuItems.map((item) => (
             <NavItem
@@ -65,7 +70,7 @@ export const Sidebar = () => {
 
       {/* Bottom Section */}
       <div className="border-t border-gray-200 mt-2">
-        <ul className="space-y-1 mt-4 px-[30px]">
+        <ul className="space-y-1 mt-4">
           {bottomMenuItems.map((item) => (
             <NavItem
               key={item.id}
@@ -79,5 +84,5 @@ export const Sidebar = () => {
         </ul>
       </div>
     </aside>
-  );
-};
+  )
+}
