@@ -42,11 +42,11 @@ const API_ENDPOINT = {
     CreateNotification: API_DOMAIN + '/admin/create-notification',
     UpdateNotification: API_DOMAIN + '/admin/update-notification',
     DeleteNotification: API_DOMAIN + '/admin/delete-notification',
-    GetNotification: API_DOMAIN + '/admin/get-notification',
+    GetNotification: API_DOMAIN + '/admin/get-all-notifications',
 
 
   }
 }
 const token =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsInVzZXJuYW1lIjoiamFuZWRvZSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDIwNzM5OCwiZXhwIjoxNzM0MjkzNzk4fQ.gaZjl_wUwLUSeyqlmi4rB0KOrgogWieoTACLjF_rLDo'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsInVzZXJuYW1lIjoiamFuZWRvZSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDI2OTYyMywiZXhwIjoxNzM0MzU2MDIzfQ.kjF2qGx0vDzmqbIEJ5EZMgYMk-XJCT7iQ8Ib0a1imUw'
 export { API_DOMAIN, API_ENDPOINT, token }

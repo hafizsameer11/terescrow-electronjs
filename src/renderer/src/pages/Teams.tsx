@@ -57,7 +57,7 @@ const Teams = () => {
     }
   ]
 
-  const [activeTab, setActiveTab] = useState<'Active' | 'Deleted'>('Active')
+  const [activeTab, setActiveTab] = useState<'online' | 'offline'>('online')
   const [selectedRole, setSelectedRole] = useState<'Manager' | 'Agent' | 'Roles'>('Roles')
   const [searchValue, setSearchValue] = useState('')
   const [isEditClick, setIsEditClick] = useState(false)

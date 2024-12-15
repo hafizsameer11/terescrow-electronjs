@@ -213,11 +213,12 @@ export interface CreateSubCategoryResponse {
 export interface CreateDepartmentResponse{
   status: string
   message: string
-  datta:Department
+  data:Department
 }
 export interface Banner{
   id: number
   imgae: string
+  createdAt?: string
 }
 export interface CreateBannerResponse{
   status: string

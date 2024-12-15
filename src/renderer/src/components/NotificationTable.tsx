@@ -2,139 +2,88 @@ import React, { useState, useEffect } from 'react'
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
 import NotificationFilters from './NotificationFilters'
 import WelcomeModal from './WelcomeModal'
-import { Images } from '@renderer/constant/Image'
 import AppBanner from './modal/AppBanner'
 import NewNotificationModal from './modal/NewNotificationModal'
-import { useMutation } from '@tanstack/react-query'
-import { createNotification } from '@renderer/api/queries/adminqueries'
-
-interface Transaction {
-  message: string
-  date: string
-  createdBy: string
-  deliveryStatus: string
-}
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getNotification, getBanner, deleteNotification, deleteBanner } from '@renderer/api/queries/adminqueries'
+import { token } from '@renderer/api/config'
 
 const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: string) => void }> = ({
   textMsg,
   onTitleChange
 }) => {
+  const queryClient = useQueryClient()
+
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [notificationType, setNotificationType] = useState<string>('Notification')
-  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false)
+  const [selectedNotification, setSelectedNotification] = useState<any>(null)
+  const [selectedBanner, setSelectedBanner] = useState<any>(null)
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
   const [isAppBannerOpen, setIsAppBannerOpen] = useState(false)
 
-  const handleOpenNotificationModal = () => {
+  // Fetch Notifications and Banners
+  const { data: notificationsData, isLoading: loadingNotifications } = useQuery({
+    queryKey: ['notificationsData'],
+    queryFn: () => getNotification({ token }),
+    enabled: !!token,
+  })
+
+  const { data: bannersData, isLoading: loadingBanners } = useQuery({
+    queryKey: ['bannersData'],
+    queryFn: () => getBanner({ token }),
+    enabled: !!token,
+  })
+
+  // Delete Mutations
+  const deleteNotificationMutation = useMutation({
+    mutationFn: deleteNotification,
+    onSuccess: () => queryClient.invalidateQueries(['notificationsData']),
+  })
+
+  const deleteBannerMutation = useMutation({
+    mutationFn: deleteBanner,
+    onSuccess: () => queryClient.invalidateQueries(['bannersData']),
+  })
+
+  const handleDeleteNotification = (id: string) => {
+    deleteNotificationMutation.mutate({ token, id })
+  }
+
+  const handleDeleteBanner = (id: string) => {
+    if (confirm('Are you sure you want to delete this banner?')) {
+      deleteBannerMutation.mutate({ token, id })
+    }
+  }
+
+  const handleOpenNotificationModal = (notification: any) => {
+    setSelectedNotification(notification)
     setIsNotificationModalOpen(true)
   }
 
-  const handleOpenModal = () => {
-    if (notificationType === 'Notification') {
-      setIsWelcomeModalOpen(true)
-    } else {
-      setIsAppBannerOpen(true)
-    }
+  const handleOpenBannerModal = (banner: any) => {
+    setSelectedBanner(banner)
+    setIsAppBannerOpen(true)
   }
 
-  const handleCloseModal = () => {
-    setIsWelcomeModalOpen(false)
+  const handleCloseModals = () => {
+    setIsNotificationModalOpen(false)
     setIsAppBannerOpen(false)
+    setSelectedNotification(null)
+    setSelectedBanner(null)
   }
 
   useEffect(() => {
-    const title = notificationType === 'Notification' ? 'Notifications' : 'In-App Banner'
+    const title = notificationType === 'Notification' ? 'Notifications' : 'Banners'
     onTitleChange(title)
   }, [notificationType, onTitleChange])
 
-  // Hardcoded data to match the image
-  const data: Transaction[] = [
-    {
-      message: 'Welcome to tercesecrow, your no 1 hub for.......',
-      date: 'Nov 8, 2024 - 11:22am',
-      createdBy: 'Dave',
-      deliveryStatus: 'Delivered'
-    },
-    {
-      message: 'Welcome to tercesecrow, your no 1 hub for.......',
-      date: 'Nov 8, 2024 - 11:22am',
-      createdBy: 'Dave',
-      deliveryStatus: 'Pending'
-    },
-    {
-      message: 'Welcome to tercesecrow, your no 1 hub for.......',
-      date: 'Nov 8, 2024 - 11:22am',
-      createdBy: 'Dave',
-      deliveryStatus: 'Failed'
-    },
-    {
-      message: 'Welcome to tercesecrow, your no 1 hub for.......',
-      date: 'Nov 8, 2024 - 11:22am',
-      createdBy: 'Dave',
-      deliveryStatus: 'Delivered'
-    },
-    {
-      message: 'Welcome to tercesecrow, your no 1 hub for.......',
-      date: 'Nov 8, 2024 - 11:22am',
-      createdBy: 'Dave',
-      deliveryStatus: 'Delivered'
-    },
-    {
-      message: 'Welcome to tercesecrow, your no 1 hub for.......',
-      date: 'Nov 8, 2024 - 11:22am',
-      createdBy: 'Dave',
-      deliveryStatus: 'Delivered'
-    },
-    {
-      message: 'Welcome to tercesecrow, your no 1 hub for.......',
-      date: 'Nov 8, 2024 - 11:22am',
-      createdBy: 'Dave',
-      deliveryStatus: 'Delivered'
-    }
-  ]
-
-  const filteredData =
-    statusFilter === 'All'
-      ? data
-      : data.filter((transaction) => transaction.deliveryStatus === statusFilter)
+  const filteredNotifications = notificationsData?.data || []
+  const filteredBanners = bannersData?.data || []
 
   const handleFilterChange = (updatedFilter: string, updatedNotificationType: string) => {
     setStatusFilter(updatedFilter)
     setNotificationType(updatedNotificationType)
   }
-  const { mutate, isLoading, isError, error } = useMutation({
-    mutationFn: async (formData: FormData) => {
-      const token = 'your-auth-token'; // Replace this with actual token logic
-      return await createNotification({ token, data: formData });
-    },
-    onSuccess: (data) => {
-      console.log('Notification created successfully:', data);
-      setIsNotificationModalOpen(false);
-    },
-    onError: (err) => {
-      console.error('Error creating notification:', err);
-    },
-  });
-
-  // Handle Form Submission
-  const handleCreateNotification = (formData: {
-    title: string;
-    message: string;
-    image: File | null;
-    type: string;
-    customerSelection: string[];
-  }) => {
-    const notificationData = new FormData();
-    notificationData.append('title', formData.title);
-    notificationData.append('message', formData.message);
-    notificationData.append('type', formData.type);
-
-    if (formData.image) {
-      notificationData.append('image', formData.image);
-    }
-
-    mutate(notificationData);
-  };
 
   return (
     <div className="overflow-x-auto">
@@ -146,83 +95,91 @@ const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: str
         />
       </div>
 
-      <table className="min-w-full bg-white border border-gray-200">
-        <thead>
-          <tr className="bg-gray-100 text-left">
-            <th className="px-4 py-2">Message</th>
-            <th className="px-4 py-2">Date</th>
-            <th className="px-4 py-2">Created By</th>
-            <th className="px-4 py-2">Delivery Status</th>
-            <th className="px-4 py-2">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredData.map((transaction, index) => (
-            <tr key={index} className="border-b">
-              {textMsg && notificationType === 'Notification' ? (
-                <td className="px-4 py-2">{transaction.message}</td>
-              ) : (
-                <td className="px-4 py-2">
-                  <img src={Images.tableImg} alt="" />
-                </td>
-              )}
-              <td className="px-4 py-2">{transaction.date}</td>
-              <td className="px-4 py-2">{transaction.createdBy}</td>
-              <td className="px-4 py-2">
-                <span
-                  className={`px-2 py-1 rounded-md ${
-                    transaction.deliveryStatus === 'Delivered'
-                      ? 'text-green-500'
-                      : transaction.deliveryStatus === 'Pending'
-                        ? 'text-yellow-600'
-                        : 'text-red-500'
-                  }`}
-                >
-                  {transaction.deliveryStatus}
-                </span>
-              </td>
-              <td className="px-4 py-2 space-x-2">
-                <button
-                  className="text-gray-500 bg-gray-100 p-2 rounded-lg"
-                  onClick={handleOpenModal}
-                >
-                  <AiOutlineEye size={20} />
-                </button>
-                <button
-                  className="text-gray-500 bg-gray-100 p-2 rounded-lg"
-                  onClick={handleOpenNotificationModal}
-                >
-                  <AiOutlineEdit size={20} />
-                </button>
-                <button className="text-red-500">
-                  <AiOutlineDelete size={22} />
-                </button>
-              </td>
+      {/* Notifications Table */}
+      {notificationType === 'Notification' && !loadingNotifications && (
+        <table className="min-w-full bg-white border border-gray-200">
+          <thead>
+            <tr className="bg-gray-100 text-left">
+              <th className="px-4 py-2">Message</th>
+              <th className="px-4 py-2">Date</th>
+              <th className="px-4 py-2">Type</th>
+              <th className="px-4 py-2">Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {isWelcomeModalOpen && <WelcomeModal onClose={handleCloseModal} />}
-      {isAppBannerOpen && (
-        <AppBanner
-          onSend={handleCloseModal}
-          modalVisible={isAppBannerOpen}
-          setModalVisible={setIsAppBannerOpen}
-        />
+          </thead>
+          <tbody>
+            {filteredNotifications.map((notification: any) => (
+              <tr key={notification.id} className="border-b">
+                <td className="px-4 py-2">{notification.message}</td>
+                <td className="px-4 py-2">{new Date(notification.createdAt).toLocaleString()}</td>
+                <td className="px-4 py-2">{notification.type}</td>
+                <td className="px-4 py-2 space-x-2">
+                  <button
+                    className="text-gray-500 bg-gray-100 p-2 rounded-lg"
+                    onClick={() => handleOpenNotificationModal(notification)}
+                  >
+                    <AiOutlineEye size={20} />
+                  </button>
+                  <button
+                    className="text-red-500"
+                    onClick={() => handleDeleteNotification(notification.id)}
+                  >
+                    <AiOutlineDelete size={22} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
+
+      {/* Banners Table */}
+      {notificationType === 'Banner' && !loadingBanners && (
+        <table className="min-w-full bg-white border border-gray-200">
+          <thead>
+            <tr className="bg-gray-100 text-left">
+              <th className="px-4 py-2">Banner</th>
+              <th className="px-4 py-2">Uploaded At</th>
+              <th className="px-4 py-2">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredBanners.map((banner: any) => (
+              <tr key={banner.id} className="border-b">
+                <td className="px-4 py-2">
+                  <img src={banner.image} alt="Banner" className="w-32 h-20 object-cover rounded-md" />
+                </td>
+                <td className="px-4 py-2">{new Date(banner.createdAt).toLocaleString()}</td>
+                <td className="px-4 py-2 space-x-2">
+                  <button
+                    className="text-gray-500 bg-gray-100 p-2 rounded-lg"
+                    onClick={() => handleOpenBannerModal(banner)}
+                  >
+                    <AiOutlineEye size={20} />
+                  </button>
+                  <button
+                    className="text-red-500"
+                    onClick={() => handleDeleteBanner(banner.id)}
+                  >
+                    <AiOutlineDelete size={22} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* Modals */}
       <NewNotificationModal
         isOpen={isNotificationModalOpen}
-        onClose={() => setIsNotificationModalOpen(false)}
-        onSubmit={() => setIsNotificationModalOpen(false)}
+        onClose={handleCloseModals}
         actionType="edit"
-        initialData={{
-          title: 'teresecrow Notification',
-          message: 'Sample notification message',
-          imagePreview: 'https://via.placeholder.com/150',
-          recipientType: 'customer',
-          customerSelection: ['All']
-        }}
+        initialData={selectedNotification}
+      />
+      <AppBanner
+        onSend={handleCloseModals}
+        modalVisible={isAppBannerOpen}
+        setModalVisible={setIsAppBannerOpen}
       />
     </div>
   )

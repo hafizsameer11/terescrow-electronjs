@@ -18,6 +18,7 @@ import {
   Department,
   DepartmentResponse,
   Notification,
+  NotificationsResponse,
   PostCustomerData,
   RateResponse,
   SingleCategoryResponse,
@@ -251,7 +252,7 @@ export const deleteBanner = async ({
   token: string
   id: string
 }): Promise<CreateBannerResponse> => {
-  return await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteBanner}/${id}`, 'GET', undefined, token)
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteBanner}/${id}`, 'DELETE', undefined, token)
 }
 
 export const createNotification = async ({
@@ -261,9 +262,9 @@ export const createNotification = async ({
   token: string
   data: Notification
 }): Promise<NotificationResponse> => {
-  return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateBanner}`, 'POST', data, token)
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateNotification}`, 'POST', data, token)
 }
-export const getNotification= async ({ token }: { token: string }): Promise<NotificationResponse> => {
+export const getNotification= async ({ token }: { token: string }): Promise<NotificationsResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetNotification}`, 'GET', undefined, token)
 }
 export const editNotification = async ({
@@ -284,5 +285,5 @@ export const deleteNotification = async ({
   token: string
   id: string
 }): Promise<NotificationResponse> => {
-  return await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteNotification}/${id}`, 'GET', undefined, token)
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteNotification}/${id}`, 'DELETE', undefined, token)
 }

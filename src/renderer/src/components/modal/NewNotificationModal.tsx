@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import TeamGroupModal from './TeamGroupModal'
+import { useMutation } from '@tanstack/react-query'
+import { createNotification } from '@renderer/api/queries/adminqueries'
+import { token } from '@renderer/api/config'
 
 interface NewNotificationModalProps {
   isOpen: boolean
   actionType: 'add' | 'edit'
   onClose: () => void
-  onSubmit: (formData: {
-    title: string
-    message: string
-    image: File | null
-    recipientType: string
-    customerSelection: string[]
-  }) => void
   initialData?: {
     title: string
     message: string
     imagePreview?: string
-    recipientType: string
-    customerSelection: string[]
+    type: 'customer' | 'agent'
   }
 }
 
@@ -25,32 +20,40 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   isOpen,
   actionType,
   onClose,
-  onSubmit,
   initialData = {
     title: '',
     message: '',
     imagePreview: null,
-    recipientType: 'customer',
-    customerSelection: ['All']
+    type: 'customer'
   }
 }) => {
   const [title, setTitle] = useState('')
   const [message, setMessage] = useState('')
   const [image, setImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
-  const [recipientType, setRecipientType] = useState('customer')
-  const [customerSelection, setCustomerSelection] = useState<string[]>(['All'])
+  const [type, setType] = useState<'customer' | 'agent'>('customer')
   const [errors, setErrors] = useState<{ title?: string; message?: string }>({})
-  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false)
 
-  // Populate form fields if editing
+  // Mutation for API submission
+  const { mutate, isError, error } = useMutation({
+    mutationFn: async (formData: FormData) => {
+      return await createNotification({ token, data: formData })
+    },
+    onSuccess: (data) => {
+      console.log('Notification created successfully:', data);
+      alert('Notification sent successfully!')
+      onClose()
+    },
+    onError: (err) => {
+      console.error('Error creating notification:', err)
+    }
+  })
   useEffect(() => {
     if (actionType === 'edit' && initialData) {
       setTitle(initialData.title)
       setMessage(initialData.message)
       setImagePreview(initialData.imagePreview || null)
-      setRecipientType(initialData.recipientType)
-      setCustomerSelection(initialData.customerSelection)
+      setType(initialData.type)
     }
   }, [actionType, initialData])
 
@@ -59,27 +62,10 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
     if (file) {
       setImage(file)
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string)
-      }
+      reader.onloadend = () => setImagePreview(reader.result as string)
       reader.readAsDataURL(file)
     }
   }
-
-  const handleRecipientTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setRecipientType(e.target.value)
-  }
-
-  const handleCustomerSelectionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value)
-    setCustomerSelection(selectedOptions)
-    if (selectedOptions.includes('All')) {
-      handleOpenModal()
-    }
-  }
-
-  const handleOpenModal = () => setIsCustomerModalOpen(true)
-  const handleCloseModal = () => setIsCustomerModalOpen(false)
 
   const validate = () => {
     const validationErrors: { title?: string; message?: string } = {}
@@ -94,14 +80,18 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
       setErrors(validationErrors)
       return
     }
-    onSubmit({
-      title,
-      message,
-      image,
-      recipientType,
-      customerSelection
-    })
-    onClose()
+
+    const formData = new FormData()
+    formData.append('title', title)
+    formData.append('message', message)
+    formData.append('type', type)
+    formData.append('isSingle', 'false')
+
+    if (image) {
+      formData.append('image', image)
+    }
+
+    mutate(formData)
   }
 
   if (!isOpen) return null
@@ -109,7 +99,6 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="relative bg-white rounded-lg shadow-lg p-6 w-[500px]">
-        {/* Close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-3xl"
@@ -117,13 +106,11 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
           &times;
         </button>
 
-        {/* Modal Title */}
         <h2 className="text-lg font-semibold text-gray-700 mb-4">
           {actionType === 'add' ? 'New Notification' : 'Edit Notification'}
         </h2>
 
         <div className="space-y-4">
-          {/* Title Input */}
           <div className="relative">
             <input
               type="text"
@@ -141,17 +128,12 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
                   : 'focus:ring-[#147341] focus:border-[#147341]'
               }`}
             />
-            <label
-              className={`absolute text-sm ${
-                errors.title ? 'text-red-500' : 'text-gray-500'
-              } duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
-            >
+            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1">
               Title
             </label>
             {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title}</p>}
           </div>
 
-          {/* Message Input */}
           <div className="relative">
             <textarea
               value={message}
@@ -168,17 +150,12 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
                   : 'focus:ring-[#147341] focus:border-[#147341]'
               }`}
             />
-            <label
-              className={`absolute text-sm ${
-                errors.message ? 'text-red-500' : 'text-gray-500'
-              } duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4`}
-            >
+            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1">
               Message
             </label>
             {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
           </div>
 
-          {/* Image Upload */}
           <label htmlFor="imageInput" className="cursor-pointer">
             <img
               src={imagePreview || ''}
@@ -194,14 +171,13 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
             className="hidden"
           />
 
-          {/* Recipient Type */}
           <div className="space-x-4">
             <label>
               <input
                 type="radio"
                 value="customer"
-                checked={recipientType === 'customer'}
-                onChange={handleRecipientTypeChange}
+                checked={type === 'customer'}
+                onChange={(e) => setType(e.target.value as 'customer')}
               />
               Customer
             </label>
@@ -209,13 +185,12 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
               <input
                 type="radio"
                 value="agent"
-                checked={recipientType === 'agent'}
-                onChange={handleRecipientTypeChange}
+                checked={type === 'agent'}
+                onChange={(e) => setType(e.target.value as 'agent')}
               />
               Agent
             </label>
           </div>
-          
         </div>
 
         <div className="mt-6">
@@ -227,12 +202,6 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
           </button>
         </div>
       </div>
-
-      <TeamGroupModal
-        modalVisible={isCustomerModalOpen}
-        setModalVisible={setIsCustomerModalOpen}
-        onUserSelection={(selectedUsers) => console.log(selectedUsers)}
-      />
     </div>
   )
 }
