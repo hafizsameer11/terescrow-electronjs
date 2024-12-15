@@ -49,7 +49,11 @@ const AgentsPage: React.FC = () => {
       agent.user.username.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-
+const handleAgentUpdate = () => {
+  // Perform agent update logic here
+  console.log('Updating agent...');
+  setIsEditModalOpen(false);
+};
 
   return (
     <div className="p-6 w-full">
@@ -96,21 +100,10 @@ const AgentsPage: React.FC = () => {
           onClose={() => setIsEditModalOpen(false)}
           agentData={selectedAgent}
           departmentData={selectedDepartment}
-          onUpdate={(updatedData) =>
-            console.log("Updated Data:", updatedData)
-          }
+          onUpdate={handleAgentUpdate}
         />
       )}
 
-      {/* Add Profile Modal */}
-      {/* {isAddModalOpen && (
-        <AddAgentProfileModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onUpdate={(updatedData) => console.log("Updated Data:", updatedData)}
-          agentData={agentData}
-        />
-      )} */}
     </div>
   );
 };

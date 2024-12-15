@@ -151,12 +151,6 @@ const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: str
                 <td className="px-4 py-2">{new Date(banner.createdAt).toLocaleString()}</td>
                 <td className="px-4 py-2 space-x-2">
                   <button
-                    className="text-gray-500 bg-gray-100 p-2 rounded-lg"
-                    onClick={() => handleOpenBannerModal(banner)}
-                  >
-                    <AiOutlineEye size={20} />
-                  </button>
-                  <button
                     className="text-red-500"
                     onClick={() => handleDeleteBanner(banner.id)}
                   >

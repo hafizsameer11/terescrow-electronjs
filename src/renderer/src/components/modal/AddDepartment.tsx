@@ -47,7 +47,7 @@ interface AgentEditProfileModalProps {
     description: string
     icon?: string
     Type?: string
-    niceh?: string
+    niche?: string
     id?: number
   }
 }

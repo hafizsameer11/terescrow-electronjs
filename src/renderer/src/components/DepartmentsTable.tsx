@@ -41,7 +41,6 @@ const DepartmentsTable: React.FC = () => {
     }
   }, [departmentsData]);
 
-  // Search Filter Handler
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value.toLowerCase();
     setSearchQuery(query);
@@ -86,7 +85,7 @@ const DepartmentsTable: React.FC = () => {
   const handleUpdate = (data: Record<string, any>) => {
     mutation.mutate({
       token,
-      id:data.id,
+      id: data.id,
       data: {
         title: data.name,
         description: data.description,
@@ -135,12 +134,18 @@ const DepartmentsTable: React.FC = () => {
                   <td>
                     <StatusButton title="Active" status={department.status || ''} />
                   </td>
-                  <td className="py-3 px-4">{department.niche?.toUpperCase() }</td>
-                  <td className="py-3 px-4">{department.noOfAgents || 0}</td>
+                  <td className="py-3 px-4">{department.niche?.toUpperCase()}</td>
+                  <td className="py-3 px-4">
+                    <button onClick={() => navigate(`/department-agent?id=${department.id}`)}>
+                      {department.noOfAgents || 0}
+
+                    </button>
+
+                  </td>
                   <td className="py-3 px-4">{department.description || 'N/A'}</td>
                   <td className="py-3 px-4 text-center flex justify-center gap-2">
                     <button
-                      onClick={() => navigate(`/department-agent?id=${department.id}`)}
+                      onClick={() => navigate(`/department-agent`)}
                       className="bg-green-100 text-green-600 px-3 py-2 rounded-lg text-sm flex items-center gap-2"
                       title="Assign Agents"
                     >
@@ -161,7 +166,7 @@ const DepartmentsTable: React.FC = () => {
                       <MdEdit />
                     </button>
                     <button
-                    onClick={()=>handledeletDepartment(department.id)}
+                      onClick={() => handledeletDepartment(department.id?.toString() || '')}
                       className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200"
                       title="Delete Department"
                     >

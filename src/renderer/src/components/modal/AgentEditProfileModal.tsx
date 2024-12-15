@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Select, { MultiValue } from "react-select";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Agent } from "@renderer/api/queries/datainterfaces";
-import { Department } from "../DepartmentsTable";
+import { Agent, Department } from "@renderer/api/queries/datainterfaces";
+// import { Department } from "../DepartmentsTable";
 
 interface OptionType {
   value: number;
@@ -30,13 +30,21 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
 
   useEffect(() => {
     if (agentData && departmentData) {
-      const preselectedDepartments = departmentData.map((dept) => ({
-        value: dept.id,
-        label: dept.title,
-      }));
+      const assignedDepartmentIds = agentData.assignedDepartments.map(
+        (dept) => dept.departmentId
+      );
+
+      const preselectedDepartments = departmentData
+        .filter((dept) => assignedDepartmentIds.includes(dept.id))
+        .map((dept) => ({
+          value: dept.id,
+          label: dept.title,
+        }));
+
       setSelectedDepartments(preselectedDepartments);
     }
   }, [agentData, departmentData]);
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>

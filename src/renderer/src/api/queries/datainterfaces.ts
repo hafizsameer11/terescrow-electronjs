@@ -64,11 +64,16 @@ export interface Country {
   id: number
   title?: string
 }
+export interface AssignedDepartments{
+  departmentId: number
+  title?: string
+}
 export interface Agent {
   id: number
   userId: number
   AgentStatus: string
   user: Customer
+  assignedDepartments?: AssignedDepartments[]
 }
 
 interface Transaction {
