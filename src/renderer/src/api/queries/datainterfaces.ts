@@ -259,3 +259,9 @@ export interface NotificationsResponse {
   message: string;
   data: Notification[];
 }
+
+export interface createAgentResponse{
+  status: string
+  message: string
+  data: Agent
+}

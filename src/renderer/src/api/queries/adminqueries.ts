@@ -3,6 +3,7 @@ import { NotificationResponse } from 'electron'
 import { API_ENDPOINT } from '../config'
 import { apiCall } from '../customApiCall'
 import {
+  Agent,
   AgentByDepartmentResponse,
   AllBannerResponse,
   AllCustomerRespone,
@@ -10,6 +11,7 @@ import {
   Banner,
   Category,
   CategroiesResponse,
+  createAgentResponse,
   CreateBannerResponse,
   CreateCategoryResponse,
   CreateDepartmentResponse,
@@ -286,4 +288,15 @@ export const deleteNotification = async ({
   id: string
 }): Promise<NotificationResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteNotification}/${id}`, 'DELETE', undefined, token)
+}
+
+
+export const createAgent= async ({
+  token,
+  data
+}: {
+  token: string
+  data: Agent
+}): Promise<createAgentResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateAgent}`, 'POST', data, token)
 }

@@ -93,7 +93,6 @@ const handleAgentUpdate = () => {
         ))}
       </div>
 
-      Edit Profile Modal
       {isEditModalOpen && selectedAgent && (
         <AgentEditProfileModal
           isOpen={isEditModalOpen}
@@ -103,6 +102,15 @@ const handleAgentUpdate = () => {
           onUpdate={handleAgentUpdate}
         />
       )}
+      {
+        isAddModalOpen && (
+          <AddAgentProfileModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            departmentData={selectedDepartment}
+          />
+        )
+      }
 
     </div>
   );
