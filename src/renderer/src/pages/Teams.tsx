@@ -6,6 +6,10 @@ import TeamFilterHeader from '@renderer/components/TeamFilterHeader.js'
 import AgentEditProfileModal from '@renderer/components/modal/AgentEditProfileModal.js'
 import { Images } from '@renderer/constant/Image.js'
 import ActivityHistory from '@renderer/components/ActivityHistory.js'
+import TeamTable from '@renderer/components/TeamsTable.js'
+import { getTeam } from '@renderer/api/queries/adminqueries.js'
+import { token } from '@renderer/api/config.js'
+import { useQuery } from '@tanstack/react-query'
 
 interface Agent {
   fullName: string
@@ -53,7 +57,7 @@ const Teams = () => {
     }
   ]
 
-  const [activeTab, setActiveTab] = useState<'Active' | 'Deleted'>('Active')
+  const [activeTab, setActiveTab] = useState<'online' | 'offline'>('online')
   const [selectedRole, setSelectedRole] = useState<'Manager' | 'Agent' | 'Roles'>('Roles')
   const [searchValue, setSearchValue] = useState('')
   const [isEditClick, setIsEditClick] = useState(false)
@@ -65,6 +69,11 @@ const Teams = () => {
   const handleTabChange = (tab: 'Active' | 'Deleted') => {
     setActiveTab(tab)
   }
+  const { data: teamData, isLoading, isError, error } = useQuery({
+    queryKey: ['teamData'],
+    queryFn: () => getTeam({ token }),
+    enabled: !!token,
+  });
 
   const handleRoleChange = (role: 'Manager' | 'Agent' | 'Roles') => {
     setSelectedRole(role)
@@ -94,20 +103,14 @@ const Teams = () => {
     setSelectAgentActivityId(selectedUserUd)
   }
 
-  // Filter the data dynamically based on filters
-  const filteredData = sampleData.filter((member) => {
-    // Match the `activeTab` to filter by status
+  const filteredData = teamData?.data.filter((member) => {
     const matchesTab =
-      activeTab === 'Active' ? member.status === 'Active' : member.status === 'Inactive'
-
-    // Match the `selectedRole` to filter by role
-    const matchesRole = selectedRole === 'Roles' || member.role === selectedRole
-
-    // Match the `searchValue` to filter by name or username
+      activeTab === 'Active' ? member.AgentStatus === 'online' : member.AgentStatus === 'offline'
+    const matchesRole = selectedRole === 'Roles' || member.user.role === selectedRole
     const matchesSearch =
       searchValue === '' ||
-      member.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-      member.username.toLowerCase().includes(searchValue.toLowerCase())
+      member.user.firstname?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      member.user.username.toLowerCase().includes(searchValue.toLowerCase())
 
     return matchesTab && matchesRole && matchesSearch
   })
@@ -147,7 +150,7 @@ const Teams = () => {
             onRoleChange={handleRoleChange}
             onSearchChange={handleSearchChange}
           />
-          <ChatTable
+          <TeamTable
             data={filteredData}
             isTeam={true}
             isTeamCommunition={false}

@@ -23,16 +23,22 @@
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.1",
     "@electron-toolkit/utils": "^3.0.0",
+    "@tanstack/react-query": "^5.62.7",
+    "axios": "^1.7.9",
+    "electron-store": "^10.0.0",
     "electron-updater": "^6.1.7",
     "formik": "^2.4.6",
+    "react-query": "^3.39.3",
     "react-router-dom": "6",
     "react-select": "^5.8.3",
+    "react-toastify": "^10.0.6",
     "yup": "^1.5.0"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",
     "@electron-toolkit/eslint-config-ts": "^2.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
+    "@types/electron-store": "^3.2.2",
     "@types/node": "^20.14.8",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

@@ -1,27 +1,12 @@
+import { token } from "@renderer/api/config";
+import { gettAllCustomerss } from "@renderer/api/queries/adminqueries";
 import CustomerFilters from "@renderer/components/CustomerFilters";
 import CustomerTable from "@renderer/components/CustomerTable";
 import StatsCard from "@renderer/components/StatsCard";
-import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
 
-const customers = [
-  {
-    id: 1,
-    name: "Qamardeen Abdulmalik",
-    username: "Alucard",
-    email: "johndoe@gmail.com",
-    mobileNumber: "+234123456789",
-    password: "****",
-    gender: "Male",
-    referralCode: null,
-    country: "Nigeria",
-    kycStatus: "Successful",
-    tier: "Gold",
-    dateJoined: "Nov 7, 2024",
-    lastPasswordReset: "Nov 1, 2024",
-    accountActivities: [],
-  },
-  // Add more customers here as needed
-];
+// Define the Customer Interface
 
 const CustomersPage: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -30,57 +15,78 @@ const CustomersPage: React.FC = () => {
     search: "",
   });
 
-  const filteredCustomers = customers.filter((customer) => {
+  // Fetch customers using React Query
+  const { data: customersData, isLoading, isError, error } = useQuery({
+    queryKey: ["customersData"],
+    queryFn: () => gettAllCustomerss({ token }),
+    enabled: !!token,
+  });
+
+  // Log fetched data for debugging
+  useEffect(() => {
+    if (customersData) {
+      console.log("Fetched Customers:", customersData.data);
+    }
+  }, [customersData]);
+
+  // Filter customers based on filters state
+  const filteredCustomers = customersData?.data.filter((customer) => {
     const matchesGender =
       filters.gender === "All" || customer.gender === filters.gender;
     const matchesCountry =
       filters.country === "All" || customer.country === filters.country;
     const matchesSearch =
       filters.search === "" ||
-      customer.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      customer.username.toLowerCase().includes(filters.search.toLowerCase());
+      customer.firstname?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      customer.lastname?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      customer.username?.toLowerCase().includes(filters.search.toLowerCase());
 
     return matchesGender && matchesCountry && matchesSearch;
   });
+
+  if (isLoading) return <p>Loading customers...</p>;
+  if (isError) return <p>Error fetching customers: {(error as any)?.message}</p>;
 
   return (
     <div className="w-full mb-10">
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-[40px] font-normal text-gray-800">Customers</h1>
-
       </div>
 
       {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <StatsCard
           title="Total Customers"
-          value="15,000"
+          value={customersData?.data.length.toString() || "0"}
           change="+1%"
           isPositive={true}
         />
         <StatsCard
           title="Active Now"
-          value="20"
+          value="20" // Example static value
           change="+1%"
           isPositive={true}
         />
         <StatsCard
           title="Offline Now"
-          value="14,980"
+          value="14,980" // Example static value
           change="+1%"
           isPositive={true}
         />
         <StatsCard
           title="Total Transactions"
-          value="1,500"
+          value="1,500" // Example static value
           change="-1%"
           isPositive={false}
         />
       </div>
+
       <div>
-        <h2 className="text-[30px] font-normal  text-black">Customers on the app</h2>
-        <p className="text-[#00000080] text-[16px] mb-5">
+        <h2 className="text-[30px] font-normal text-black">
+          Customers on the app
+        </h2>
+        <p className="text-[#00000080] text-[16px]">
           Manage total customers and see their activities
         </p>
       </div>
@@ -94,7 +100,7 @@ const CustomersPage: React.FC = () => {
       />
 
       {/* Customer Table */}
-      <CustomerTable data={filteredCustomers} />
+      <CustomerTable data={filteredCustomers } />
     </div>
   );
 };

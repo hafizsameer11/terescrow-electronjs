@@ -23,10 +23,6 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(({ chil
 Content.displayName = 'Content';
 
 
-
-
-
-
 export const MainContent = ({ children, className, ...props }: ComponentProps<'div'>) => {
   return (
     <div className={twMerge('flex flex-row px-[40px] py-[48px]', className)} {...props}>

@@ -1,48 +1,66 @@
-import React, { useState } from "react";
-import Select from "react-select";
+import React, { useState, useEffect } from "react";
+import Select, { MultiValue } from "react-select";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { Agent, Department } from "@renderer/api/queries/datainterfaces";
+// import { Department } from "../DepartmentsTable";
+
+interface OptionType {
+  value: number;
+  label: string;
+}
 
 interface AgentEditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  agentData: {
-    fullName: string;
-    username: string;
-    role: string;
-    departments: string[];
-    password: string;
-    profilePhoto?: string;
-  };
+  agentData: Agent;
   onUpdate: (updatedData: Record<string, any>) => void;
+  departmentData?: Department[] | null;
 }
-
-const departmentOptions = [
-  { value: "Buy Crypto", label: "Buy Crypto" },
-  { value: "Sell Crypto", label: "Sell Crypto" },
-  { value: "Buy Gift Card", label: "Buy Gift Card" },
-  { value: "Sell Gift Card", label: "Sell Gift Card" },
-];
 
 const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
   isOpen,
   onClose,
   agentData,
   onUpdate,
+  departmentData,
 }) => {
   const [formData, setFormData] = useState(agentData);
+  const [selectedDepartments, setSelectedDepartments] = useState<OptionType[]>([]);
   const [showPassword, setShowPassword] = useState(false);
+
+  useEffect(() => {
+    if (agentData && departmentData) {
+      const assignedDepartmentIds = agentData.assignedDepartments.map(
+        (dept) => dept.departmentId
+      );
+
+      const preselectedDepartments = departmentData
+        .filter((dept) => assignedDepartmentIds.includes(dept.id))
+        .map((dept) => ({
+          value: dept.id,
+          label: dept.title,
+        }));
+
+      setSelectedDepartments(preselectedDepartments);
+    }
+  }, [agentData, departmentData]);
+
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, user: { ...prev.user, [name]: value } }));
   };
 
-  const handleDepartmentsChange = (selectedOptions: any) => {
+  const handleDepartmentsChange = (selectedOptions: MultiValue<OptionType>) => {
+    setSelectedDepartments(selectedOptions as OptionType[]);
     setFormData((prev) => ({
       ...prev,
-      departments: selectedOptions ? selectedOptions.map((opt: any) => opt.value) : [],
+      departments: selectedOptions?.map((opt) => ({
+        id: opt.value,
+        title: opt.label,
+      })) || [],
     }));
   };
 
@@ -55,11 +73,13 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
         if (event.target?.result) {
           setFormData((prev) => ({
             ...prev,
-            profilePhoto: event.target.result as string, // Set base64 image
+            user: {
+              ...prev.user,
+              profilePicture: event.target.result as string,
+            },
           }));
         }
       };
-
       reader.readAsDataURL(file);
     }
   };
@@ -88,7 +108,7 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
         className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
       />
       <label
-        className={`absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 z-10 ${
+        className={`absolute text-sm text-gray-500 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 ${
           props.value ? "scale-75 -translate-y-4" : "peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100"
         } peer-focus:scale-75 peer-focus:-translate-y-4`}
       >
@@ -96,6 +116,12 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
       </label>
     </div>
   );
+
+  const departmentOptions: OptionType[] =
+    departmentData?.map((dept) => ({
+      value: dept.id,
+      label: dept.title,
+    })) || [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6">
@@ -115,7 +141,9 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
         <div className="flex flex-col items-center mb-6">
           <div className="relative">
             <img
-              src={formData.profilePhoto || "https://via.placeholder.com/80"}
+              src={
+                formData.user.profilePicture || "https://via.placeholder.com/80"
+              }
               alt="Profile"
               className="w-20 h-20 object-cover rounded-full border border-gray-300"
             />
@@ -139,41 +167,39 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
         <div className="space-y-4">
           <FloatingInput
             label="Full Name"
-            name="fullName"
-            value={formData.fullName}
+            name="firstname"
+            value={formData?.user?.firstname || ""}
             onChange={handleChange}
           />
           <FloatingInput
             label="Username"
             name="username"
-            value={formData.username}
+            value={formData?.user?.username || ""}
             onChange={handleChange}
           />
+
+          {/* Role Dropdown */}
           <div className="relative">
             <select
               name="role"
-              value={formData.role}
+              value={formData.user.role}
               onChange={handleChange}
               className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341] bg-white"
             >
               <option value="Agent">Agent</option>
               <option value="Admin">Admin</option>
             </select>
-            <label
-              className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4"
-            >
+            <label className="absolute text-sm text-gray-500 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1">
               Role
             </label>
           </div>
 
-          {/* Departments */}
+          {/* Departments Dropdown */}
           <div className="relative">
             <Select
               isMulti
               options={departmentOptions}
-              value={departmentOptions.filter((opt) =>
-                formData.departments.includes(opt.value)
-              )}
+              value={selectedDepartments}
               onChange={handleDepartmentsChange}
               placeholder="Select Departments"
               className="text-sm"
@@ -185,14 +211,12 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
             <input
               type={showPassword ? "text" : "password"}
               name="password"
-              value={formData.password}
+              value={formData.user.password}
               onChange={handleChange}
               placeholder=" "
               className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] pr-10"
             />
-            <label
-              className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4"
-            >
+            <label className="absolute text-sm text-gray-500 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1">
               Password
             </label>
             <button
