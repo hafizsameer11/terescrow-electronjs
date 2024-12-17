@@ -3,14 +3,40 @@ import { useNavigate } from 'react-router-dom'
 import { Formik, Form } from 'formik'
 import Input from '@renderer/utils/customInput'
 import { validationSignIn } from '@renderer/utils/validation'
-import { Icons } from '@renderer/constant/Icons'
+import { useMutation } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
+import { useAuth, UserRoles } from '@renderer/context/authContext'
+import { loginUser } from '@renderer/mutation/commonMutation'
+import { ApiError } from '@renderer/api/customApiCall'
 
 const LoginPage = () => {
   const navigate = useNavigate()
+  const { dispatch } = useAuth()
 
-  const handleLogin = () => {
-    navigate('/dashboard')
-  }
+  const { mutate, isPending } = useMutation({
+    mutationKey: ['login'],
+    mutationFn: loginUser,
+    onSuccess: async (data) => {
+      console.log(`API response: `, data.data)
+      if (data?.token) {
+        dispatch({ type: 'SET_TOKEN', payload: data?.token })
+        dispatch({ type: 'SET_USER_DATA', payload: data.data })
+        data.data.role === UserRoles.admin ? navigate('/dashboard') : navigate('/chats')
+      } else {
+        toast.error(`Error: ${data?.message}`, {
+          position: 'top-right',
+          theme: 'colored',
+          autoClose: 3000
+        })
+      }
+    },
+    onError: (error: ApiError) => {
+      toast.error(`Error: ${error?.message || 'Failed to login'}`, {
+        position: 'top-right',
+        autoClose: 3000
+      })
+    }
+  })
 
   return (
     <div className=" w-full">
@@ -18,7 +44,7 @@ const LoginPage = () => {
         <img src={Images.logo} alt="" />
       </div>
       <div className="h-full w-full flex items-center justify-center">
-        <div className="p-6 rounded-lg shadow-sm w-1/3  bg-white">
+        <div className="p-6 rounded-lg shadow-sm bg-white w-[450px] mt-10">
           <div className="mb-6">
             <h2 className="font-semibold text-2xl">Login</h2>
             <p>Login to your admin dashboard</p>
@@ -27,9 +53,11 @@ const LoginPage = () => {
             <Formik
               initialValues={{ email: '', password: '' }}
               validationSchema={validationSignIn}
-              onSubmit={handleLogin}
+              onSubmit={(values) => {
+                mutate(values)
+              }}
             >
-              {({ handleChange, handleBlur, values, errors, touched }) => {
+              {({ handleChange, handleBlur, values, errors, touched, handleSubmit }) => {
                 return (
                   <Form>
                     <div>
@@ -53,6 +81,7 @@ const LoginPage = () => {
                       />
                       <div>
                         <button
+                          onClick={() => handleSubmit}
                           className="bg-green-600 hover:bg-green-700 w-full text-white font-bold py-2 px-4 rounded"
                           type="submit"
                         >

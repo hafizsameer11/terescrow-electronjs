@@ -25,13 +25,14 @@ import Teams from './pages/Teams'
 import Settings from './pages/Settings'
 import Transaction from './pages/Transaction'
 import Services from './pages/Services'
+import { AuthProvider } from './context/authContext'
 
 function App(): JSX.Element {
   const location = useLocation()
   const [isLogin, setIsLogin] = useState(false)
   
   return (
-    <>
+    <AuthProvider>
       <RootLayout>
         {!isLogin && location.pathname !== '/' && <Sidebar />}
 
@@ -63,7 +64,7 @@ function App(): JSX.Element {
           </MainContent>
         </Content>
       </RootLayout>
-    </>
+    </AuthProvider>
   )
 }
 

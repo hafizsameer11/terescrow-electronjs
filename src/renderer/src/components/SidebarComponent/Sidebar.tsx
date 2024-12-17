@@ -1,36 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import NavItem from './NavItem' // Import the NavItem component
-import {
-  FaUser,
-  FaComments,
-  FaChartPie,
-  FaMoneyCheckAlt,
-  FaPercent,
-  FaBook,
-  FaUserTie,
-  FaUsers,
-  FaBell,
-  FaCog,
-  FaUserTag,
-} from 'react-icons/fa'
+import { FaBell, FaCog, FaUserTag } from 'react-icons/fa'
 import { RiTeamFill } from 'react-icons/ri'
 import { Images } from '@renderer/constant/Image'
+import { useAuth, UserRoles } from '@renderer/context/authContext'
 
 export const Sidebar = () => {
-  const [activeItem, setActiveItem] = useState('dashboard')
+  const { userData } = useAuth()
+  const initialActiveItem = userData?.role === UserRoles.admin ? 'dashboard' : 'chats'
+  const [activeItem, setActiveItem] = useState(initialActiveItem)
 
-  // Navigation menu data
-  const menuItems = [
-    { label: 'Dashboard', icon: <FaChartPie />, href: '/dashboard', id: 'dashboard' },
-    { label: 'Customers', icon: <FaUser />, href: '/customers', id: 'customers' },
-    { label: 'Chats', icon: <FaComments />, href: '/chats', id: 'chats' },
-    { label: 'Transactions', icon: <FaMoneyCheckAlt />, href: '/transactions', id: 'transactions' },
-    { label: 'Rates', icon: <FaPercent />, href: '/rates', id: 'rates' },
-    { label: 'Log', icon: <FaBook />, href: '/log', id: 'log' },
-    { label: 'Department', icon: <FaUserTie />, href: '/departments', id: 'department' },
+  const adminMenuItems = [
+    { label: 'Dashboard', icon: Images.dashboard, href: '/dashboard', id: 'dashboard' },
+    { label: 'Customers', icon: Images.customer, href: '/customers', id: 'customers' },
+    { label: 'Chats', icon: Images.chats, href: '/chats', id: 'chats' },
+    { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
+    { label: 'Rates', icon: Images.rates, href: '/rates', id: 'rates' },
+    { label: 'Log', icon: Images.log, href: '/log', id: 'log' },
+    { label: 'Department', icon: Images.department, href: '/departments', id: 'department' },
     { label: 'Services', icon: <FaUserTag />, href: '/services', id: 'services' },
-    { label: 'Teams', icon: <FaUsers />, href: '/teams', id: 'teams' },
-    { label: 'Users', icon: <FaUser />, href: '/usersall', id: 'users' }
+    { label: 'Teams', icon: Images.teams, href: '/teams', id: 'teams' },
+    { label: 'Users', icon: Images.users, href: '/usersall', id: 'users' }
+  ]
+
+  const agentMenuItems = [
+    { label: 'Chats', icon: Images.chats, href: '/chats', id: 'chats' },
+    { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' }
   ]
 
   const bottomMenuItems = [
@@ -43,23 +38,40 @@ export const Sidebar = () => {
       id: 'team-communication'
     }
   ]
+  console.log('sidebar', userData?.role)
+
+  const menuItems = userData?.role === UserRoles.admin ? adminMenuItems : agentMenuItems
 
   return (
     <aside className="lg:w-[280px] h-screen bg-white px-[20px] lg:px-[30px] text-gray-800 flex flex-col border-r border-[#989898] overflow-auto">
-      {/* Logo Section */}
       <div className="flex items-start justify-start py-6">
         <img src={Images.logo} alt="Logo" className="h-8 lg:h-14 object-contain" />
-        {/* <span className="ml-2 text-lg font-bold">Terescrow</span> */}
       </div>
-
-      {/* Navigation Links */}
       <nav className="mt-4">
         <ul className="space-y-1">
           {menuItems.map((item) => (
             <NavItem
               key={item.id}
               label={item.label}
-              icon={item.icon}
+              icon={
+                typeof item.icon === 'string' ? (
+                  <img
+                    src={item.icon}
+                    alt={item.label}
+                    className={`w-5 h-5 object-cover transition-colors ${
+                      activeItem === item.id ? 'image-tint' : ''
+                    }`}
+                  />
+                ) : (
+                  <span
+                    className={`text-2xl transition-colors ${
+                      activeItem === item.id ? 'image-tint' : 'text-black'
+                    }`}
+                  >
+                    {item.icon}
+                  </span>
+                )
+              }
               href={item.href}
               isActive={activeItem === item.id}
               onClick={() => setActiveItem(item.id)}
@@ -75,9 +87,19 @@ export const Sidebar = () => {
             <NavItem
               key={item.id}
               label={item.label}
-              icon={item.icon}
-              href={item.href}
               isActive={activeItem === item.id}
+              icon={
+                <span
+                  className={`text-2xl transition-colors ${
+                    activeItem === item.id
+                      ? 'image-tint text-white fill-white stroke-white'
+                      : 'text-black'
+                  }`}
+                >
+                  {item.icon}
+                </span>
+              }
+              href={item.href}
               onClick={() => setActiveItem(item.id)}
             />
           ))}

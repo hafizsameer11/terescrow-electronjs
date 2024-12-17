@@ -14,39 +14,45 @@ const UsersPage = () => {
     search: ''
   })
 
-  const userCategory = ['All', 'Customer', 'Team']
+  const userCategory = ['All', 'customer', 'agent']
   // const { data: teamData, isLoading, isError, error } = useQuery({
   //   queryKey: ['teamData'],
   //   queryFn: () => getTeam({ token }),
   //   enabled: !!token,
   // });
-  const {data:userData, isLoading, isError, error} = useQuery({
+  const {
+    data: userData,
+    isLoading,
+    isError,
+    error
+  } = useQuery({
     queryKey: ['userData'],
     queryFn: () => getAllUsers({ token }),
-    enabled: !!token,
+    enabled: !!token
   })
+
+  console.log(userData)
   const handleCategoryChange = (category) => {
     setFilters({ ...filters, category })
   }
 
-  const filteredCustomers = DUMMY_USERS.filter((customer) => {
+  const filteredCustomers = userData?.data.filter((customer) => {
     const matchesGender = filters.gender === 'All' || customer.gender === filters.gender
-    const matchesCategory = filters.category === 'All' || customer.category === filters.category
+    const matchesCategory = filters.category === 'All' || customer.role === filters.category
     const matchesSearch =
       filters.search === '' ||
-      customer.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      customer.username.toLowerCase().includes(filters.search.toLowerCase())
+      customer.username.toLowerCase().includes(filters.search.toLowerCase()) ||
+      customer.firstname?.toLowerCase().includes(filters.search.toLowerCase())
 
     return matchesGender && matchesCategory && matchesSearch
   })
 
+  console.log(userData)
+
   return (
     <div className="p-6 space-y-8 w-full">
       <div className="flex items-center justify-between">
-        {/* Header */}
         <h1 className="text-[40px] text-gray-800">Users</h1>
-
-        {/* Dropdown */}
         <select className="ml-4 px-3 py-2 rounded-lg border border-gray-300 text-gray-800">
           <option>Last 30 days</option>
           <option>Last 15 days</option>
@@ -81,18 +87,18 @@ const UsersPage = () => {
               selectedFilter === 'Team' ? 'rounded-r-lg' : ''
             }`}
           >
-            {selectedFilter}
+            {selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)}
           </button>
         ))}
       </div>
 
-        {/* Filters Component */}
-        <UsersFilter
-          filters={filters}
-          onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
-        />
+      {/* Filters Component */}
+      <UsersFilter
+        filters={filters}
+        onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
+      />
 
-        <UserTable data={userData?.data} />
+      <UserTable data={filteredCustomers} />
     </div>
   )
 }

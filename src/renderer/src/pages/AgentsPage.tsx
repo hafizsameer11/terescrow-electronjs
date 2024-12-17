@@ -1,59 +1,65 @@
-import React, { useEffect, useState } from "react";
-import AgentCard from "@renderer/components/AgentCard";
-import { Images } from "@renderer/constant/Image";
-import AgentEditProfileModal from "@renderer/components/modal/AgentEditProfileModal";
-import AddAgentProfileModal from "@renderer/components/modal/AddAgentProfileModal";
-import { useLocation, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { getAgentByDepartment, getAllAgents, getCustomerDetails, getDepartments } from "@renderer/api/queries/adminqueries";
-import { token } from "@renderer/api/config";
-import { Agent, Department } from "@renderer/api/queries/datainterfaces";
+import React, { useEffect, useState } from 'react'
+import AgentCard from '@renderer/components/AgentCard'
+import { Images } from '@renderer/constant/Image'
+import AgentEditProfileModal from '@renderer/components/modal/AgentEditProfileModal'
+import AddAgentProfileModal from '@renderer/components/modal/AddAgentProfileModal'
+import { useLocation, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import {
+  getAgentByDepartment,
+  getAllAgents,
+  getCustomerDetails,
+  getDepartments
+} from '@renderer/api/queries/adminqueries'
+import { token } from '@renderer/api/config'
+import { Agent, Department } from '@renderer/api/queries/datainterfaces'
 const AgentsPage: React.FC = () => {
-  const location = useLocation();
+  const location = useLocation()
 
   // Extract the department ID from the query string
-  const queryParams = new URLSearchParams(location.search);
-  const departmentId = queryParams.get("id");
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(""); // State for search query
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const queryParams = new URLSearchParams(location.search)
+  const departmentId = queryParams.get('id')
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('') // State for search query
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
 
-  const [selectedDepartment, setSelectedDepartment] = useState<Department[] | null>([]);
+  const [selectedDepartment, setSelectedDepartment] = useState<Department[] | null>([])
 
-  const { data: departmentsData, isLoading: isDepartmetnLoadin, isError: isDepartmentError, error: departmenterror } = useQuery({
+  const {
+    data: departmentsData,
+    isLoading: isDepartmetnLoading,
+    isError: isDepartmentError,
+    error: departmenterror
+  } = useQuery({
     queryKey: ['departmentsData'],
     queryFn: () => getDepartments({ token }),
-    enabled: !!token,
-  });
+    enabled: !!token
+  })
 
   // Effect to Set Filtered Departments
   useEffect(() => {
     if (departmentsData) {
       setSelectedDepartment(departmentsData.data)
     }
-  }, [departmentsData]);
+  }, [departmentsData])
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: departmentId ? ['agentsData', departmentId] : ['allAgentsData'],
     queryFn: () =>
-      departmentId
-        ? getAgentByDepartment({ token, id: departmentId })
-        : getAllAgents({ token }),
-  });
-
+      departmentId ? getAgentByDepartment({ token, id: departmentId }) : getAllAgents({ token })
+  })
 
   const filteredAgents = data?.data.filter(
     (agent) =>
       agent.user.firstname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       agent.user.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  )
 
-const handleAgentUpdate = () => {
-  // Perform agent update logic here
-  console.log('Updating agent...');
-  setIsEditModalOpen(false);
-};
+  const handleAgentUpdate = () => {
+    console.log('Updating agent...')
+    setIsEditModalOpen(false)
+  }
 
   return (
     <div className="p-6 w-full">
@@ -76,7 +82,6 @@ const handleAgentUpdate = () => {
           </button>
         </div>
       </div>
-
       {/* Agents Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {filteredAgents?.map((agent) => (
@@ -85,8 +90,8 @@ const handleAgentUpdate = () => {
             agent={agent}
             onView={() => alert(`Viewing details of ${agent.user.username}`)}
             onEdit={() => {
-              setSelectedAgent(agent);
-              setIsEditModalOpen(true);
+              setSelectedAgent(agent)
+              setIsEditModalOpen(true)
             }}
             onDelete={() => alert(`Deleting ${agent.user.username}`)}
           />
@@ -112,8 +117,18 @@ const handleAgentUpdate = () => {
         )
       }
 
-    </div>
-  );
-};
+      {
+        isAddModalOpen && (
+          <AddAgentProfileModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            departmentData={selectedDepartment}
+          />
+        )
+      }
 
-export default AgentsPage;
+    </div>
+  )
+}
+
+export default AgentsPage

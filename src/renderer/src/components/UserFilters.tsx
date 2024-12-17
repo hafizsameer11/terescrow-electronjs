@@ -10,8 +10,8 @@ interface CustomerFiltersProps {
 }
 
 const UsersFilter: React.FC<CustomerFiltersProps> = ({ filters, onChange }) => {
-  const genderOptions = ['All', 'Male', 'Female']
-  const categoryOptions = ['All', 'Team', 'Customer'] // Add more countries if needed
+  const genderOptions = ['All', 'male', 'female']
+  const categoryOptions = ['All', 'agent', 'customer'] // Add more countries if needed
 
   return (
     <div className="flex flex-wrap justify-between items-center mb-4">
@@ -29,7 +29,7 @@ const UsersFilter: React.FC<CustomerFiltersProps> = ({ filters, onChange }) => {
             }`}
             onClick={() => onChange({ gender })}
           >
-            {gender}
+            {gender.charAt(0).toUpperCase() + gender.slice(1)}
           </button>
         ))}
       </div>
@@ -42,7 +42,7 @@ const UsersFilter: React.FC<CustomerFiltersProps> = ({ filters, onChange }) => {
         >
           {categoryOptions.map((category) => (
             <option key={category} value={category}>
-              {category}
+              {category.charAt(0).toUpperCase() + category.slice(1)}
             </option>
           ))}
         </select>
