@@ -23,11 +23,11 @@ const LoginPage = () => {
         dispatch({ type: 'SET_USER_DATA', payload: data.data })
         data.data.role === UserRoles.admin ? navigate('/dashboard') : navigate('/chats')
       } else {
-        toast.error(`Error: ${data?.message}`),
-          {
-            position: 'top-right',
-            autoClose: 3000
-          }
+        toast.error(`Error: ${data?.message}`, {
+          position: 'top-right',
+          theme: 'colored',
+          autoClose: 3000
+        })
       }
     },
     onError: (error: ApiError) => {
@@ -37,7 +37,7 @@ const LoginPage = () => {
       })
     }
   })
-  
+
   return (
     <div className=" w-full">
       <div>

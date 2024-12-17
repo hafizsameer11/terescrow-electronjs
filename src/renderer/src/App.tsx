@@ -30,7 +30,7 @@ import { AuthProvider } from './context/authContext'
 function App(): JSX.Element {
   const location = useLocation()
   const [isLogin, setIsLogin] = useState(false)
-
+  
   return (
     <AuthProvider>
       <RootLayout>

@@ -117,6 +117,16 @@ const AgentsPage: React.FC = () => {
         )
       }
 
+      {
+        isAddModalOpen && (
+          <AddAgentProfileModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            departmentData={selectedDepartment}
+          />
+        )
+      }
+
     </div>
   )
 }
