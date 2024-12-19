@@ -45,6 +45,9 @@ const API_ENDPOINT = {
     GetNotification: API_DOMAIN + '/admin/operations/get-all-notifications',
 
 
+  }, 
+  COMMON: {
+    login: API_DOMAIN + '/public/login'
   }
 }
 const token =
