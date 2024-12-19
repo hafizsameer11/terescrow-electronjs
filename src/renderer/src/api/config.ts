@@ -1,4 +1,4 @@
-const API_DOMAIN = 'http://localhost:8000/api'
+const API_DOMAIN = 'http://46.202.154.203:8000/api'
 const API_ENDPOINT = {
   CUSTOMER: {
     AllCustomers: API_DOMAIN + '/admin/operations/get-all-customers',
@@ -48,5 +48,5 @@ const API_ENDPOINT = {
   }
 }
 const token =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTAsInVzZXJuYW1lIjoiamFuZWRvZSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDI2OTYyMywiZXhwIjoxNzM0MzU2MDIzfQ.kjF2qGx0vDzmqbIEJ5EZMgYMk-XJCT7iQ8Ib0a1imUw'
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJBZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDUyNzk2OCwiZXhwIjoxNzM0NjE0MzY4fQ.lDblM7-Mn45bd6nA-S7WHXD3BRjWr-RynDwQhtQ5IP4'
 export { API_DOMAIN, API_ENDPOINT, token }
