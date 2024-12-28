@@ -4,8 +4,8 @@ import TeamFilterActivityTabs from './TeamFilterActivityTabs'
 import ChatTable from './ChatTable'
 import { useQuery } from '@tanstack/react-query'
 import { getAccountActivities } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
 import { getSingleAgentToCusomterChat, getSingleAgentToTeamChats } from '@renderer/api/queries/admin.chat.queries'
+import { useAuth } from '@renderer/context/authContext'
 const dummyData = [
   {
     id: 1,
@@ -99,6 +99,7 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ userId }) => {
   const [activeFilter, setActiveFilter] = useState('Customer')
   const [isChat, setIsChat] = useState(true)
   const [isTeam, setIsTeam] = useState(false)
+  const {token}=useAuth();
   const id = userId;
   const {
     data: accountActivityData,

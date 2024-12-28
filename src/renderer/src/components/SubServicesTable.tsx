@@ -4,8 +4,8 @@ import AppBanner from './modal/AppBanner'
 import EditSubServicesModal from './modal/EditSubServicesModal'
 import { useQuery } from '@tanstack/react-query'
 import { getCategories, getSubCategories } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
 import { SubCategory } from '@renderer/api/queries/datainterfaces'
+import { useAuth } from '@renderer/context/authContext'
 // import EditServicesModal from './modal/EditServicesModal'
 // import EditSubServicesModal from './modal/EditSubServicesModal'
 // import EditServicesModal from './modal/EditServicesModal'
@@ -37,6 +37,7 @@ const data: ServicesTableProps[] = [
 const SubServicesTable = () => {
   const [isAppBannerOpen, setIsAppBannerOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const {token}=useAuth();
   const [selectedCategory, setSelectedCategory] = useState<SubCategory | null>(null)
   const handleOpenEditModal = (item: SubCategory) => {
     setSelectedCategory(item)

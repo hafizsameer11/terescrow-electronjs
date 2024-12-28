@@ -3,12 +3,12 @@ import AddDepartmentModal from '@renderer/components/modal/AddDepartment';
 import { useParams } from "react-router-dom";
 import { getSingleDepartment } from "@renderer/api/queries/adminqueries";
 import { useQuery } from "@tanstack/react-query";
-import { token } from "@renderer/api/config";
+import { useAuth } from "@renderer/context/authContext";
 const DetailsDepartment: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => setIsModalOpen(true);
-
+  const {token}=useAuth();
   const handleCloseModal = () => setIsModalOpen(false);
 //get if from route
 const departmentId = useParams().id;

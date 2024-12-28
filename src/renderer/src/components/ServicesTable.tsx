@@ -2,16 +2,16 @@ import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getCategories, getSingleCategory, deleteCategory } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
 import ViewSIngleServiceModal from './modal/ViewSIngleServiceModal'
 import { getImageUrl } from '@renderer/api/helper'
 import AddNewService from './modal/AddNewService'
 import EditServicesModal from './modal/EditServicesModal'
 import { Category } from './Transaction/TransactionTable'
+import { useAuth } from '@renderer/context/authContext'
 
 const ServicesTable = () => {
   const queryClient = useQueryClient()
-
+  const {token}=useAuth();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)

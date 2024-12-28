@@ -527,6 +527,7 @@ export interface ITeamChatDetailsResponse extends ApiResponse {
       createdAt: Date
       updatedAt: Date
       chatId: number
+      image: string
       message: string
       senderId: number
       receiverId: number
@@ -542,4 +543,47 @@ export interface ITeamChatDetailsResponse extends ApiResponse {
 
 export interface ITeamChatResponse extends ApiResponse {
   data: ITeamChatDetailsResponse['data'][]
+}
+
+
+
+export interface IResMessage {
+  id: number;
+  createdAt: Date;
+  updatedAt: Date;
+  chatId: number;
+  message: string;
+  senderId: number;
+  receiverId: number;
+  isRead: boolean;
+  image?: string;
+}
+
+export interface ISendMessageToTeamResponse extends ApiResponse {
+  data: IResMessage;
+}
+
+
+
+export interface IUser {
+  id: number;
+  username: string;
+  firstname: string;
+  lastname: string;
+  profilePicture: string | null;
+}
+export interface AllAgentsResponse extends ApiResponse {
+  data: {
+    user: IUser;
+    id: number;
+    assignedDepartments: {
+      departmentId: number;
+    }[];
+    AgentStatus: AgentStatus;
+  }[];
+}
+
+enum AgentStatus {
+  online = 'online',
+  offline = 'offline',
 }

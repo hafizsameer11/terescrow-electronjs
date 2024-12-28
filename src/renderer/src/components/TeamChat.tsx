@@ -115,6 +115,7 @@ const TeamChat: React.FC<TeamChatProps> = ({ onClose }) => {
 
   const handleUserSelect = (user: ChatUser) => {
     setSelectedUser(user);
+    console.log('Selected User:', user);
   };
 
   const handleCreateGroup = (selectedUsers: ChatUser[]) => {
@@ -144,7 +145,7 @@ const TeamChat: React.FC<TeamChatProps> = ({ onClose }) => {
           </button>
         </div>
         {selectedUser ? (
-          <TeamChatSection user={selectedUser} />
+          <TeamChatSection chatId={selectedUser.id} />
         ) : (
           <div className="flex justify-center items-center h-full text-gray-400 text-lg">
             Select a user to start chatting.

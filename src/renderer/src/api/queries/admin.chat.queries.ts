@@ -7,6 +7,12 @@ import {
   CustomerToAgentChatDetailResponse,
   TeamChatDetailsResponse
 } from './datainterfaces'
+import {
+  AdminDashboardStatsResponse,
+  AdminTransactionStatsResponse,
+  CustomerStatsResponse,
+  TeamStatsResponse
+} from './statDataInterface'
 
 export const getAllAgentToCusomterChats = async ({
   token
@@ -82,4 +88,29 @@ export const getAgentToAgentChatDetails = async ({
 
 export const getChatStats = async ({ token }: { token: string }): Promise<ChatStats> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetChatStats}`, 'GET', undefined, token)
+}
+
+export const getCustomerStats = async ({
+  token
+}: {
+  token: string
+}): Promise<CustomerStatsResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetCustomerStats}`, 'GET', undefined, token)
+}
+export const getDashBoardStats = async ({
+  token
+}: {
+  token: string
+}): Promise<AdminDashboardStatsResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetDashboardStats}`, 'GET', undefined, token)
+}
+export const getTeamStats = async ({ token }: { token: string }): Promise<TeamStatsResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetTeamStats}`, 'GET', undefined, token)
+}
+export const getTransactionStats = async ({
+  token
+}: {
+  token: string
+}): Promise<AdminTransactionStatsResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetTransactionStats}`, 'GET', undefined, token)
 }

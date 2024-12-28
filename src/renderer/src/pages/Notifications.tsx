@@ -4,7 +4,7 @@ import NewNotificationModal from '@renderer/components/modal/NewNotificationModa
 import NewBannerModal from '@renderer/components/modal/NewBannerModal' // Import NewBannerModal
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createBanner } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
+import { useAuth } from '@renderer/context/authContext'
 interface Notification {
   type: 'Team' | 'Customer'
   message: string
@@ -35,6 +35,7 @@ const Notifications = () => {
     'Notifications'
   )
   const queryClient = useQueryClient()
+  const {token}=useAuth();
   const { mutate: uploadBanner } = useMutation({
     mutationFn: async (file: File | null) => {
       if (!file) throw new Error('No file selected')

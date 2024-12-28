@@ -3,8 +3,8 @@ import Select from 'react-select'
 import { FaEye, FaEyeSlash } from 'react-icons/fa'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createAgent } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
 import { Department } from '@renderer/api/queries/datainterfaces'
+import { useAuth } from '@renderer/context/authContext'
 
 interface OptionType {
   value: number;
@@ -23,7 +23,7 @@ const AddAgentProfileModal: React.FC<AgentEditProfileModalProps> = ({
   departmentData
 }) => {
   const queryClient = useQueryClient()
-
+  const { token } = useAuth();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -84,12 +84,12 @@ const AddAgentProfileModal: React.FC<AgentEditProfileModalProps> = ({
 
   if (!isOpen) return null
   const departmentOptions: OptionType[] =
-  departmentData?.map((dept) => ({
-    value: dept.id,
-    label: dept.title,
-  })) || [];
+    departmentData?.map((dept) => ({
+      value: dept.id,
+      label: dept.title,
+    })) || [];
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6">
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6 " style={{ overflowY: 'scroll' }}>
       <div className="bg-white rounded-lg shadow-lg w-[500px] p-6">
         <div className="flex justify-between items-center pb-4 mb-4 border-b">
           <h2 className="text-lg font-semibold text-gray-800">Add new Agent</h2>
@@ -185,20 +185,29 @@ const AddAgentProfileModal: React.FC<AgentEditProfileModalProps> = ({
             className="text-sm"
           />
 
-          <input
-            type={showPassword ? 'text' : 'password'}
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Password"
-            className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341]"
-          />
+          <div className="relative w-full">
+            <input
+              type={showPassword ? 'text' : 'password'}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Password"
+              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341]"
+            />
+            <span
+              onClick={() => setShowPassword((prev) => !prev)}
+
+              className="absolute right-4 top-3 text-gray-600 cursor-pointer"
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
             className="absolute top-1/2 transform -translate-y-1/2 right-4 text-gray-500"
           >
-            {showPassword ? <FaEyeSlash /> : <FaEye />}
+            {/* {showPassword ? <FaEyeSlash /> : <FaEye />} */}
           </button>
         </div>
 

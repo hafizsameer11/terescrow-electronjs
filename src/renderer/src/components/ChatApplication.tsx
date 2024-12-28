@@ -5,7 +5,7 @@ import NewTransaction from './NewTransaction'
 import { AiOutlineSend, AiOutlinePicture } from 'react-icons/ai'; // Importing icons from react-icons
 import { useQuery } from '@tanstack/react-query';
 import { getAgentToCustomerChatDetails } from '@renderer/api/queries/admin.chat.queries';
-import { token } from '@renderer/api/config';
+import { useAuth } from '@renderer/context/authContext';
 interface Message {
   id: number
   text: string
@@ -25,6 +25,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
   console.log(id);
   console.log(data);
   const { name, username, serviceType } = data;
+  const {token}=useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,

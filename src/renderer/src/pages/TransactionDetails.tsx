@@ -5,7 +5,7 @@ import { getCustomerDetails, getCustomerTransactions } from '@renderer/api/queri
 import StatsCard from '@renderer/components/StatsCard';
 import TransactionsFilter from '@renderer/components/TransactionsFilter';
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable';
-import { token } from '@renderer/api/config';
+import { useAuth } from '@renderer/context/authContext';
 
 const TransactionDetails: React.FC = () => {
   const { customerId } = useParams<{ customerId: string }>();
@@ -18,7 +18,7 @@ const TransactionDetails: React.FC = () => {
     dateRange: 'Last 30 days',
     search: '',
   });
-
+  const {token}=useAuth();
   // Fetch transactions using React Query
   const { data: customerTransactions, isLoading, isError, error } = useQuery({
     queryKey: ["customerDetails", customerId],

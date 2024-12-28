@@ -5,10 +5,10 @@ import NewTransaction from './NewTransaction'
 import { AiOutlineSend, AiOutlinePicture } from 'react-icons/ai'; // Importing icons from react-icons
 import { useQuery } from '@tanstack/react-query';
 import { getAgentToAgentChatDetails, getAgentToCustomerChatDetails } from '@renderer/api/queries/admin.chat.queries';
-import { token } from '@renderer/api/config';
 import AdminChatHeader from './AdminChatHeader';
 import { getImageUrl } from '@renderer/api/helper';
 import { AgentToAgentChatData } from '@renderer/api/queries/datainterfaces';
+import { useAuth } from '@renderer/context/authContext';
 interface Message {
   id: number
   text: string
@@ -29,6 +29,7 @@ const AdminChatApplicationTeam: React.FC<ChatApplicationProps> = ({ onClose, dat
   console.log(data);
   const [dataa, setData] = useState<any>(data)
   const [currentStatus, setCurrentStatus] = useState('Pending')
+  const {token}=useAuth();
   const [notification, setNotification] = useState<{
     message: string
     backgroundColor: string

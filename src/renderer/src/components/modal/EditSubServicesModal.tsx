@@ -1,9 +1,9 @@
 import { editSubCategory, getCategories } from '@renderer/api/queries/adminqueries'
 import React, { useEffect, useState } from 'react'
 import Select from 'react-select'
-import { token } from '@renderer/api/config'
 import { SubCategory } from '@renderer/api/queries/datainterfaces'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { useAuth } from '@renderer/context/authContext'
 
 interface EditServicesModalProps {
   isOpen: boolean
@@ -25,6 +25,7 @@ const EditSubServicesModal: React.FC<EditServicesModalProps> = ({
   const [subtitle, setSubtitle] = useState('')
   const [price, setPrice] = useState('')
   const [selectedCategories, setSelectedCategories] = useState<OptionType[]>([])
+  const {token}=useAuth();
 
   // Fetch categories
   const { data: categories } = useQuery({

@@ -1,8 +1,8 @@
 import { getTransactions } from '@renderer/api/queries/adminqueries';
 import { useQuery } from '@tanstack/react-query';
 import React, { useState } from 'react';
-import { token } from '@renderer/api/config';
 import LogTable from '@renderer/components/LogTable';
+import { useAuth } from '@renderer/context/authContext';
 
 const LogPage: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -12,6 +12,7 @@ const LogPage: React.FC = () => {
     search: '',
   });
 
+  const {token}=useAuth();
   const { data: customerTransactions, isLoading, isError, error } = useQuery({
     queryKey: ['customerTransactions'],
     queryFn: () => getTransactions({ token }),

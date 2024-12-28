@@ -7,9 +7,12 @@ import AgentEditProfileModal from '@renderer/components/modal/AgentEditProfileMo
 import { Images } from '@renderer/constant/Image.js'
 import ActivityHistory from '@renderer/components/ActivityHistory.js'
 import TeamTable from '@renderer/components/TeamsTable.js'
-import { getTeam } from '@renderer/api/queries/adminqueries.js'
-import { token } from '@renderer/api/config.js'
+import { getDepartments, getTeam } from '@renderer/api/queries/adminqueries.js'
 import { useQuery } from '@tanstack/react-query'
+import { useAuth } from '@renderer/context/authContext.js'
+import { getTeamStats } from '@renderer/api/queries/admin.chat.queries.js'
+import { Department } from '@renderer/api/queries/datainterfaces.js'
+import AddAgentProfileModal from '@renderer/components/modal/AddAgentProfileModal.js'
 
 interface Agent {
   fullName: string
@@ -62,9 +65,11 @@ const Teams = () => {
   const [searchValue, setSearchValue] = useState('')
   const [isEditClick, setIsEditClick] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent>()
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isUserViewed, setIsUserViewed] = useState(false)
+  const [selectedDepartment, setSelectedDepartment] = useState<Department[] | null>([])
   const [selectAgentActivityId, setSelectAgentActivityId] = useState(1);
-
+  const { token } = useAuth();
   console.log(selectAgentActivityId);
   const handleTabChange = (tab: 'Active' | 'Deleted') => {
     setActiveTab(tab)
@@ -74,7 +79,26 @@ const Teams = () => {
     queryFn: () => getTeam({ token }),
     enabled: !!token,
   });
-
+  const { data: teamStats, isLoading: teamStatsloading } = useQuery({
+    queryKey: ['teamStats'],
+    queryFn: () => getTeamStats({ token }),
+    enabled: !!token,
+  });
+  const {
+    data: departmentsData,
+    isLoading: isDepartmetnLoading,
+    isError: isDepartmentError,
+    error: departmenterror
+  } = useQuery({
+    queryKey: ['departmentsData'],
+    queryFn: () => getDepartments({ token }),
+    enabled: !!token
+  })
+  useEffect(() => {
+    if (departmentsData) {
+      setSelectedDepartment(departmentsData.data)
+    }
+  }, [departmentsData])
   const handleRoleChange = (role: 'Manager' | 'Agent' | 'Roles') => {
     setSelectedRole(role)
   }
@@ -117,7 +141,8 @@ const Teams = () => {
   })
   useEffect(() => {
     console.log("here is team data", teamData?.data);
-    console.log("here is filtered data", filteredData)
+    console.log("here is filtered data", filteredData);
+    console.log("team stats", teamStats?.data)
   }, [teamData?.data]);
   console.log(isUserViewed)
   return (
@@ -126,20 +151,27 @@ const Teams = () => {
         {/* Header */}
         <h1 className="text-[40px] text-gray-800">Teams</h1>
 
-        <button className="bg-green-800 text-white py-2 px-3 rounded-lg">Add team member</button>
+        <button className="bg-green-800 text-white py-2 px-3 rounded-lg"
+          onClick={() => setIsAddModalOpen(true)}
+        >Add team member</button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
-        <UserStat
-          title="Total Team Members"
-          value={DUMMY_USERS.length}
-          change="15%"
-          showStats={true}
-        />
-        <UserStat title="Online" value="15" />
-        <UserStat title="Offline" value="5" />
-      </div>
+      {
+        !teamStatsloading && (
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+            <UserStat
+              title="Total Team Members"
+              value={teamStats?.data.totalAgents}
+              change="15%"
+              showStats={true}
+            />
+            <UserStat title="Online" value={teamStats?.data.totalOnlineAgents} />
+            <UserStat title="Offline" value={teamStats?.data.totalOfflineAgents} />
+          </div>
+
+        )
+      }
 
       {/* Filters */}
 
@@ -175,6 +207,15 @@ const Teams = () => {
           }}
         />
       )}
+      {
+        isAddModalOpen && (
+          <AddAgentProfileModal
+            isOpen={isAddModalOpen}
+            onClose={() => setIsAddModalOpen(false)}
+            departmentData={selectedDepartment}
+          />
+        )
+      }
     </div>
   )
 }

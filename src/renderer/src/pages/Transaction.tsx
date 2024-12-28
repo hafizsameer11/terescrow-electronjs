@@ -1,9 +1,10 @@
-import { token } from '@renderer/api/config'
+import { getTransactionStats } from '@renderer/api/queries/admin.chat.queries'
 import { getTransactions } from '@renderer/api/queries/adminqueries'
 import StatsCard from '@renderer/components/StatsCard'
 // import CustomerTransaction from '@renderer/components/Transaction/CutomerTransaction';
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable'
 import TransactionsFilter from '@renderer/components/TransactionsFilter'
+import { useAuth } from '@renderer/context/authContext'
 import { useQuery } from '@tanstack/react-query'
 import React, { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
@@ -12,7 +13,7 @@ const Transactions: React.FC = () => {
   const { customerId } = useParams<{ customerId: string }>()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'details' | 'transactions'>('transactions')
-
+  const { token } = useAuth();
   const customerData = {
     id: customerId || '1',
     name: 'Qamardeen Abdulmalik',
@@ -80,6 +81,11 @@ const Transactions: React.FC = () => {
     dateRange: 'Last 30 days',
     search: ''
   })
+  const { data: transationStats, isLoading: transactionStatLoading } = useQuery({
+    queryKey: ['transactionStats'],
+    queryFn: () => getTransactionStats({ token }),
+    enabled: !!token,
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTransaction, setSelectedTransaction] = useState<
@@ -127,26 +133,30 @@ const Transactions: React.FC = () => {
       <h2 className="text-4xl font-semibold text-gray-800 mb-5">Transactions</h2>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
-        <StatsCard
-          title="Total Transactions"
-          value={customerData.stats.totalTransactions}
-          change="+5%"
-          isPositive={true}
-        />
-        <StatsCard
-          title="Crypto Transactions"
-          value={customerData.stats.cryptoTransactions}
-          change="+5%"
-          isPositive={true}
-        />
-        <StatsCard
-          title="Gift Card Transactions"
-          value={customerData.stats.giftCardTransactions}
-          change="+5%"
-          isPositive={true}
-        />
-      </div>
+
+      {
+        !transactionStatLoading &&
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
+          <StatsCard
+            title="Total Transactions"
+            value={transationStats?.data.totalTransactions}
+            change="+5%"
+            isPositive={true}
+          />
+          <StatsCard
+            title="Crypto Transactions"
+            value={transationStats?.data.cryptoTransactions._sum.amount !==null ? transationStats?.data.cryptoTransactions._sum.amount : 0}
+            change="+5%"
+            isPositive={true}
+          />
+          <StatsCard
+            title="Gift Card Transactions"
+            value={`$${transationStats?.data.giftCardTransactions._sum.amount !== null ? transationStats?.data.giftCardTransactions._sum.amount : 0}`}
+            change="+5%"
+            isPositive={true}
+          />
+        </div>
+      }
       <div>
         <div className="mt-10">
           <TransactionsFilter

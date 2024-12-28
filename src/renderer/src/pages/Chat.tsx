@@ -7,8 +7,8 @@ import ChatTable from '@renderer/components/ChatTable'
 import StatsCard from '@renderer/components/StatsCard'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { token } from '@renderer/api/config'
 import chatData from '@renderer/utils'
+import { useAuth } from '@renderer/context/authContext'
 const sampleData = [
   {
     id: 1,
@@ -51,7 +51,7 @@ const Chat = () => {
     transactionType: 'All',
     category: 'All'
   })
-
+  const {token}=useAuth();
   const { data: chatStatsData } = useQuery({
     queryKey: ['chatStats'],
     queryFn: () => getChatStats({ token }),
@@ -113,7 +113,7 @@ const Chat = () => {
             {/* Toggle Buttons */}
 
           </div>
-    
+
         </div>
 
         {/* Stats Cards */}

@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react'
-import NavItem from './NavItem' // Import the NavItem component
-import { FaBell, FaCog, FaUserTag } from 'react-icons/fa'
-import { RiTeamFill } from 'react-icons/ri'
-import { Images } from '@renderer/constant/Image'
-import { useAuth, UserRoles } from '@renderer/context/authContext'
+import { useState } from 'react';
+import NavItem from './NavItem';
+import { FaBell, FaCog, FaUserTag } from 'react-icons/fa';
+import { RiTeamFill } from 'react-icons/ri';
+import { Images } from '@renderer/constant/Image';
+import { useAuth, UserRoles } from '@renderer/context/authContext';
+import TeamChat from '../TeamChat'; // Import the TeamChat modal component
 
 export const Sidebar = () => {
-  const { userData } = useAuth()
-  const initialActiveItem = userData?.role === UserRoles.admin ? 'dashboard' : 'chats'
-  const [activeItem, setActiveItem] = useState(initialActiveItem)
+  const { userData } = useAuth();
+  const initialActiveItem = userData?.role === UserRoles.admin ? 'dashboard' : 'chats';
+  const [activeItem, setActiveItem] = useState(initialActiveItem);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
 
   const adminMenuItems = [
     { label: 'Dashboard', icon: Images.dashboard, href: '/dashboard', id: 'dashboard' },
@@ -20,13 +22,8 @@ export const Sidebar = () => {
     { label: 'Department', icon: Images.department, href: '/departments', id: 'department' },
     { label: 'Services', icon: <FaUserTag />, href: '/services', id: 'services' },
     { label: 'Teams', icon: Images.teams, href: '/teams', id: 'teams' },
-    { label: 'Users', icon: Images.users, href: '/usersall', id: 'users' }
-  ]
-
-  const agentMenuItems = [
-    { label: 'Chats', icon: Images.chats, href: '/chats', id: 'chats' },
-    { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' }
-  ]
+    { label: 'Users', icon: Images.users, href: '/usersall', id: 'users' },
+  ];
 
   const bottomMenuItems = [
     { label: 'Notifications', icon: <FaBell />, href: '/notifications', id: 'notifications' },
@@ -34,14 +31,13 @@ export const Sidebar = () => {
     {
       label: 'Team Communication',
       icon: <RiTeamFill />,
-      href: '/team-communication',
-      id: 'team-communication'
-    }
-  ]
-  console.log('sidebar', userData?.role)
+      href: '#',
+      id: 'team-communication',
+    },
+  ];
 
-  // const menuItems = userData?.role === UserRoles.admin ? adminMenuItems : agentMenuItems
-const menuItems=adminMenuItems
+  const menuItems = adminMenuItems;
+
   return (
     <aside className="lg:w-[280px] h-screen bg-white px-[20px] lg:px-[30px] text-gray-800 flex flex-col border-r border-[#989898] overflow-auto">
       <div className="flex items-start justify-start py-6">
@@ -72,9 +68,15 @@ const menuItems=adminMenuItems
                   </span>
                 )
               }
-              href={item.href}
+              href={item.id === 'team-communication' ? undefined : item.href}
               isActive={activeItem === item.id}
-              onClick={() => setActiveItem(item.id)}
+              onClick={() => {
+                if (item.id === 'team-communication') {
+                  setIsModalOpen(true); // Open modal
+                } else {
+                  setActiveItem(item.id);
+                }
+              }}
             />
           ))}
         </ul>
@@ -99,12 +101,27 @@ const menuItems=adminMenuItems
                   {item.icon}
                 </span>
               }
-              href={item.href}
-              onClick={() => setActiveItem(item.id)}
+              href={item.id === 'team-communication' ? undefined : item.href}
+              onClick={() => {
+                if (item.id === 'team-communication') {
+                  setIsModalOpen(true); // Open modal
+                } else {
+                  setActiveItem(item.id);
+                }
+              }}
             />
           ))}
         </ul>
       </div>
+
+      {/* Team Communication Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center z-50">
+          <div className="bg-white ms-10 w-full max-w-3xl rounded-lg shadow-lg relative">
+            <TeamChat onClose={() => setIsModalOpen(false)} />
+          </div>
+        </div>
+      )}
     </aside>
-  )
-}
+  );
+};

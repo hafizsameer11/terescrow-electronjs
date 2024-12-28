@@ -3,11 +3,11 @@ import DepartmentsTable from '@renderer/components/DepartmentsTable';
 import AddDepartmentModal from '@renderer/components/modal/AddDepartment';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createDepartment } from '@renderer/api/queries/adminqueries';
-import { token } from '@renderer/api/config';
+import { useAuth } from '@renderer/context/authContext';
 
 const Departments: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const {token}=useAuth();
   // Initialize query client
   const queryClient = useQueryClient();
 
@@ -23,6 +23,7 @@ const Departments: React.FC = () => {
       alert('Failed to create department. Please try again.');
     },
   });
+  
 
   // Handle form submission
   const handleUpdate = (data: Record<string, any>) => {

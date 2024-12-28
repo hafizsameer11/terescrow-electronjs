@@ -6,16 +6,16 @@ import StatusButton from './StatusButton';
 import { Icons } from '@renderer/constant/Icons';
 import DepartmentModal from './modal/AddDepartment';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { token } from '@renderer/api/config';
 import { deleteDepartment, editDepartment, getDepartments } from '@renderer/api/queries/adminqueries';
 import { Department } from '@renderer/api/queries/datainterfaces';
+import { useAuth } from '@renderer/context/authContext';
 
 // Define the Department interface
 
 
 const DepartmentsTable: React.FC = () => {
   const navigate = useNavigate();
-
+  const {token}=useAuth();
   // State Management
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filteredDepartments, setFilteredDepartments] = useState<Department[]>([]);

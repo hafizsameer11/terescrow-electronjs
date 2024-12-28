@@ -1,6 +1,6 @@
-import { token } from "@renderer/api/config";
 import { getRate } from "@renderer/api/queries/adminqueries";
 import { Rate } from "@renderer/api/queries/datainterfaces";
+import { useAuth } from "@renderer/context/authContext";
 import { formatDateTime } from "@renderer/utils/customfunctions";
 import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
@@ -10,7 +10,7 @@ const RatesHistory: React.FC = () => {
   const [filterDate, setFilterDate] = useState("Last 30 Days");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-
+  const {token}=useAuth();
   const { data: ratesData, isLoading, isError, error } = useQuery({
     queryKey: ["ratesData"],
     queryFn: () => getRate({ token }),

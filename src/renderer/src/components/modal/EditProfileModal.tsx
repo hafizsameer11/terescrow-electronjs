@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateCustomer } from "@renderer/api/queries/adminqueries"; // Adjust import path
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { token } from "@renderer/api/config";
+import { useAuth } from "@renderer/context/authContext";
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
 }) => {
   const [formData, setFormData] = useState({ ...userData });
   const [showPassword, setShowPassword] = useState(false);
-
+  const {token}=useAuth();
   // Mutation for updating customer
   const mutation = useMutation({
     mutationFn: updateCustomer,

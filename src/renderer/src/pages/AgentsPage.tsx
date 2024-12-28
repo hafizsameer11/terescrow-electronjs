@@ -11,8 +11,8 @@ import {
   getCustomerDetails,
   getDepartments
 } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
 import { Agent, Department } from '@renderer/api/queries/datainterfaces'
+import { useAuth } from '@renderer/context/authContext'
 const AgentsPage: React.FC = () => {
   const location = useLocation()
 
@@ -23,7 +23,7 @@ const AgentsPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('') // State for search query
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
-
+  const {token}=useAuth();
   const [selectedDepartment, setSelectedDepartment] = useState<Department[] | null>([])
 
   const {

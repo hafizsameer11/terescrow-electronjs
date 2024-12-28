@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import Select from 'react-select'
 import { editCategory, getDepartments } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Category } from '@renderer/api/queries/datainterfaces'
 import { getImageUrl } from '@renderer/api/helper'
+import { useAuth } from '@renderer/context/authContext'
 
 interface EditServicesModalProps {
   isOpen: boolean
@@ -23,6 +23,7 @@ const EditServicesModal: React.FC<EditServicesModalProps> = ({ isOpen, onClose, 
   const [image, setImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>('https://via.placeholder.com/150')
   const [departments, setDepartments] = useState<{ value: string; label: string }[]>([])
+  const {token}=useAuth();
   const [selectedDepartments, setSelectedDepartments] = useState<{ value: number; label: string }[]>(
     []
   )

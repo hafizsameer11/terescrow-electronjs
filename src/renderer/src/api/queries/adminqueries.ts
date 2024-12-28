@@ -6,6 +6,7 @@ import {
   AccountAcitivityResponse,
   Agent,
   AgentByDepartmentResponse,
+  AllAgentsResponse,
   AllBannerResponse,
   AllCustomerRespone,
   AlluserResponse,
@@ -346,3 +347,16 @@ export const getAccountActivities = async ({
   )
 }
 
+export const getAllAgentss = async ({
+  token,
+}: {
+  token: string;
+}): Promise<AllAgentsResponse> => {
+  console.log('Url: ', API_ENDPOINT.OPERATIONS.GetAllAgents);
+  return await apiCall(
+    `${API_ENDPOINT.OPERATIONS.GetAllAgents}`,
+    'GET',
+    undefined,
+    token
+  );
+};

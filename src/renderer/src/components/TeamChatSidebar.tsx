@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ChatUser } from './TeamChat';
 import { AiOutlineUsergroupAdd, AiOutlineEdit } from 'react-icons/ai';
 import { getAllTeamChats } from '@renderer/api/queries/commonqueries';
-// import { ITeamChatResponse } from './types'; // Ensure this matches your provided type definitions
-// import { getAllTeamChats } from './api'; // Import the API function
-import {token } from '@renderer/api/config';
 import { getImageUrl } from '@renderer/api/helper';
+import { useAuth } from '@renderer/context/authContext';
+
 interface TeamChatSidebarProps {
   onSelectUser: (user: ChatUser) => void;
   onOpenGroupModal: () => void;
@@ -19,22 +18,22 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
   const [activeTab, setActiveTab] = useState<'All' | 'Group' | 'Unread'>('All');
   const [searchValue, setSearchValue] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<ChatUser[]>([]);
-
+  const {token}=useAuth();
   // Fetch chats using React Query
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['all-chats-with-team'],
-    queryFn: () => getAllTeamChats(token), // Replace with your token or auth logic
+    queryFn: () => getAllTeamChats(token),
   });
 
   const chats = data?.data || [];
 
-  // Convert API response to `ChatUser` format
-  const transformChats = (): ChatUser[] =>
-    chats.map((chat) => {
+  // Transform chats to `ChatUser` format (useMemo ensures the transformation doesn't run on every render)
+  const users: ChatUser[] = useMemo(() => {
+    return chats.map((chat) => {
       const isGroup = chat.chatType === 'group_chat';
       const lastMessage = chat.messages[0] || null;
       const participants = chat.participants.filter(
-        (p) => p.user.id !==3// Replace with your user ID
+        (p) => p.user.id !== 3 // Replace with your user ID
       );
       const receiver = participants[0]?.user || null;
 
@@ -57,10 +56,9 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
         })),
       };
     });
+  }, [chats]);
 
-  const users = transformChats();
-
-  // Apply filters
+  // Filter users based on activeTab and searchValue
   useEffect(() => {
     let filtered = [...users];
 

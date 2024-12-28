@@ -1,5 +1,5 @@
-import { token } from '@renderer/api/config'
 import { getCategories, createSubCategory } from '@renderer/api/queries/adminqueries'
+import { useAuth } from '@renderer/context/authContext'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import React, { useState } from 'react'
 import Select from 'react-select'
@@ -15,7 +15,7 @@ const AddNewSubService: React.FC<AddNewSubServiceProps> = ({ isOpen, onClose }) 
   const [subtitle, setSubtitle] = useState('')
   const [price, setPrice] = useState<number | ''>('')
   const [selectedCategories, setSelectedCategories] = useState<{ value: number; label: string }[]>([])
-
+  const {token}=useAuth();
   // Fetch categories
   const { data: categoriesData, isLoading, isError } = useQuery({
     queryKey: ['categories'],

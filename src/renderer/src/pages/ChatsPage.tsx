@@ -2,11 +2,11 @@ import { getChatStats } from "@renderer/api/queries/admin.chat.queries";
 import ChatFilters from "@renderer/components/ChatFilters";
 import ChatTable from "@renderer/components/ChatTable";
 import StatsCard from "@renderer/components/StatsCard";
+import { useAuth } from "@renderer/context/authContext";
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 // import ChatTable from "./ChatTable";
 // import ChatFilters from "./ChatFilters";
-import { token } from "@renderer/api/config";
 const chats = [
   {
     id: 1,
@@ -35,7 +35,7 @@ const ChatPage: React.FC = () => {
     transactionType: "Buy",
     search: "",
   });
-
+  const {token}=useAuth();
   const filteredChats = chats.filter((chat) => {
     const matchesStatus =
       filters.status === "All" || chat.status === filters.status;

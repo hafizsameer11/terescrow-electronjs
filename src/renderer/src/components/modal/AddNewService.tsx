@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Select from 'react-select';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { createCategory, getDepartments } from '@renderer/api/queries/adminqueries';
-import { token } from '@renderer/api/config';
+import { useAuth } from '@renderer/context/authContext';
 
 interface AddNewServiceProps {
   isOpen: boolean;
@@ -15,7 +15,7 @@ const AddNewService: React.FC<AddNewServiceProps> = ({ isOpen, onClose }) => {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [departments, setDepartments] = useState<{ value: number; label: string }[]>([]);
-
+  const {token}=useAuth();
   // Fetch departments from backend
   const { data: departmentsData, isLoading, isError, error } = useQuery({
     queryKey: ['departmentsData'],

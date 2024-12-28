@@ -1,14 +1,16 @@
 // import StatsCard from '@renderer/components/Dashboard/StatsCard';
 // import TransactionsFilter from '@renderer/components/Dashboard/TransactionsFilter';
-import { token } from '@renderer/api/config'
+import { getDashBoardStats } from '@renderer/api/queries/admin.chat.queries'
 import { getTransactions } from '@renderer/api/queries/adminqueries'
 import StatsCard from '@renderer/components/StatsCard'
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable'
 import TransactionsFilter from '@renderer/components/TransactionsFilter'
+import { useAuth } from '@renderer/context/authContext'
 import { useQuery } from '@tanstack/react-query'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 const Dashboard: React.FC = () => {
+  const { token, userData } = useAuth();
   const {
     data: customerTransactions,
     isLoading,
@@ -19,6 +21,11 @@ const Dashboard: React.FC = () => {
     queryFn: () => getTransactions({ token }),
     enabled: !!token
   })
+  const { data: dashboardStats } = useQuery({
+    queryKey: ['dsahboardStats'],
+    queryFn: () => getDashBoardStats({ token }),
+    enabled: !!token,
+  });
   const [filters, setFilters] = useState({
     status: 'All',
     type: 'All',
@@ -29,17 +36,20 @@ const Dashboard: React.FC = () => {
   })
   const filteredData = Array.isArray(customerTransactions?.data)
     ? customerTransactions?.data.filter((transaction) => {
-        const matchesStatus = filters.status === 'All' || transaction.status === filters.status
+      const matchesStatus = filters.status === 'All' || transaction.status === filters.status
 
-        const matchesType = filters.type === 'All' || transaction.department?.Type === filters.type
+      const matchesType = filters.type === 'All' || transaction.department?.Type === filters.type
 
-        const matchesSearch =
-          filters.search === '' ||
-          transaction.category?.title?.toLowerCase().includes(filters.search.toLowerCase())
+      const matchesSearch =
+        filters.search === '' ||
+        transaction.category?.title?.toLowerCase().includes(filters.search.toLowerCase())
 
-        return matchesStatus && matchesType && matchesSearch
-      })
+      return matchesStatus && matchesType && matchesSearch
+    })
     : []
+    useEffect(() => {
+      console.log("dashboard Stats", dashboardStats)
+    })
   return (
     <div className="p-6 space-y-8 w-full">
       <div className="flex items-center justify-between">
@@ -53,14 +63,14 @@ const Dashboard: React.FC = () => {
       </div>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <StatsCard title="Total Users" value="15,000" change="+1%" isPositive={true} />
-        <StatsCard title="Total Inflow" value="NGN2,000,000" change="+1%" isPositive={true} />
-        <StatsCard title="Total Outflow" value="NGN2,000,000" change="+1%" isPositive={true} />
-        <StatsCard title="Total Revenue" value="NGN5,300,000" change="-1%" isPositive={false} />
-        <StatsCard title="Active Users" value="500" change="" />
-        <StatsCard title="Total Profit" value="NGN555,000" change="" action="Edit" />
-        <StatsCard title="Total Transactions" value="2,000" change="" action="View" />
-        <StatsCard title="Total Team Members" value="200" change="" action="View" />
+        <StatsCard title="Total Users" value={dashboardStats?.data.users || '0'} isPositive={true} />
+        <StatsCard title="Total Transactions" value={dashboardStats?.data.transactions || '0'}  isPositive={true} />
+        <StatsCard title="Total Agents" value={dashboardStats?.data.agents || '0'}  isPositive={true} />
+        <StatsCard title="Total Revenue" value={dashboardStats?.data.transactionAmountSum._sum.amount || '0'} />
+        <StatsCard title="TotalDepartments" value={dashboardStats?.data.departments || '0'} />
+        <StatsCard title="Total Services" value={dashboardStats?.data.categories || '0'}  action="Edit" />
+        {/* <StatsCard title="Total Transactions" value="2,000" change="" action="View" /> */}
+        {/* <StatsCard title="Total Team Members" value="200" change="" action="View" /> */}
       </div>
 
       {/* Transactions Table */}

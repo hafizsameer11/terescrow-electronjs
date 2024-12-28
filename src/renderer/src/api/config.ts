@@ -54,11 +54,20 @@ const API_ENDPOINT = {
     GetAgentTeamChatDetails: API_DOMAIN + '/admin/operations/get-agent-agent-chatdetails',
     GetAllTeamChats: API_DOMAIN + '/get-all-teams-chats',
     //Stats Routes
-    GetChatStats: API_DOMAIN + '/admin/operations/get-chat-stats'
+    GetChatStats: API_DOMAIN + '/admin/operations/get-chat-stats',
+    GetTeamStats: API_DOMAIN + '/admin/operations/get-team-stats',
+    GetDashboardStats: API_DOMAIN + '/admin/operations/get-dashboard-stats',
+    GetCustomerStats: API_DOMAIN + '/admin/operations/get-customer-stats',
+    GetTransactionStats: API_DOMAIN + '/admin/operations/get-transaction-stats',
+
+    CreateChatGroup: API_DOMAIN + '/admin/create-chat-group'
   },
   COMMON: {
     login: API_DOMAIN + '/public/login',
     GetTeamChatDetails: API_DOMAIN + '/get-team-chat-details',
+    SendMessageToTeam: API_DOMAIN + '/send-message-to-team',
+    MarkAllAsRead: API_DOMAIN + '/public/read-all-messages'
+    // GetTeamChatDetails: API_DOMAIN + 'get-team-chat-details',
   }
 }
 const token =

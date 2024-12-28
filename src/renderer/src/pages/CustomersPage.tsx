@@ -1,14 +1,15 @@
-import { token } from "@renderer/api/config";
 import { gettAllCustomerss } from "@renderer/api/queries/adminqueries";
 import CustomerFilters from "@renderer/components/CustomerFilters";
 import CustomerTable from "@renderer/components/CustomerTable";
 import StatsCard from "@renderer/components/StatsCard";
+import { useAuth } from "@renderer/context/authContext";
 import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useState } from "react";
 
 // Define the Customer Interface
 
 const CustomersPage: React.FC = () => {
+  const {token}=useAuth();
   const [filters, setFilters] = useState({
     gender: "All",
     country: "All",
@@ -21,7 +22,6 @@ const CustomersPage: React.FC = () => {
     queryFn: () => gettAllCustomerss({ token }),
     enabled: !!token,
   });
-
   // Log fetched data for debugging
   useEffect(() => {
     if (customersData) {
@@ -58,7 +58,7 @@ const CustomersPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <StatsCard
           title="Total Customers"
-          value={customersData?.data.length.toString() || "0"}
+          value={customersData?.data.length|| "0"}
           change="+1%"
           isPositive={true}
         />

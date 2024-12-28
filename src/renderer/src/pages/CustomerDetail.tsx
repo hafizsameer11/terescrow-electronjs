@@ -10,9 +10,9 @@ import NotesHistoryModal from "@renderer/components/modal/NotesHistoryModal";
 import EditProfileModal from "@renderer/components/modal/EditProfileModal";
 
 import { getCustomerDetails } from "@renderer/api/queries/adminqueries";
-import { token } from "@renderer/api/config";
 import { FaTicketAlt } from "react-icons/fa";
 import { Customer } from "@renderer/api/queries/datainterfaces";
+import { useAuth } from "@renderer/context/authContext";
 
 // interface Customer {
 //   id: number;
@@ -35,7 +35,7 @@ const CustomerDetails: React.FC = () => {
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false);
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-
+  const {token}=useAuth();
   const [activeTab, setActiveTab] = useState<"details" | "transactions">("details");
 
   const { id } = useParams<{ id: string }>();

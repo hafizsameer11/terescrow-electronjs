@@ -6,14 +6,14 @@ import AppBanner from './modal/AppBanner'
 import NewNotificationModal from './modal/NewNotificationModal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getNotification, getBanner, deleteNotification, deleteBanner } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
+import { useAuth } from '@renderer/context/authContext'
 
 const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: string) => void }> = ({
   textMsg,
   onTitleChange
 }) => {
   const queryClient = useQueryClient()
-
+  const {token}=useAuth();
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [notificationType, setNotificationType] = useState<string>('Notification')
   const [selectedNotification, setSelectedNotification] = useState<any>(null)

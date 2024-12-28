@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import TeamGroupModal from './TeamGroupModal'
 import { useMutation } from '@tanstack/react-query'
 import { createNotification } from '@renderer/api/queries/adminqueries'
-import { token } from '@renderer/api/config'
+import { useAuth } from '@renderer/context/authContext'
 
 interface NewNotificationModalProps {
   isOpen: boolean
@@ -33,7 +33,7 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [type, setType] = useState<'customer' | 'agent'>('customer')
   const [errors, setErrors] = useState<{ title?: string; message?: string }>({})
-
+  const {token}=useAuth();
   // Mutation for API submission
   const { mutate, isError, error } = useMutation({
     mutationFn: async (formData: FormData) => {

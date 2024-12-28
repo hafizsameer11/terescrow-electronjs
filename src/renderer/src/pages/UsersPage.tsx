@@ -3,8 +3,8 @@ import UserTable from '@renderer/components/UserTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAllUsers } from '@renderer/api/queries/adminqueries.js';
-import { token } from '@renderer/api/config.js';
 import UserStat from '@renderer/components/UserStat';
+import { useAuth } from '@renderer/context/authContext';
 
 const UsersPage = () => {
   const [filters, setFilters] = useState({
@@ -15,7 +15,7 @@ const UsersPage = () => {
   });
 
   const userCategory = ['All', 'customer', 'agent'];
-
+  const {token}=useAuth();
   const { data: userData, isLoading, isError, error } = useQuery({
     queryKey: ['userData'],
     queryFn: () => getAllUsers({ token }),
