@@ -3,6 +3,7 @@ import { NotificationResponse } from 'electron'
 import { API_ENDPOINT } from '../config'
 import { apiCall } from '../customApiCall'
 import {
+  AccountAcitivityResponse,
   Agent,
   AgentByDepartmentResponse,
   AllBannerResponse,
@@ -24,6 +25,7 @@ import {
   PostCustomerData,
   RateResponse,
   SingleCategoryResponse,
+  SIngleDepartmentResponse,
   SubcategoriesResponse,
   SubCategory,
   TeamResponse,
@@ -71,6 +73,20 @@ export const getTransactions = async ({
 export const getDepartments = async ({ token }: { token: string }): Promise<DepartmentResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.Departments}`, 'GET', undefined, token)
 }
+export const getSingleDepartment = async ({
+  token,
+  id
+}: {
+  token: string
+  id: string
+}): Promise<SIngleDepartmentResponse> => {
+  return await apiCall(
+    `${API_ENDPOINT.OPERATIONS.GetSingleDepartment}/${id}`,
+    'GET',
+    undefined,
+    token
+  )
+}
 export const getAgentByDepartment = async ({
   token,
   id
@@ -87,16 +103,11 @@ export const getAgentByDepartment = async ({
 }
 
 export const getAllAgents = async ({
-  token,
+  token
 }: {
   token: string
 }): Promise<AgentByDepartmentResponse> => {
-  return await apiCall(
-    `${API_ENDPOINT.OPERATIONS.GetAllAgents}`,
-    'GET',
-    undefined,
-    token
-  )
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetAllAgents}`, 'GET', undefined, token)
 }
 export const getRate = async ({ token }: { token: string }): Promise<RateResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetRate}`, 'GET', undefined, token)
@@ -183,15 +194,18 @@ export const editCategory = async ({
 }): Promise<CreateCategoryResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateCategory}/${id}`, 'POST', data, token)
 }
-export const createSubCategory = async ({
+export const editSubCategory = async ({
   token,
-  data
+  data,
+  id
 }: {
   token: string
   data: SubCategory
+  id: number
 }): Promise<CreateCategoryResponse> => {
-  return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateSubCategory}`, 'POST', data, token)
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateSubCategory}/${id}`, 'POST', data, token)
 }
+
 export const createDepartment = async ({
   token,
   data
@@ -207,7 +221,7 @@ export const editDepartment = async ({
   id
 }: {
   token: string
-  data: Department,
+  data: Department
   id: string
 }): Promise<CreateDepartmentResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateDepartment}/${id}`, 'POST', data, token)
@@ -221,7 +235,15 @@ export const deleteDepartment = async ({
 }): Promise<CreateDepartmentResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteDepartment}/${id}`, 'GET', undefined, token)
 }
-
+export const createSubCategory = async ({
+  token,
+  data
+}: {
+  token: string
+  data: SubCategory
+}): Promise<CreateCategoryResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateSubCategory}`, 'POST', data, token)
+}
 export const createBanner = async ({
   token,
   data
@@ -232,8 +254,7 @@ export const createBanner = async ({
   return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateBanner}`, 'POST', data, token)
 }
 
-
-export const getBanner= async ({ token }: { token: string }): Promise<AllBannerResponse> => {
+export const getBanner = async ({ token }: { token: string }): Promise<AllBannerResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetBanner}`, 'GET', undefined, token)
 }
 export const editBanner = async ({
@@ -242,7 +263,7 @@ export const editBanner = async ({
   id
 }: {
   token: string
-  data: Banner,
+  data: Banner
   id: string
 }): Promise<CreateBannerResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateBanner}/${id}`, 'POST', data, token)
@@ -266,7 +287,11 @@ export const createNotification = async ({
 }): Promise<NotificationResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateNotification}`, 'POST', data, token)
 }
-export const getNotification= async ({ token }: { token: string }): Promise<NotificationsResponse> => {
+export const getNotification = async ({
+  token
+}: {
+  token: string
+}): Promise<NotificationsResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetNotification}`, 'GET', undefined, token)
 }
 export const editNotification = async ({
@@ -275,7 +300,7 @@ export const editNotification = async ({
   id
 }: {
   token: string
-  data: Notification,
+  data: Notification
   id: string
 }): Promise<NotificationResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateNotification}/${id}`, 'POST', data, token)
@@ -287,11 +312,15 @@ export const deleteNotification = async ({
   token: string
   id: string
 }): Promise<NotificationResponse> => {
-  return await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteNotification}/${id}`, 'DELETE', undefined, token)
+  return await apiCall(
+    `${API_ENDPOINT.OPERATIONS.DeleteNotification}/${id}`,
+    'DELETE',
+    undefined,
+    token
+  )
 }
 
-
-export const createAgent= async ({
+export const createAgent = async ({
   token,
   data
 }: {
@@ -300,3 +329,20 @@ export const createAgent= async ({
 }): Promise<createAgentResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateAgent}`, 'POST', data, token)
 }
+
+//account activites
+export const getAccountActivities = async ({
+  token,
+  id
+}: {
+  token: string
+  id: string
+}): Promise<AccountAcitivityResponse> => {
+  return await apiCall(
+    `${API_ENDPOINT.OPERATIONS.UserAccountActivity}/${id}`,
+    'GET',
+    undefined,
+    token
+  )
+}
+

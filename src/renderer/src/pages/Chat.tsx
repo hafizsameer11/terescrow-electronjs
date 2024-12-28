@@ -1,11 +1,14 @@
 // import StatsCard from '@renderer/components/Dashboard/StatsCard';
 // import TransactionsFilter from '@renderer/components/Dashboard/TransactionsFilter';
 // import TransactionsTable from '@renderer/components/Dashboard/TransactionsTable';
+import { getAllAgentToCusomterChats, getChatStats } from '@renderer/api/queries/admin.chat.queries'
 import ChatFilters from '@renderer/components/ChatFilters'
 import ChatTable from '@renderer/components/ChatTable'
 import StatsCard from '@renderer/components/StatsCard'
-import { useState } from 'react'
-
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { token } from '@renderer/api/config'
+import chatData from '@renderer/utils'
 const sampleData = [
   {
     id: 1,
@@ -49,17 +52,55 @@ const Chat = () => {
     category: 'All'
   })
 
-  // Filter data based on the selected filters
-  const filteredData = sampleData.filter((transaction) => {
-    const matchesStatus = filters.status === 'All' || transaction.status === filters.status
-    const matchesType = filters.type === 'All' || transaction.serviceType === filters.type
+  const { data: chatStatsData } = useQuery({
+    queryKey: ['chatStats'],
+    queryFn: () => getChatStats({ token }),
+    enabled: !!token,
+  });
+  const { data: chatsData, isLoading: chatLoading, isError: chatIsError, error: chatError } = useQuery({
+    queryKey: ['chats'],
+    queryFn: () => getAllAgentToCusomterChats({ token }),
+    enabled: !!token,
+  });
+  useEffect(() => {
+    console.log('chatsData', chatsData)
+
+  }, [chatsData])
+
+  // Define a helper function to calculate the date range
+  const calculateDateRange = (dateRange: string) => {
+    const currentDate = new Date();
+    switch (dateRange) {
+      case 'Last 7 days':
+        return new Date(currentDate.setDate(currentDate.getDate() - 7));
+      case 'Last 15 days':
+        return new Date(currentDate.setDate(currentDate.getDate() - 15));
+      case 'Last 30 days':
+        return new Date(currentDate.setDate(currentDate.getDate() - 30));
+      default:
+        return null; // No date filter
+    }
+  };
+
+  const filteredData = chatsData?.data.filter((item) => {
+    const matchesStatus = filters.status === 'All' || item.chatStatus === filters.status;
+    const matchesType = filters.type === 'All' || item.department.Type === filters.type;
     const matchesSearch =
       filters.search === '' ||
-      transaction.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      transaction.username.toLowerCase().includes(filters.search.toLowerCase())
+      item.customer.username.toLowerCase().includes(filters.search.toLowerCase()) ||
+      item.agent.username.toLowerCase().includes(filters.search.toLowerCase());
+    const matchesCategory =
+      filters.category === 'All' || item.department.niche?.toLowerCase() === filters.category.toLowerCase();
 
-    return matchesStatus && matchesType && matchesSearch
-  })
+    // Filter by date range
+    const selectedDateRange = calculateDateRange(filters.dateRange);
+    const matchesDateRange =
+      !selectedDateRange || new Date(item.createdAt) >= selectedDateRange;
+
+    return matchesStatus && matchesCategory && matchesType && matchesSearch && matchesDateRange;
+  });
+
+
   const [activeChat, setActiveChat] = useState<'giftCard' | 'crypto'>('giftCard')
   return (
     <>
@@ -70,59 +111,31 @@ const Chat = () => {
             <h1 className="text-[40px] text-gray-800 font-semibold">Chats</h1>
 
             {/* Toggle Buttons */}
-            <div className="flex items-center">
-              <div>
-                <button
-                  onClick={() => setActiveChat('giftCard')}
-                  className={`px-4 py-2 rounded-tl-lg rounded-bl-lg font-medium ${
-                    activeChat === 'giftCard'
-                      ? 'text-white bg-green-700'
-                      : 'text-gray-800 border border-gray-300'
-                  }`}
-                >
-                  Gift card chat
-                </button>
-              </div>
-              <div>
-                <button
-                  onClick={() => setActiveChat('crypto')}
-                  className={`px-4 py-2 rounded-tr-lg rounded-br-lg font-medium ${
-                    activeChat === 'crypto'
-                      ? 'text-white bg-green-700'
-                      : 'text-gray-800 border border-gray-300'
-                  }`}
-                >
-                  Crypto Chat
-                </button>
-              </div>
-            </div>
+
           </div>
-          {/* Dropdown */}
-          <select className="ml-4 px-3 py-2 rounded-lg border border-gray-300 text-gray-800">
-            <option>Last 30 days</option>
-            <option>Last 15 days</option>
-            <option>Last 7 days</option>
-          </select>
+    
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <StatsCard title="Total Chat" value="20" />
-          <StatsCard title="Successful Transaction" value="15" />
-          <StatsCard title="Pending Chat" value="3" />
-          <StatsCard title="Declined Chat" value="2" />
+          <StatsCard title="Total Chat" value={chatStatsData?.data?.totalChats} />
+          <StatsCard title="Successful Transaction" value={chatStatsData?.data?.successfulllTransactions} />
+          <StatsCard title="Pending Chat" value={chatStatsData?.data?.pendingChats} />
+          <StatsCard title="Declined Chat" value={chatStatsData?.data?.declinedChats} />
         </div>
 
         {/* Transactions Table */}
         <div>
           <ChatFilters
             filters={filters}
-            title="Gift card chats"
+            title="Chat History"
             subtitle="Manage total chat and transaction"
             onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
           />
-
-          <ChatTable data={filteredData} isChat={true} onUserViewed={() => null} />
+          {
+            !chatLoading && !chatIsError && !chatError &&
+            <ChatTable data={filteredData} isChat={true} onUserViewed={() => null} />
+          }
         </div>
       </div>
     </>

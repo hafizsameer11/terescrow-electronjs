@@ -1,3 +1,4 @@
+import { getImageUrl } from '@renderer/api/helper'
 import React, { useState, useEffect } from 'react'
 
 interface FloatingInputProps {
@@ -69,6 +70,7 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
 }) => {
   const [formData, setFormData] = useState(initialData)
   const [iconFile, setIconFile] = useState<File | null>(null); // New state for file
+  const  [previewImage, setPreviewImage] = useState<String | null>(getImageUrl(formData.icon) || null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -80,11 +82,11 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      setIconFile(file); // Save file for upload
+      setIconFile(file);
       const reader = new FileReader();
-
+      setFormData((prev) => ({ ...prev, icon: file }));
       reader.onload = (event) => {
-        setFormData((prev) => ({ ...prev, icon: event.target?.result as string })); // Set preview
+        setPreviewImage(event.target?.result as string)
       };
       reader.readAsDataURL(file);
     }
@@ -92,8 +94,9 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
 
 
   const handleUpdate = () => {
-    onUpdate(formData)
+    const updatedFormData={...formData,icon:iconFile}
     console.log('Updated Data:', formData)
+    onUpdate(formData)
     onClose()
   }
 
@@ -116,7 +119,7 @@ const Department: React.FC<AgentEditProfileModalProps> = ({
         <div className="flex flex-col items-center mb-6">
           <div className="relative">
             <img
-              src={formData.icon || 'https://via.placeholder.com/80'}
+              src={previewImage || 'https://via.placeholder.com/80'}
               alt="Profile"
               className="w-20 h-20 object-cover rounded-full border border-gray-300"
             />

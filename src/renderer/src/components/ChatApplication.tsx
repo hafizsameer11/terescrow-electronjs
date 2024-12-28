@@ -3,7 +3,9 @@ import ChatHeader from './ChatHeader'
 import NotificationBanner from './NotificationBanner'
 import NewTransaction from './NewTransaction'
 import { AiOutlineSend, AiOutlinePicture } from 'react-icons/ai'; // Importing icons from react-icons
-
+import { useQuery } from '@tanstack/react-query';
+import { getAgentToCustomerChatDetails } from '@renderer/api/queries/admin.chat.queries';
+import { token } from '@renderer/api/config';
 interface Message {
   id: number
   text: string
@@ -14,10 +16,11 @@ interface Message {
 interface ChatApplicationProps {
   onClose: () => void // Callback to close the chat
   id: number
-  data?: any
+  data?: any,
+  isAdmin?: boolean
 }
 
-const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) => {
+const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, isAdmin }) => {
   console.log("The Id")
   console.log(id);
   console.log(data);
@@ -46,15 +49,22 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
     borderColor: string
   } | null>(null)
 
+
   const [isInputVisible, setIsInputVisible] = useState(true)
   const chatEndRef = useRef<HTMLDivElement>(null)
-
-  // Scroll to the latest message
+  //get chat details
+  const { data: chatsData, isLoading: chatLoading, isError: chatIsError, error: chatError } = useQuery({
+    queryKey: ['chatDetails', id],
+    queryFn: () => getAgentToCustomerChatDetails({ token, chatId: id.toString() }),
+    enabled: !!token,
+  });
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+  useEffect(() => {
+    console.log('Chat details:', chatsData?.data);
+  }, [chatsData]);
 
-  // Handle image upload
   const handleImageUpload = (files: FileList | null) => {
     if (files && files[0]) {
       const file = files[0];
@@ -75,8 +85,6 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
       reader.readAsDataURL(file); // Convert file to Base64
     }
   };
-
-  // Handle sending a message
   const sendMessage = () => {
     if (!inputValue.trim() && !uploadedImage) return
 
@@ -99,8 +107,6 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
       setMessages((prev) => [...prev, dummyResponse])
     }, 1000)
   }
-
-  // Hide the initial banner after 5 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowBanner(false)
@@ -108,7 +114,6 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
 
     return () => clearTimeout(timer)
   }, [])
-
   const handleSendMessage = () => {
     console.log("asdkl");
     if (!inputValue.trim()) return;
@@ -131,7 +136,6 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id }) 
     setMessages((prevMessages) => [...prevMessages, newMessage]);
     setInputValue('');
   };
-  // Handle status change from ChatHeader
   const handleStatusChange = (status: string, reason?: string) => {
     setIsInputVisible(false)
 

@@ -1,80 +1,107 @@
-import React, { useState, useEffect } from 'react';
-import { ChatUser, ChatMessage } from './TeamChat';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { io, Socket } from 'socket.io-client'; // Install socket.io-client
 import { IoImageOutline, IoSend } from 'react-icons/io5';
-
+import { ChatUser, ChatMessage } from './TeamChat';
+import { getChatDetails, sendMessageToChat } from './api'; // Replace with actual API functions
+import { getTeamChatDetails } from '@renderer/api/queries/commonqueries';
+import { token } from '@renderer/api/config';
 interface TeamChatSectionProps {
   user: ChatUser;
 }
 
 const TeamChatSection: React.FC<TeamChatSectionProps> = ({ user }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]); // Initialize with an empty array
   const [inputValue, setInputValue] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const socketRef = useRef<Socket | null>(null); // Socket reference
+  const queryClient = useQueryClient();
 
-  // Update messages when the user changes
+  // Fetch chat details using React Query
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['team-chat-details', user.id],
+    queryFn: () => getTeamChatDetails(user.id), // Replace with actual API call
+    onSuccess: (data) => {
+      setMessages(data.messages); // Assume `data.messages` contains chat messages
+    },
+  });
+
+  // Send message mutation
+  const { mutate: sendMessage } = useMutation({
+    mutationFn: sendMessageToChat, // Replace with your API function
+    onSuccess: (newMessage) => {
+      setMessages((prev) => [...prev, newMessage]); // Add new message locally
+    },
+    onError: (error) => {
+      console.error('Failed to send message:', error);
+    },
+  });
+
+  // Initialize socket connection
   useEffect(() => {
-    setMessages([...user.messages]); // Reset messages to the new user's messages
-  }, [user]);
+    const socket = io('http://localhost:4000'); // Replace with your WebSocket server URL
+    socketRef.current = socket;
 
-  // Convert File to Base64
+    // Listen for incoming messages
+    socket.on('message', (message: ChatMessage) => {
+      if (message && message.type === 'received') {
+        setMessages((prev) => [...prev, message]);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  // Handle sending messages
+  const handleSendMessage = () => {
+    if (!inputValue.trim()) return;
+
+    const message = {
+      chatId: user.id,
+      text: inputValue,
+      type: 'sent',
+      timestamp: new Date().toISOString(),
+    };
+
+    sendMessage(message); // Trigger mutation
+    setInputValue('');
+
+    // Emit message to the server via WebSocket
+    socketRef.current?.emit('message', message);
+  };
+
+  // Handle image uploads
   const handleImageUpload = (files: FileList | null) => {
     if (files && files[0]) {
       const file = files[0];
-      const reader = new FileReader();
+      setUploadedImage(file);
 
+      const reader = new FileReader();
       reader.onload = () => {
-        const base64Image = reader.result as string;
-        const newMessage: ChatMessage = {
+        const imageMessage: ChatMessage = {
           id: messages.length + 1,
           text: '',
           type: 'sent',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          imageUrl: base64Image,
+          imageUrl: reader.result as string,
         };
+        setMessages((prev) => [...prev, imageMessage]);
 
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
-
-        // Dummy response for image upload
+        // Dummy server response simulation
         setTimeout(() => {
-          const dummyResponse: ChatMessage = {
-            id: newMessage.id + 1,
-            text: 'Nice image! Let me check.',
+          const responseMessage: ChatMessage = {
+            id: imageMessage.id + 1,
+            text: 'Great image! Thanks for sharing.',
             type: 'received',
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           };
-          setMessages((prevMessages) => [...prevMessages, dummyResponse]);
+          setMessages((prev) => [...prev, responseMessage]);
         }, 1000);
       };
-
-      reader.readAsDataURL(file); // Convert file to Base64
+      reader.readAsDataURL(file); // Convert image to Base64
     }
-  };
-
-  const handleSendMessage = () => {
-    if (!inputValue.trim()) return;
-
-    const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    const newMessage: ChatMessage = {
-      id: messages.length + 1,
-      text: inputValue.trim(),
-      type: 'sent',
-      timestamp,
-    };
-
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
-    setInputValue('');
-
-    // Dummy response for text messages
-    setTimeout(() => {
-      const dummyResponse: ChatMessage = {
-        id: newMessage.id + 1,
-        text: 'Got it! Let me check.',
-        type: 'received',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prevMessages) => [...prevMessages, dummyResponse]);
-    }, 1000);
   };
 
   return (
@@ -99,26 +126,33 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ user }) => {
 
       {/* Messages */}
       <div className="flex-1 p-4 overflow-y-auto bg-gray-50">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.type === 'sent' ? 'justify-end' : 'justify-start'} mb-2`}
-          >
+        {isLoading ? (
+          <div>Loading messages...</div>
+        ) : isError ? (
+          <div>Error loading messages</div>
+        ) : (
+          messages.map((message) => (
             <div
-              className={`max-w-xs px-4 py-2 rounded-lg ${message.type === 'sent' ? 'bg-green-100 text-gray-800' : 'bg-gray-200 text-gray-800'
-                }`}
+              key={message.id}
+              className={`flex ${message.type === 'sent' ? 'justify-end' : 'justify-start'} mb-2`}
             >
-              {message.imageUrl && (
-                <img
-                  src={message.imageUrl}
-                  alt="Uploaded"
-                  className="mb-2 rounded-lg w-full max-w-[150px]"
-                />
-              )}
-              {message.text}
+              <div
+                className={`max-w-xs px-4 py-2 rounded-lg ${
+                  message.type === 'sent' ? 'bg-green-100 text-gray-800' : 'bg-gray-200 text-gray-800'
+                }`}
+              >
+                {message.imageUrl && (
+                  <img
+                    src={message.imageUrl}
+                    alt="Uploaded"
+                    className="mb-2 rounded-lg w-full max-w-[150px]"
+                  />
+                )}
+                {message.text}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Input Field */}

@@ -4,6 +4,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getCategories, getSingleCategory, deleteCategory } from '@renderer/api/queries/adminqueries'
 import { token } from '@renderer/api/config'
 import ViewSIngleServiceModal from './modal/ViewSIngleServiceModal'
+import { getImageUrl } from '@renderer/api/helper'
+import AddNewService from './modal/AddNewService'
+import EditServicesModal from './modal/EditServicesModal'
+import { Category } from './Transaction/TransactionTable'
 
 const ServicesTable = () => {
   const queryClient = useQueryClient()
@@ -11,7 +15,7 @@ const ServicesTable = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
   const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-
+const [selectedCategory, setSelectedCategory] = useState<Category|null> (null);
   // Fetch all categories
   const { data: categories, isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['categories'],
@@ -49,7 +53,10 @@ const ServicesTable = () => {
     setSelectedCategoryId(null)
   }
 
-  const handleOpenEditModal = () => setIsEditModalOpen(true)
+  const handleOpenEditModal = (item : Category) =>{
+    setIsEditModalOpen(true)
+    setSelectedCategory(item)
+  }
   const handleCloseEditModal = () => setIsEditModalOpen(false)
 
   const handleDeleteCategory = (id: string) => {
@@ -73,7 +80,7 @@ const ServicesTable = () => {
           {categories?.data.map((category, index) => (
             <tr key={index} className="border-b">
               <td className="px-4 py-2">
-                <img src={category.image} alt={category.title} className="object-cover w-16 h-16" />
+                <img src={getImageUrl(category.image)} alt={category.title} className="object-cover w-16 h-16" />
               </td>
               <td className="px-4 py-2">{category.title}</td>
               <td className="px-4 py-2">{category.subTitle}</td>
@@ -86,7 +93,7 @@ const ServicesTable = () => {
                 </button>
                 <button
                   className="text-gray-500 bg-gray-100 p-2 rounded-lg"
-                  onClick={handleOpenEditModal}
+                  onClick={()=>handleOpenEditModal(category)}
                 >
                   <AiOutlineEdit size={20} />
                 </button>
@@ -101,7 +108,8 @@ const ServicesTable = () => {
           ))}
         </tbody>
       </table>
-
+      <EditServicesModal isOpen={isEditModalOpen} onClose={handleCloseEditModal} service={selectedCategory} />
+      {/* <AddNewService isOpen={isServiceModalOpen} onClose={handleCloseModal} /> */}
       {isViewModalOpen && singleCategory && (
         <ViewSIngleServiceModal data={singleCategory.data} onClose={handleCloseViewModal} />
       )}

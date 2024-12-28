@@ -5,6 +5,7 @@ import EditSubServicesModal from './modal/EditSubServicesModal'
 import { useQuery } from '@tanstack/react-query'
 import { getCategories, getSubCategories } from '@renderer/api/queries/adminqueries'
 import { token } from '@renderer/api/config'
+import { SubCategory } from '@renderer/api/queries/datainterfaces'
 // import EditServicesModal from './modal/EditServicesModal'
 // import EditSubServicesModal from './modal/EditSubServicesModal'
 // import EditServicesModal from './modal/EditServicesModal'
@@ -36,7 +37,9 @@ const data: ServicesTableProps[] = [
 const SubServicesTable = () => {
   const [isAppBannerOpen, setIsAppBannerOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const handleOpenEditModal = () => {
+  const [selectedCategory, setSelectedCategory] = useState<SubCategory | null>(null)
+  const handleOpenEditModal = (item: SubCategory) => {
+    setSelectedCategory(item)
     setIsEditModalOpen(true)
   }
   const { data: subcategories, isLoading: isCategoriesLoading } = useQuery({
@@ -72,7 +75,7 @@ const SubServicesTable = () => {
               <td className="px-4 py-2 space-x-2">
                 <button
                   className="text-gray-500 bg-gray-100 p-2 rounded-lg"
-                  onClick={handleOpenEditModal}
+                  onClick={()=>handleOpenEditModal(transaction)}
                 >
                   <AiOutlineEdit size={20} />
                 </button>
@@ -93,7 +96,7 @@ const SubServicesTable = () => {
       )}
 
       {isEditModalOpen && (
-        <EditSubServicesModal isOpen={isEditModalOpen} onClose={handleCloseEditModal} />
+        <EditSubServicesModal isOpen={isEditModalOpen} onClose={handleCloseEditModal} subcategory={selectedCategory} />
       )}
     </div>
   )

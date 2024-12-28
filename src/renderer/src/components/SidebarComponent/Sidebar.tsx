@@ -40,8 +40,8 @@ export const Sidebar = () => {
   ]
   console.log('sidebar', userData?.role)
 
-  const menuItems = userData?.role === UserRoles.admin ? adminMenuItems : agentMenuItems
-
+  // const menuItems = userData?.role === UserRoles.admin ? adminMenuItems : agentMenuItems
+const menuItems=adminMenuItems
   return (
     <aside className="lg:w-[280px] h-screen bg-white px-[20px] lg:px-[30px] text-gray-800 flex flex-col border-r border-[#989898] overflow-auto">
       <div className="flex items-start justify-start py-6">

@@ -21,8 +21,8 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
   subTitle,
 }) => {
   const statusOptions = ['All', 'successful', 'pending', 'declined'];
-  const typeOption = ['All', 'Buy', 'Sell'];
-  const category = ['All', 'Crypto', 'Gift Card'];
+  const typeOption = ['All', 'buy', 'sell'];
+  const category = ['All', 'crypto', 'giftcard'];
 
   return (
     <>
@@ -37,7 +37,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
             {subTitle || 'Manage total customers and see their activities'}
           </p>
         </div>
-        <div className="filters-top">
+        {/* <div className="filters-top">
           {category.map((status, index) => (
             <button
               key={status}
@@ -53,7 +53,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
               {status}
             </button>
           ))}
-        </div>
+        </div> */}
       </div>
       <div className="flex items-center justify-between">
         {/* Status Filter */}

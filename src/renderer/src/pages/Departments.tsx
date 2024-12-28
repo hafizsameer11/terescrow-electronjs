@@ -26,16 +26,19 @@ const Departments: React.FC = () => {
 
   // Handle form submission
   const handleUpdate = (data: Record<string, any>) => {
+
+    const formData = new FormData();
+    formData.append('title', data.name);
+    formData.append('description', data.description);
+    formData.append('status', data.status);
+    formData.append('Type', data.Type || 'buy');
+    formData.append('niche', data.niche || 'crypto');
+    formData.append('icon', data.icon);
+
+
     mutation.mutate({
       token,
-      data: {
-        title: data.name,
-        description: data.description,
-        status: data.status,
-        Type: data.Type || 'buy',
-        niche: data.niche || 'crypto',
-        icon: data.icon || '',
-      },
+      data: formData, // Pass the FormData object
     });
   };
 

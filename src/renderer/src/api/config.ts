@@ -1,4 +1,5 @@
-const API_DOMAIN = 'http://46.202.154.203:8000/api'
+const API_DOMAIN = 'https://46.202.154.203/api'
+const API_BASE_URL = 'https://46.202.154.203'
 const API_ENDPOINT = {
   CUSTOMER: {
     AllCustomers: API_DOMAIN + '/admin/operations/get-all-customers',
@@ -6,16 +7,15 @@ const API_ENDPOINT = {
     CustomerTransactions: API_DOMAIN + '/admin/operations/get-customer-transactions'
   },
   OPERATIONS: {
-    Traansactions: API_DOMAIN + '/get-admin-transaction',
+    Traansactions: API_DOMAIN + '/admin/operations/get-all-transactions',
     Departments: API_DOMAIN + '/admin/operations/get-all-department',
 
     AgentByDepartment: API_DOMAIN + '/admin/operations/get-agent-by-department',
-    GetAllAgents: API_DOMAIN + '/admin/operations/get-all-agent',
+    GetAllAgents: API_DOMAIN + '/admin/operations/get-all-agents',
     GetRate: API_DOMAIN + '/admin/operations/get-rate',
     GetTeam: API_DOMAIN + '/admin/operations/get-team-members',
     GetAllUsers: API_DOMAIN + '/admin/operations/get-all-users',
     GetCategories: API_DOMAIN + '/admin/operations/get-all-categories',
-
 
     GetSubCategories: API_DOMAIN + '/admin/operations/get-all-subcategories',
     GetBanner: API_DOMAIN + '/admin/operations/get-all-banners',
@@ -23,10 +23,10 @@ const API_ENDPOINT = {
     UpdateBanner: API_DOMAIN + '/admin/operations/update-banner',
     DeleteBanner: API_DOMAIN + '/admin/operations/delete-banner',
 
-
     CreateDepartment: API_DOMAIN + '/admin/operations/create-department',
     UpdateDepartment: API_DOMAIN + '/admin/operations/update-department',
     DeleteDepartment: API_DOMAIN + '/admin/operations/delete-department',
+    GetSingleDepartment: API_DOMAIN + '/admin/operations/get-department',
 
     UpdateCustomer: API_DOMAIN + '/admin/operations/update-customer',
     CreateAgent: API_DOMAIN + '/admin/create-agent',
@@ -44,12 +44,23 @@ const API_ENDPOINT = {
     DeleteNotification: API_DOMAIN + '/admin/operations/delete-notification',
     GetNotification: API_DOMAIN + '/admin/operations/get-all-notifications',
 
+    UserAccountActivity: API_DOMAIN + '/admin/operations/get-user-activity',
+    //chat routes
+    GetAllAgentToCusomterChats: API_DOMAIN + '/admin/operations/get-all-agent-to-customer-chats',
+    GetSingleAgentToCusomterChat: API_DOMAIN + '/admin/operations/get-agent-customer-chats',
+    GetAgentToTeamChats: API_DOMAIN + '/admin/operations/get-agent-team-chats',
 
-  }, 
+    GetAgentCustomerChatDetails: API_DOMAIN + '/admin/operations/get-agent-customer-chatdetails',
+    GetAgentTeamChatDetails: API_DOMAIN + '/admin/operations/get-agent-agent-chatdetails',
+    GetAllTeamChats: API_DOMAIN + '/get-all-teams-chats',
+    //Stats Routes
+    GetChatStats: API_DOMAIN + '/admin/operations/get-chat-stats'
+  },
   COMMON: {
-    login: API_DOMAIN + '/public/login'
+    login: API_DOMAIN + '/public/login',
+    GetTeamChatDetails: API_DOMAIN + '/get-team-chat-details',
   }
 }
 const token =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJBZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNDUyNzk2OCwiZXhwIjoxNzM0NjE0MzY4fQ.lDblM7-Mn45bd6nA-S7WHXD3BRjWr-RynDwQhtQ5IP4'
-export { API_DOMAIN, API_ENDPOINT, token }
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywidXNlcm5hbWUiOiJBZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTczNTMzNTAyNiwiZXhwIjoxNzM1NDIxNDI2fQ.uu1cSUMbThUKwTemMjHDtnbe4C9YyFZ4HK5vItWOyp0'
+export { API_DOMAIN, API_ENDPOINT, token, API_BASE_URL }

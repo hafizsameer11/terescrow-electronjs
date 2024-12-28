@@ -4,7 +4,7 @@ import { Formik, Form } from 'formik'
 import Input from '@renderer/utils/customInput'
 import { validationSignIn } from '@renderer/utils/validation'
 import { useMutation } from '@tanstack/react-query'
-import { toast } from 'react-toastify'
+// import { toast } from 'react-toastify'
 import { useAuth, UserRoles } from '@renderer/context/authContext'
 import { loginUser } from '@renderer/mutation/commonMutation'
 import { ApiError } from '@renderer/api/customApiCall'
@@ -23,18 +23,18 @@ const LoginPage = () => {
         dispatch({ type: 'SET_USER_DATA', payload: data.data })
         data.data.role === UserRoles.admin ? navigate('/dashboard') : navigate('/chats')
       } else {
-        toast.error(`Error: ${data?.message}`, {
-          position: 'top-right',
-          theme: 'colored',
-          autoClose: 3000
-        })
+        // toast.error(`Error: ${data?.message}`, {
+        //   position: 'top-right',
+        //   theme: 'colored',
+        //   autoClose: 3000
+        // })
       }
     },
     onError: (error: ApiError) => {
-      toast.error(`Error: ${error?.message || 'Failed to login'}`, {
-        position: 'top-right',
-        autoClose: 3000
-      })
+      // toast.error(`Error: ${error?.message || 'Failed to login'}`, {
+      //   position: 'top-right',
+      //   autoClose: 3000
+      // })
     }
   })
 

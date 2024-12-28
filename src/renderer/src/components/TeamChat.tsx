@@ -97,17 +97,17 @@ const TeamChat: React.FC<TeamChatProps> = ({ onClose }) => {
       ],
     },
     {
-      id:11,
+      id: 11,
       name: 'Group',
       avatar: 'https://via.placeholder.com/50',
       status: 'Offline',
       isGroup: true,
       groupMembers: ['Jane Smith', 'Buy Crypto Group', 'Marketing Team'],
       messages: [
-       { id: 1, text: 'Group: The issue with the customer was resolved yesterday.', type: 'received', timestamp: '4:00 pm' },
-       {id:2, text: 'Perfect! Let’s close the ticket and mark it as resolved.', type: 'received', timestamp: '4:05 pm' },
-       {id:3, text: 'Perfect! Let’s close the ticket and mark it as resolved.', type: 'received', timestamp: '4:05 pm' },
-       {id:4, text: 'Perfect! Let’s close the ticket and mark it as resolved.', type: 'sent', timestamp: '4:05 pm' },
+        { id: 1, text: 'Group: The issue with the customer was resolved yesterday.', type: 'received', timestamp: '4:00 pm' },
+        { id: 2, text: 'Perfect! Let’s close the ticket and mark it as resolved.', type: 'received', timestamp: '4:05 pm' },
+        { id: 3, text: 'Perfect! Let’s close the ticket and mark it as resolved.', type: 'received', timestamp: '4:05 pm' },
+        { id: 4, text: 'Perfect! Let’s close the ticket and mark it as resolved.', type: 'sent', timestamp: '4:05 pm' },
       ],
     }
   ];
@@ -126,7 +126,7 @@ const TeamChat: React.FC<TeamChatProps> = ({ onClose }) => {
       {/* Sidebar */}
       <div className="w-[35%] bg-gray-50 border-r">
         <TeamChatSidebar
-          users={users}
+
           onSelectUser={handleUserSelect}
           onOpenGroupModal={() => setIsGroupModalOpen(true)}
         />

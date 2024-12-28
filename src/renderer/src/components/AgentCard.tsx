@@ -1,3 +1,4 @@
+import { getImageUrl } from "@renderer/api/helper";
 import { Agent } from "@renderer/api/queries/datainterfaces";
 import React from "react";
 import { MdVisibility, MdEdit, MdDelete } from "react-icons/md";
@@ -17,7 +18,7 @@ const AgentCard: React.FC<AgentCardProps> = ({ agent, onView, onEdit, onDelete }
       <div className="top-container w-full flex items-center  p-2 ">
 
         <img
-          src={agent.user.profilePicture || "N/A"}
+          src={getImageUrl(agent?.user.profilePicture || "") || "N/A"}
           alt={agent.user.username}
           className="w-[57px]  h-[57px] rounded-full object-cover "
         />

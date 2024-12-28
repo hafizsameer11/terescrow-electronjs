@@ -1,10 +1,12 @@
+import { getChatStats } from "@renderer/api/queries/admin.chat.queries";
 import ChatFilters from "@renderer/components/ChatFilters";
 import ChatTable from "@renderer/components/ChatTable";
 import StatsCard from "@renderer/components/StatsCard";
-import React, { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useState } from "react";
 // import ChatTable from "./ChatTable";
 // import ChatFilters from "./ChatFilters";
-
+import { token } from "@renderer/api/config";
 const chats = [
   {
     id: 1,
@@ -45,7 +47,7 @@ const ChatPage: React.FC = () => {
 
   return (
     <div className="w-full">
-         <div className="mb-6">
+      <div className="mb-6">
         <h1 className="text-[40px] font-normal text-gray-800">Chats</h1>
 
       </div>

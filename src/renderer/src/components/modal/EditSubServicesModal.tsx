@@ -1,38 +1,95 @@
-import React, { useState } from 'react'
+import { editSubCategory, getCategories } from '@renderer/api/queries/adminqueries'
+import React, { useEffect, useState } from 'react'
 import Select from 'react-select'
+import { token } from '@renderer/api/config'
+import { SubCategory } from '@renderer/api/queries/datainterfaces'
+import { useMutation, useQuery } from '@tanstack/react-query'
 
 interface EditServicesModalProps {
   isOpen: boolean
   onClose: () => void
+  subcategory: SubCategory
 }
 
-const serviceOptions = [
-  { value: 'Web Development', label: 'Web Development' },
-  { value: 'App Development', label: 'App Development' },
-  { value: 'Graphic Design', label: 'Graphic Design' },
-  { value: 'Content Writing', label: 'Content Writing' },
-  { value: 'Digital Marketing', label: 'Digital Marketing' }
-]
+interface OptionType {
+  value: number
+  label: string
+}
 
-const EditSubServicesModal: React.FC<EditServicesModalProps> = ({ isOpen, onClose }) => {
-  const [title, setTitle] = useState('Sample Service Title')
-  const [subtitle, setSubtitle] = useState('Sample Service Subtitle')
-  const [price, setPrice] = useState<string>('Free')
-  const [services, setServices] = useState<{ value: string; label: string }[]>([])
+const EditSubServicesModal: React.FC<EditServicesModalProps> = ({
+  isOpen,
+  onClose,
+  subcategory
+}) => {
+  const [title, setTitle] = useState('')
+  const [subtitle, setSubtitle] = useState('')
+  const [price, setPrice] = useState('')
+  const [selectedCategories, setSelectedCategories] = useState<OptionType[]>([])
 
-  const handleServicesChange = (selectedOptions: any) => {
-    setServices(selectedOptions || [])
+  // Fetch categories
+  const { data: categories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => getCategories({ token }),
+    enabled: !!token
+  })
+
+  // Prepopulate fields when the modal opens
+  useEffect(() => {
+    if (subcategory && isOpen) {
+      const assignedCategories = subcategory.categories?.map((cat) => cat.id)
+      const preselectedCategories =
+        categories?.data
+          ?.filter((cat) => assignedCategories?.includes(cat.id))
+          ?.map((cat) => ({
+            value: cat.id,
+            label: cat.title
+          })) || []
+
+      setSelectedCategories(preselectedCategories)
+      setTitle(subcategory?.title || '')
+      // setSubtitle(subcategory?.subTitle || '')
+      setPrice(subcategory?.price || '')
+    }
+  }, [subcategory, categories, isOpen])
+
+  const handleCategoriesChange = (selectedOptions: OptionType[]) => {
+    setSelectedCategories(selectedOptions)
   }
+  const mutation = useMutation({
+    mutationFn: (data: { title: string; price: string; categories: number[] }) =>
+      editSubCategory({ token, id: subcategory.id, data }),
+    onSuccess: () => {
+      alert('SubCategory updated successfully!');
+      onClose();
+    },
+    onError: (error) => {
+      console.error('Error updating subcategory:', error);
+      alert('Failed to update SubCategory.');
+    },
+  });
 
   const handleSubmit = () => {
-    console.log({
+    // Validate form fields
+    if (!title || !price || selectedCategories.length === 0) {
+      alert('Please fill all required fields.');
+      return;
+    }
+
+    // Collect data to submit
+    const submittedData = {
       title,
-      subtitle,
       price,
-      services
-    })
-    onClose()
-  }
+      categories: selectedCategories.map((cat) => cat.value),
+    };
+
+    mutation.mutate(submittedData); // Call the mutation
+  };
+
+  const categoryOptions: OptionType[] =
+    categories?.data?.map((cat) => ({
+      value: cat.id,
+      label: cat.title
+    })) || []
 
   if (!isOpen) return null
 
@@ -63,26 +120,12 @@ const EditSubServicesModal: React.FC<EditServicesModalProps> = ({ isOpen, onClos
             </label>
           </div>
 
-          {/* Subtitle Input */}
-          <div className="relative">
-            <textarea
-              value={subtitle}
-              onChange={(e) => setSubtitle(e.target.value)}
-              placeholder=" "
-              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
-            />
-            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4">
-              Subtitle
-            </label>
-          </div>
-
           {/* Price Input */}
           <div className="relative">
             <input
               type="text"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              min="0"
               placeholder=" "
               className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
             />
@@ -91,14 +134,14 @@ const EditSubServicesModal: React.FC<EditServicesModalProps> = ({ isOpen, onClos
             </label>
           </div>
 
-          {/* Services Selection */}
+          {/* Categories Selection */}
           <div className="relative">
             <Select
               isMulti
-              options={serviceOptions}
-              value={services}
-              onChange={handleServicesChange}
-              placeholder="Select Services"
+              options={categoryOptions}
+              value={selectedCategories}
+              onChange={handleCategoriesChange}
+              placeholder="Select Categories"
               className="text-sm"
             />
           </div>

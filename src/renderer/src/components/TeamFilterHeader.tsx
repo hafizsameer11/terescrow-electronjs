@@ -44,7 +44,7 @@ const TeamFilterHeader: React.FC<TeamFilterHeaderProps> = ({
         )}
 
         {/* Roles Dropdown */}
-        <div className="relative">
+        {/* <div className="relative">
           <select
             value={selectedRole}
             onChange={(e) => onRoleChange(e.target.value as 'Manager' | 'Agent' | 'Roles')}
@@ -54,7 +54,7 @@ const TeamFilterHeader: React.FC<TeamFilterHeaderProps> = ({
             <option value="Manager">Manager</option>
             <option value="Agent">Agent</option>
           </select>
-        </div>
+        </div> */}
       </div>
 
       {/* Right Section */}

@@ -60,10 +60,10 @@ const RatesHistory: React.FC = () => {
       <h1 className="text-[40px] font-semibold text-gray-800 mb-4">Rates</h1>
 
       <div className="flex justify-between items-center mb-6">
-        <div>
+        {/* <div>
           <h2 className="text-[30px] font-medium text-gray-600">Rates History</h2>
           <p className="text-[20px] text-gray-500">View rates history table</p>
-        </div>
+        </div> */}
         <div className="flex gap-4">
           <select
             value={filterService}

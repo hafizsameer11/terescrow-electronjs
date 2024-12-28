@@ -1,26 +1,31 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Select from 'react-select'
+import { editCategory, getDepartments } from '@renderer/api/queries/adminqueries'
+import { token } from '@renderer/api/config'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Category } from '@renderer/api/queries/datainterfaces'
+import { getImageUrl } from '@renderer/api/helper'
 
 interface EditServicesModalProps {
   isOpen: boolean
   onClose: () => void
+  service: Category | null
 }
 
-const departmentOptions = [
-  { value: 'Marketing', label: 'Marketing' },
-  { value: 'Sales', label: 'Sales' },
-  { value: 'Human Resources', label: 'Human Resources' },
-  { value: 'IT Support', label: 'IT Support' },
-  { value: 'Finance', label: 'Finance' }
-]
+interface OptionType {
+  value: number
+  label: string
+}
 
-const EditServicesModal: React.FC<EditServicesModalProps> = ({ isOpen, onClose }) => {
+const EditServicesModal: React.FC<EditServicesModalProps> = ({ isOpen, onClose, service }) => {
   const [title, setTitle] = useState('Sample Service Title')
   const [subtitle, setSubtitle] = useState('Sample Service Subtitle')
   const [image, setImage] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>('https://via.placeholder.com/150')
-  const [role, setRole] = useState<string>('Agent')
   const [departments, setDepartments] = useState<{ value: string; label: string }[]>([])
+  const [selectedDepartments, setSelectedDepartments] = useState<{ value: number; label: string }[]>(
+    []
+  )
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -34,23 +39,76 @@ const EditServicesModal: React.FC<EditServicesModalProps> = ({ isOpen, onClose }
     }
   }
 
-  const handleRoleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setRole(event.target.value)
-  }
+  const {
+    data: departmentsData,
+    isLoading: isDepartmetnLoading,
+    isError: isDepartmentError,
+    error: departmenterror
+  } = useQuery({
+    queryKey: ['departmentsData'],
+    queryFn: () => getDepartments({ token }),
+    enabled: !!token
+  })
+
+  const mutation = useMutation({
+    mutationFn: editCategory,
+    onSuccess: () => {
+      alert('Category Updated successfully!')
+      // resetForm()
+      onClose()
+    },
+    onError: (error) => {
+      console.error('Error creating category:', error)
+      alert('Failed to create category.')
+    }
+  })
+  useEffect(() => {
+    if (service) {
+      const assignedDepartmentIds = service.departments?.map((dept) => dept.departmentId)
+
+      const preselectedDepartments =
+        departmentsData?.data
+          ?.filter((dept) => assignedDepartmentIds?.includes(dept.id))
+          ?.map((dept) => ({
+            value: dept.id,
+            label: dept.title
+          })) || []
+      setSelectedDepartments(preselectedDepartments)
+      setTitle(service?.title || '')
+      setSubtitle(service?.subTitle || '') // Fix: Subtitle now editable
+      setImagePreview(getImageUrl(service?.image) || 'https://via.placeholder.com/150')
+
+    }
+  }, [service, departmentsData])
 
   const handleDepartmentsChange = (selectedOptions: any) => {
-    setDepartments(selectedOptions || [])
+    setSelectedDepartments(selectedOptions as OptionType[])
   }
 
+  const departmentOptions: OptionType[] =
+    departmentsData?.data?.map((dept) => ({
+      value: dept.id,
+      label: dept.title
+    })) || []
+
   const handleSubmit = () => {
-    console.log({
-      title,
-      subtitle,
-      image,
-      role,
-      departments
+    // Validate fields
+    if (!title  || selectedDepartments.length === 0) {
+      alert('Please fill all required fields.')
+      return
+    }
+
+    const formData = new FormData()
+    formData.append('title', title)
+    formData.append('subtitle', subtitle)
+    formData.append('image', image)
+    formData.append('departmentIds', JSON.stringify(selectedDepartments.map((d) => d.value)))
+
+    mutation.mutate({
+      token: token,
+      id: service?.id.toString() || '',
+      data: formData
     })
-    onClose() // Close the modal after submission
   }
 
   if (!isOpen) return null
@@ -110,11 +168,13 @@ const EditServicesModal: React.FC<EditServicesModalProps> = ({ isOpen, onClose }
             onChange={handleImageChange}
             className="hidden"
           />
+
+          {/* Departments Selection */}
           <div className="relative">
             <Select
               isMulti
               options={departmentOptions}
-              value={departments}
+              value={selectedDepartments}
               onChange={handleDepartmentsChange}
               placeholder="Select Departments"
               className="text-sm"

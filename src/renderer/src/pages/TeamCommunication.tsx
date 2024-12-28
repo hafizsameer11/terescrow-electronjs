@@ -1,5 +1,6 @@
 import ChatTable from '@renderer/components/ChatTable'
 import StatsCard from '@renderer/components/StatsCard'
+import TeamCommunicationTable from '@renderer/components/TeamCommunicationTable'
 import TeamFilterHeader from '@renderer/components/TeamFilterHeader'
 import { useState } from 'react'
 // import StatsCard from '@renderer/components/Dashboard/StatsCard';
@@ -100,7 +101,7 @@ const TeamCommunication = () => {
             onRoleChange={handleRoleChange}
             onSearchChange={handleSearchChange}
           />
-          <ChatTable data={filteredData} isTeam={true} isTeamCommunition={true}  />
+          <TeamCommunicationTable data={filteredData} isTeam={true} isTeamCommunition={true}  />
         </div>
       </div>
     </>

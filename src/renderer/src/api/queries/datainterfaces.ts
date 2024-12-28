@@ -15,12 +15,12 @@ export interface Customer {
   createdAt: string
   updatedAt: string
   password?: string
-  agent?:Agent
+  agent?: Agent
 }
 
 // export intergac
 export interface Department {
-  id?: number
+  id: number
   title: string
   description?: string
   icon?: string
@@ -64,7 +64,7 @@ export interface Country {
   id: number
   title?: string
 }
-export interface AssignedDepartments{
+export interface AssignedDepartments {
   departmentId: number
   title?: string
 }
@@ -129,6 +129,11 @@ export interface DepartmentResponse {
   message: string
   data: Department[]
 }
+export interface SIngleDepartmentResponse {
+  status: string
+  message: string
+  data: Department
+}
 export interface AgentByDepartmentResponse {
   status: string
   message: string
@@ -150,7 +155,7 @@ export interface CategroiesResponse {
   message: string
   data: Category[]
 }
-export interface SubcategoriesResponse{
+export interface SubcategoriesResponse {
   status: string
   message: string
   data: SubCategory[]
@@ -159,9 +164,9 @@ export interface SubcategoriesResponse{
 export interface AlluserResponse {
   status: string
   message: string
-  data:Customer[]
+  data: Customer[]
 }
-export interface PostCustomerData{
+export interface PostCustomerData {
   id: number
   username: string
   email?: string
@@ -176,92 +181,365 @@ export interface PostCustomerData{
   password?: string
 }
 
-export interface UPdateCustomerResponse{
+export interface UPdateCustomerResponse {
   status: string
   message: string
-  datta:any
+  datta: any
 }
 
-export interface CreateCategoryResponse{
+export interface CreateCategoryResponse {
   status: string
   message: string
-  datta:Category
+  datta: Category
 }
 export interface CategoryDepartment {
-  department: Department;
+  department: Department
 }
 
 // Define Single Category Interface
 export interface SingleCategory {
-  id: number;
-  title: string;
-  subTitle: string;
-  image: string;
-  createdAt: string;
-  updatedAt: string;
-  departments: CategoryDepartment[];
+  id: number
+  title: string
+  subTitle: string
+  image: string
+  createdAt: string
+  updatedAt: string
+  departments: CategoryDepartment[]
 }
-
 
 export interface SingleCategoryResponse {
-  status: string;
-  message: string;
-  data: SingleCategory;
+  status: string
+  message: string
+  data: SingleCategory
 }
 export interface CreateSubCategoryResponse {
-  status: string;
-  message: string;
-  data: SubCategory;
+  status: string
+  message: string
+  data: SubCategory
 }
 // export interface
 
-export interface CreateDepartmentResponse{
+export interface CreateDepartmentResponse {
   status: string
   message: string
-  data:Department
+  data: Department
 }
-export interface Banner{
+export interface Banner {
   id: number
   imgae: string
   createdAt?: string
 }
-export interface CreateBannerResponse{
+export interface CreateBannerResponse {
   status: string
   message: string
-  datta:Banner
+  datta: Banner
 }
-export interface AllBannerResponse{
+export interface AllBannerResponse {
   status: string
   message: string
-  datta:Banner[]
+  datta: Banner[]
 }
 
-export interface DeleteBannerResponse{
+export interface DeleteBannerResponse {
   status: string
   message: string
 }
 
 // Notification Interface
 export interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  type: 'customer' | 'agent' | string;
-  isSingle: boolean;
-  image: string;
-  userId?: number | null;
-  createdAt?: string;
+  id: number
+  title: string
+  message: string
+  type: 'customer' | 'agent' | string
+  isSingle: boolean
+  image: string
+  userId?: number | null
+  createdAt?: string
 }
 
 // API Response Interface
 export interface NotificationsResponse {
-  status: string;
-  message: string;
-  data: Notification[];
+  status: string
+  message: string
+  data: Notification[]
 }
 
-export interface createAgentResponse{
+export interface createAgentResponse {
   status: string
   message: string
   data: Agent
+}
+
+export interface AccountAcitivityResponse {
+  status: string
+  message: string
+  data: AccountActivity[]
+}
+export interface AccountActivity {
+  id: number
+  userId: number
+  description: string
+  createAt: string
+}
+
+export interface AgentToCustomerChatResponse {
+  status: string
+  message: string
+  data: AgentToCustomerChatData[]
+}
+export interface AgentToCustomerChatData {
+  id: number
+  customer: {
+    id: number
+    username: string
+    firstname: string
+    lastname: string
+    role: string
+    profilePicture: string
+  }
+  recentMessage: {
+    id: number
+    message: string
+    createdAt: string
+  } | null
+  recentMessageTimestamp: string | null
+  chatStatus: string
+  department: {
+    id: number
+    title: string
+    Type: string
+    niche: string
+  }
+  messagesCount: number
+  transactions?: {
+    id: number
+    amount: number
+    amountNaira: number
+  }[]
+  agent: {
+    id: number
+    username: string
+    firstname: string
+    lastname: string
+    role: string
+    profilePicture: string
+  }
+  createdAt: string
+}
+
+export interface AgentToAgentChatResponse {
+  status: string // Indicates the status of the API call
+  message: string // Message describing the API response
+  data: AgentToAgentChatData[]
+}
+export interface AgentToAgentChatData {
+  id: number // Unique identifier for the chat
+  recentMessage: {
+    id: number // Unique identifier for the message
+    message: string // Content of the message
+    createdAt: string // Timestamp of the message
+  }
+  recentMessageTimestamp: string // Timestamp of the most recent message
+  chatStatus: string | null // Status of the chat
+  department: {
+    id: number // Unique identifier for the department
+    title: string // Title of the department
+  } | null
+  messagesCount: number // Count of messages in the chat
+  transactions: {
+    id: number // Unique identifier for the transaction
+    amount: number // Transaction amount
+    amountNaira: number // Transaction amount in Naira
+  }[]
+  otherParticipants: {
+    user: {
+      id: number // Unique identifier for the user
+      username: string // Username of the user
+      firstname: string // First name of the user
+      lastname: string // Last name of the user
+      role: string // Role of the user (e.g., admin, agent)
+      profilePicture: string // URL or filename of the profile picture
+    }
+  }[]
+}
+
+export interface CustomerToAgentChatDetailResponse {
+  status: string // Status of the response
+  message: string // Response message
+  data: {
+    id: number // Chat ID
+    customer: {
+      id: number // Customer ID
+      username: string // Customer username
+      firstname: string // Customer first name
+      lastname: string // Customer last name
+      profilePicture: string // Customer profile picture URL
+      role: string // Customer role
+    }
+    agent: {
+      id: number // Agent ID
+      username: string // Agent username
+      firstname: string // Agent first name
+      lastname: string // Agent last name
+      profilePicture: string // Agent profile picture URL
+      role: string // Agent role
+    }
+    messages: Message[] // Array of messages
+    chatDetails: {
+      id: number // Chat Details ID
+      chatId: number // Chat ID associated with the details
+      departmentId: number // Department ID
+      categoryId: number // Category ID
+      status: string // Chat status
+      createdAt: string // Timestamp of creation
+      updatedAt: string // Timestamp of last update
+      category: {
+        id: number // Category ID
+        title: string // Category title
+        subTitle: string // Category subtitle
+        image: string // Category image URL
+        status: string // Category status
+        createdAt: string // Timestamp of category creation
+        updatedAt: string // Timestamp of category update
+      }
+      department: {
+        id: number // Department ID
+        title: string // Department title
+        description: string // Department description
+        icon: string // Department icon URL
+        createdAt: string // Timestamp of department creation
+        updatedAt: string // Timestamp of department update
+        status: string // Department status
+        Type: string // Department type
+        niche: string // Department niche
+      }
+    }
+    chatType: string // Type of chat (e.g., customer_to_agent)
+    createdAt: string // Chat creation timestamp
+    updatedAt: string // Chat update timestamp
+  }
+}
+
+// Separate interface for a message
+export interface Message {
+  id: number // Message ID
+  senderId: number // ID of the sender
+  receiverId: number // ID of the receiver
+  chatId: number // ID of the chat the message belongs to
+  message: string // Message content
+  image: string | null // Image URL (if any)
+  isRead: boolean // Whether the message has been read
+  createdAt: string // Timestamp of message creation
+  updatedAt: string // Timestamp of last message update
+}
+
+export interface TeamChatDetailsResponse {
+  status: string // Status of the API response
+  message: string // Response message
+  data: {
+    id: number // Chat ID
+    agent1: {
+      id: number // Agent 1 ID
+      username: string // Agent 1 username
+      firstname: string // Agent 1 first name
+      lastname: string // Agent 1 last name
+      profilePicture: string // Agent 1 profile picture URL
+      role: string // Agent 1 role
+    }
+    agent2: {
+      id: number // Agent 2 ID
+      username: string // Agent 2 username
+      firstname: string // Agent 2 first name
+      lastname: string // Agent 2 last name
+      profilePicture: string // Agent 2 profile picture URL
+      role: string // Agent 2 role
+    }
+    messages: Message[] // Array of messages
+    chatDetails: {
+      id: number // Chat Details ID
+      chatId: number // Associated Chat ID
+      departmentId?: number // Optional Department ID
+      categoryId?: number // Optional Category ID
+      status?: string // Chat status
+      category?: {
+        id: number // Category ID
+        title: string // Category title
+        subTitle: string // Category subtitle
+        image: string // Category image URL
+        status: string // Category status
+        createdAt: string // Timestamp of category creation
+        updatedAt: string // Timestamp of category update
+      }
+      department?: {
+        id: number // Department ID
+        title: string // Department title
+        description: string // Department description
+        icon: string // Department icon URL
+        createdAt: string // Timestamp of department creation
+        updatedAt: string // Timestamp of department update
+        status: string // Department status
+        Type: string // Department type
+        niche: string // Department niche
+      }
+      createdAt: string // Timestamp of chat details creation
+      updatedAt: string // Timestamp of chat details update
+    } | null
+    chatType: string // Type of chat (e.g., team_chat)
+    createdAt: string // Chat creation timestamp
+    updatedAt: string // Chat last update timestamp
+  }
+}
+
+export interface ChatStats {
+  status: string // Status of the API response
+  message: string // Response message
+  data: {
+    totalChats: number // Total number of chats
+    successfulllTransactions: number // Number of successful transactions
+    pendingChats: number // Number of pending chats
+    declinedChats: number // Number of declined chats
+  }
+}
+export interface ApiResponse {
+  status: 'success' | 'error'
+  message: string
+  token?: string
+}
+export interface IUser {
+  id: number
+  username: string
+  firstname: string
+  lastname: string
+  profilePicture: string | null
+}
+export interface ITeamChatDetailsResponse extends ApiResponse {
+  data: {
+    id: number
+    _count: {
+      messages: number
+    }
+    chatType: string
+    participants: {
+      user: IUser
+    }[]
+    messages: {
+      id: number
+      createdAt: Date
+      updatedAt: Date
+      chatId: number
+      message: string
+      senderId: number
+      receiverId: number
+      isRead: boolean
+    }[]
+    chatGroup: {
+      groupName: string
+      groupProfile: string | null
+      adminId: number
+    } | null
+  }
+}
+
+export interface ITeamChatResponse extends ApiResponse {
+  data: ITeamChatDetailsResponse['data'][]
 }

@@ -27,13 +27,11 @@ const Dashboard: React.FC = () => {
     transactionType: 'All',
     category: 'All'
   })
-
-  // Filter data based on the selected filters
   const filteredData = Array.isArray(customerTransactions?.data)
     ? customerTransactions?.data.filter((transaction) => {
         const matchesStatus = filters.status === 'All' || transaction.status === filters.status
 
-        const matchesType = filters.type === 'All' || transaction.department?.title === filters.type
+        const matchesType = filters.type === 'All' || transaction.department?.Type === filters.type
 
         const matchesSearch =
           filters.search === '' ||
@@ -72,9 +70,9 @@ const Dashboard: React.FC = () => {
           onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
         />
         <TransactionsTable
-          data={filteredData} // Array of transactions
-          showCustomerDetailsButton={true} // Dashboard does not show "View Customer Details"
-          showTransactionDetailsModal={false} // Show transaction details modal
+          data={filteredData}
+          showCustomerDetailsButton={true}
+          showTransactionDetailsModal={false}
         />
       </div>
     </div>

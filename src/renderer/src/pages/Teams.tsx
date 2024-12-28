@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DUMMY_USERS } from '../utils/dummyUsers.js'
 import UserStat from '@renderer/components/UserStat.js'
 import ChatTable from '@renderer/components/ChatTable.js'
@@ -58,7 +58,7 @@ const Teams = () => {
   ]
 
   const [activeTab, setActiveTab] = useState<'online' | 'offline'>('online')
-  const [selectedRole, setSelectedRole] = useState<'Manager' | 'Agent' | 'Roles'>('Roles')
+  const [selectedRole, setSelectedRole] = useState<'agent' | 'customer' | 'All'>('All')
   const [searchValue, setSearchValue] = useState('')
   const [isEditClick, setIsEditClick] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<Agent>()
@@ -98,22 +98,27 @@ const Teams = () => {
     }
   }
 
-  const changeView = ( selectedUserUd: number ) => {
+  const changeView = (selectedUserUd: number) => {
     setIsUserViewed(true)
+    console.log("Selected User ID:", selectedUserUd);
     setSelectAgentActivityId(selectedUserUd)
   }
 
   const filteredData = teamData?.data.filter((member) => {
     const matchesTab =
-      activeTab === 'Active' ? member.AgentStatus === 'online' : member.AgentStatus === 'offline'
-    const matchesRole = selectedRole === 'Roles' || member.user.role === selectedRole
+      activeTab === 'online' ? member.AgentStatus === 'online' : member.AgentStatus === 'offline'
+    // const matchesRole = selectedRole === 'All' || member.user.role === selectedRole
     const matchesSearch =
       searchValue === '' ||
       member.user.firstname?.toLowerCase().includes(searchValue.toLowerCase()) ||
       member.user.username.toLowerCase().includes(searchValue.toLowerCase())
 
-    return matchesTab && matchesRole && matchesSearch
+    return matchesTab && matchesSearch
   })
+  useEffect(() => {
+    console.log("here is team data", teamData?.data);
+    console.log("here is filtered data", filteredData)
+  }, [teamData?.data]);
   console.log(isUserViewed)
   return (
     <div className="p-6 space-y-8 w-full">
@@ -139,7 +144,7 @@ const Teams = () => {
       {/* Filters */}
 
       {isUserViewed ? (
-        <ActivityHistory />
+        <ActivityHistory userId={selectAgentActivityId} />
       ) : (
         <div>
           <TeamFilterHeader
@@ -151,15 +156,14 @@ const Teams = () => {
             onSearchChange={handleSearchChange}
           />
           <TeamTable
-            data={filteredData}
-            isTeam={true}
-            isTeamCommunition={false}
+            data={filteredData || []}
+            // isTeam={true}
+            // isTeamCommunition={false}
             onUserViewed={changeView}
             onEditHanlder={(agentId) => handleEditClick(agentId)}
           />
         </div>
       )}
-      {/* Edit Modal */}
       {isEditClick && selectedAgent && (
         <AgentEditProfileModal
           isOpen={isEditClick}

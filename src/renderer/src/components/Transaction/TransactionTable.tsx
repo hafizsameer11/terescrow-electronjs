@@ -44,6 +44,7 @@ export interface Category {
   image?: string;
   createdAt?: string;
   updatedAt?: string;
+  
 }
 
 interface TransactionsTableProps {
