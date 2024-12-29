@@ -28,6 +28,7 @@ import Services from './pages/Services';
 import { AuthProvider } from './context/authContext';
 import TeamChat from './components/TeamChat';
 import PendingChats from './pages/PendingChats';
+import { SocketProvider } from './context/socketContext';
 
 function App(): JSX.Element {
   const location = useLocation();
@@ -60,28 +61,30 @@ function App(): JSX.Element {
 
   return (
     <AuthProvider>
-      <RootLayout>
-        {!isLogin && location.pathname !== '/' && <Sidebar />}
-        <Content className="bg-[#f6f7ff]">
-          {!isLogin && location.pathname !== '/' && <TopBar />}
-          <MainContent className="bg-[#f6f7ff]">
-            <Routes location={location}>
-              {/* Public Route */}
-              <Route path="/" element={<LoginPage />} />
-              {/* Protected Routes */}
-              {renderProtectedRoutes()}
-            </Routes>
-          </MainContent>
-          {/* Modal */}
-          {location.pathname === '/team-communication-modal' && (
-            <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative">
-                <TeamChat onClose={() => navigate(-1)} />
+      <SocketProvider>
+        <RootLayout>
+          {!isLogin && location.pathname !== '/' && <Sidebar />}
+          <Content className="bg-[#f6f7ff]">
+            {!isLogin && location.pathname !== '/' && <TopBar />}
+            <MainContent className="bg-[#f6f7ff]">
+              <Routes location={location}>
+                {/* Public Route */}
+                <Route path="/" element={<LoginPage />} />
+                {/* Protected Routes */}
+                {renderProtectedRoutes()}
+              </Routes>
+            </MainContent>
+            {/* Modal */}
+            {location.pathname === '/team-communication-modal' && (
+              <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative">
+                  <TeamChat onClose={() => navigate(-1)} />
+                </div>
               </div>
-            </div>
-          )}
-        </Content>
-      </RootLayout>
+            )}
+          </Content>
+        </RootLayout>
+      </SocketProvider>
     </AuthProvider>
   );
 }
