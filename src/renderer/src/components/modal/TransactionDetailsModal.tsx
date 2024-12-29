@@ -151,7 +151,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
         </div>
 
         {/* Footer Icons */}
-        <div className="flex gap-5 mt-6 px-6">
+        {/* <div className="flex gap-5 mt-6 px-6">
           <button className="bg-gray-200 text-gray-700 rounded-full p-3 hover:bg-gray-300">
             <FiUpload className="h-5 w-5" />
           </button>
@@ -161,7 +161,7 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
           <button className="bg-gray-200 text-gray-700 rounded-full p-3 hover:bg-gray-300">
             <FiTrash2 className="h-5 w-5 text-red-500" />
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

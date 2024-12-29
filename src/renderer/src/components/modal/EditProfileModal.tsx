@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { updateCustomer } from "@renderer/api/queries/adminqueries"; // Adjust import path
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useAuth } from "@renderer/context/authContext";
 
 interface EditProfileModalProps {
@@ -16,7 +15,6 @@ interface EditProfileModalProps {
     firstname: string;
     lastname: string;
     country: string;
-
     profilePhoto?: string;
   };
 }
@@ -27,8 +25,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   userData,
 }) => {
   const [formData, setFormData] = useState({ ...userData });
-  const [showPassword, setShowPassword] = useState(false);
-  const {token}=useAuth();
+  const [previewPhoto, setPreviewPhoto] = useState<string | undefined>(
+    userData.profilePhoto
+  );
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const { token } = useAuth();
+
   // Mutation for updating customer
   const mutation = useMutation({
     mutationFn: updateCustomer,
@@ -43,7 +45,11 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   });
 
   useEffect(() => {
-    if (isOpen) setFormData(userData); // Sync when modal opens
+    if (isOpen) {
+      setFormData(userData);
+      setPreviewPhoto(userData.profilePhoto);
+      setProfilePhotoFile(null); // Reset file state
+    }
   }, [isOpen, userData]);
 
   const handleChange = (
@@ -59,37 +65,42 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          setFormData((prev) => ({
-            ...prev,
-            profilePhoto: event.target.result as string,
-          }));
+          setPreviewPhoto(event.target.result as string);
         }
       };
       reader.readAsDataURL(file);
+      setProfilePhotoFile(file);
     }
   };
 
   const handleUpdate = () => {
+    const formDataToSend = new FormData();
+    formDataToSend.append("id", formData.id);
+    formDataToSend.append("username", formData.username);
+    formDataToSend.append("email", formData.email);
+    formDataToSend.append("phoneNumber", formData.phoneNumber);
+    formDataToSend.append("gender", formData.gender);
+    formDataToSend.append("firstname", formData.firstname);
+    formDataToSend.append("lastname", formData.lastname);
+    formDataToSend.append("country", formData.country);
+    if (profilePhotoFile) {
+      formDataToSend.append("profilePicture", profilePhotoFile);
+    }
+
     mutation.mutate({
       token: token, // Replace with actual token logic
       id: formData.id,
-      data: {
-        username: formData.username,
-        email: formData.email,
-        phoneNumber: formData.phoneNumber,
-        gender: formData.gender,
-        firstname: formData.firstname,
-        lastname: formData.lastname,
-        country: formData.country,
-        profilePicture: formData.profilePhoto || "",
-      },
+      data: formDataToSend,
     });
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6">
+    <div
+      className="fixed top-0 inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6 "
+      style={{ overflowY: "scroll" }}
+    >
       <div className="bg-white rounded-lg shadow-lg w-[500px] p-6">
         <div className="flex justify-between items-center pb-4 mb-4 border-b">
           <h2 className="text-lg font-semibold text-gray-800">Edit Profile</h2>
@@ -165,23 +176,26 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </select>
           </label>
 
-          {/* <label className="block relative">
-            <span className="block text-sm font-medium text-gray-700">Password</span>
+          <label className="block">
+            <span className="block text-sm font-medium text-gray-700">
+              Profile Picture
+            </span>
             <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 pr-10"
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoChange}
+              className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute top-9 right-4 text-gray-500"
-            >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
-          </label> */}
+            {previewPhoto && (
+              <div className="mt-4">
+                <img
+                  src={previewPhoto}
+                  alt="Preview"
+                  className="w-20 h-20 rounded-full object-cover mx-auto"
+                />
+              </div>
+            )}
+          </label>
 
           <div className="mt-6">
             <button

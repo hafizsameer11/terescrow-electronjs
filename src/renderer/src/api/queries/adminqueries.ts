@@ -27,6 +27,7 @@ import {
   PostCustomerData,
   RateResponse,
   SingleCategoryResponse,
+  SIngleCustomerResponse,
   SIngleDepartmentResponse,
   SubcategoriesResponse,
   SubCategory,
@@ -47,7 +48,7 @@ export const getCustomerDetails = async ({
 }: {
   token: string
   id: string
-}): Promise<AllCustomerRespone> => {
+}): Promise<SIngleCustomerResponse> => {
   return await apiCall(`${API_ENDPOINT.CUSTOMER.CustomerDetails}/${id}`, 'GET', undefined, token)
 }
 export const getCustomerTransactions = async ({

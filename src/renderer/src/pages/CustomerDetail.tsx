@@ -14,22 +14,6 @@ import { FaTicketAlt } from "react-icons/fa";
 import { Customer } from "@renderer/api/queries/datainterfaces";
 import { useAuth } from "@renderer/context/authContext";
 
-// interface Customer {
-//   id: number;
-//   username: string;
-//   email: string;
-//   firstname: string;
-//   lastname: string;
-//   country: string;
-//   phoneNumber: string;
-//   profilePicture: string | null;
-//   gender: string;
-//   role: string;
-//   isVerified: boolean;
-//   createdAt: string;
-//   updatedAt: string;
-//   password: string;
-// }
 
 const CustomerDetails: React.FC = () => {
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false);
@@ -49,9 +33,7 @@ const CustomerDetails: React.FC = () => {
   const customer: Customer | undefined = data?.data;
   const {
     data: notDetailsData,
-    isLoading: notDetailsLoading,
-    isError: isChatDetailsError,
-    error: chatDetailsError,
+    isLoading: isNotesLoading,
   } = useQuery({
     queryKey: ['notes-for-customer'],
     queryFn: () => getNotesForCustomer(token, id!),
@@ -219,28 +201,27 @@ const CustomerDetails: React.FC = () => {
       <NotesHistoryModal
         isOpen={isNotesModalOpen}
         onClose={() => setIsNotesModalOpen(false)}
-        notes={notDetailsData.data || []}
+        notes={!isNotesLoading ? notDetailsData?.data :[]}
         onNewNote={handleNewNote}
         onEdit={handleEditNote}
         onDelete={handleDeleteNote}
       />
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        userData={{
-          firstname: customer?.firstname || "",
-          lastname: customer?.lastname || "",
-          username: customer?.username || "",
-          email: customer?.email || "",
-          phoneNumber: customer?.phoneNumber || "",
-          gender: customer?.gender || "",
-        
-          country: customer?.country || "",
-          profilePhoto: customer?.profilePicture || "",
-          id: customer?.id || "",
-        }}
-        onUpdate={handleEditProfile}
-      />
+    <EditProfileModal
+      isOpen={isEditModalOpen}
+      onClose={() => setIsEditModalOpen(false)}
+      userData={{
+        firstname: customer?.firstname || "",
+        lastname: customer?.lastname || "",
+        username: customer?.username || "",
+        email: customer?.email || "",
+        phoneNumber: customer?.phoneNumber || "",
+        gender: customer?.gender || "",
+
+        country: customer?.country || "",
+        profilePhoto: customer?.profilePicture || "",
+        id: customer?.id.toString() || "",
+      }}
+    />
     </div>
   );
 };

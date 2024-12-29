@@ -5,6 +5,7 @@ import TeamChat from './TeamChat'
 import ChatApplication from './ChatApplication'
 import { Agent } from '@renderer/api/queries/datainterfaces'
 import { getImageUrl } from '@renderer/api/helper'
+import { useNavigate } from 'react-router-dom'
 // import TeamChat from '../TeamChat';
 
 interface Transaction {
@@ -39,6 +40,7 @@ const TeamTable: React.FC<TransactionsTableProps> = ({
     setActiveMenu(activeMenu === id ? null : id)
   }
 
+  const navigate = useNavigate();
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isTeamChatOpen, setIsTeamChatOpen] = useState(false)
 
@@ -89,9 +91,7 @@ const TeamTable: React.FC<TransactionsTableProps> = ({
                   {/* View Button */}
                   <button
                     className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
-                    onClick={() =>
-                      onUserViewed(member.user.id)
-                    }
+                    onClick={() => navigate(`/customers/${member.user.id}`)}
                   >
                     <AiOutlineEye className="text-gray-700 w-5 h-5" />
                   </button>
@@ -99,18 +99,18 @@ const TeamTable: React.FC<TransactionsTableProps> = ({
                   {/* Edit Button */}
                   <button
                     className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
-                    onClick={() => onEditHanlder && onEditHanlder(member.id)}
+                    onClick={() => navigate(`/customers/${member.user.id}`)}
                   >
                     <AiOutlineEdit className="text-gray-700 w-5 h-5" />
                   </button>
 
                   {/* Delete Button */}
-                  <button
+                  {/* <button
                     className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"
                     onClick={() => console.log('Delete', member.id)}
                   >
                     <AiOutlineDelete className="text-red-500 w-5 h-5" />
-                  </button>
+                  </button> */}
                 </div>
               </td>
             </tr>

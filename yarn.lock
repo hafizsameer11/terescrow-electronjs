@@ -2116,6 +2116,11 @@ electron-publish@25.1.7:
     lazy-val "^1.0.5"
     mime "^2.5.2"
 
+electron-router-dom@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/electron-router-dom/-/electron-router-dom-2.0.0.tgz#f744343d163da7ac592af8f380cfe2ef70cf521d"
+  integrity sha512-E9Noo7DdwjRFPmIDUZliWmOM50Q6/nmlImvPogL/upVcK42emwv1nExr5EykzC0Q+/Vqi+UurVH5VgGjgZ62EA==
+
 electron-store@*, electron-store@^10.0.0:
   version "10.0.0"
   resolved "https://registry.yarnpkg.com/electron-store/-/electron-store-10.0.0.tgz#b6ff4d3a51457a26b394b0deffaf3ff804c8ba91"

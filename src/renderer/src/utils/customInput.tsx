@@ -85,7 +85,7 @@ const Input: React.FC<InputProps> = ({
           </select>
           <label
             htmlFor={id}
-            className={`absolute left-4 top-3 text-sm text-gray-500 bg-white px-1 transition-all 
+            className={`absolute left-4 top-1 text-sm text-gray-500 bg-white px-1 transition-all
               ${
                 value || isFocused
                   ? '-translate-y-4 scale-75'
@@ -123,7 +123,7 @@ const Input: React.FC<InputProps> = ({
           {label && (
             <label
               htmlFor={id}
-              className={`absolute left-4 top-3 text-sm text-gray-500 bg-white px-1 transition-all 
+              className={`absolute left-4 top-3 text-sm text-gray-500 bg-white px-1 transition-all
                 ${
                   value || isFocused
                     ? '-translate-y-4 scale-75'

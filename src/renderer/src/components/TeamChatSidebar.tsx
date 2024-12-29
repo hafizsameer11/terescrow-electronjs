@@ -18,7 +18,7 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
   const [activeTab, setActiveTab] = useState<'All' | 'Group' | 'Unread'>('All');
   const [searchValue, setSearchValue] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<ChatUser[]>([]);
-  const {token}=useAuth();
+  const {token,userData}=useAuth();
   // Fetch chats using React Query
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['all-chats-with-team'],
@@ -58,7 +58,6 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
     });
   }, [chats]);
 
-  // Filter users based on activeTab and searchValue
   useEffect(() => {
     let filtered = [...users];
 
@@ -88,6 +87,8 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
     <div className="flex flex-col h-full bg-white border-r shadow-sm">
       <div className="p-4 flex justify-between items-center border-b">
         <h2 className="font-bold text-lg">Chats</h2>
+        {userData?.role === 'admin' && (
+
         <div className="flex space-x-2">
           <button
             className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
@@ -95,10 +96,11 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
           >
             <AiOutlineUsergroupAdd className="w-5 h-5 text-gray-700" />
           </button>
-          <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
+          {/* <button className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
             <AiOutlineEdit className="w-5 h-5 text-gray-700" />
-          </button>
+          </button> */}
         </div>
+        )}
       </div>
 
       {/* Search Bar */}

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Select, { MultiValue } from "react-select";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { Agent, Department } from "@renderer/api/queries/datainterfaces";
-// import { Department } from "../DepartmentsTable";
+import { useMutation } from "@tanstack/react-query";
+import { API_DOMAIN } from "@renderer/api/config";
+import { getImageUrl } from "@renderer/api/helper";
 
 interface OptionType {
   value: number;
@@ -12,9 +12,19 @@ interface OptionType {
 interface AgentEditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  agentData: Agent;
+  agentData: {
+    id: number;
+    assignedDepartments: { departmentId: number }[];
+    user: {
+      firstname: string;
+      username: string;
+      email: string;
+      profilePicture?: string;
+    };
+    AgentStatus: string;
+  };
   onUpdate: (updatedData: Record<string, any>) => void;
-  departmentData?: Department[] | null;
+  departmentData?: { id: number; title: string }[] | null;
 }
 
 const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
@@ -26,14 +36,13 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
 }) => {
   const [formData, setFormData] = useState(agentData);
   const [selectedDepartments, setSelectedDepartments] = useState<OptionType[]>([]);
-  const [showPassword, setShowPassword] = useState(false);
-
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   useEffect(() => {
+    console.log("agent data", agentData);
     if (agentData && departmentData) {
       const assignedDepartmentIds = agentData.assignedDepartments.map(
         (dept) => dept.departmentId
       );
-
       const preselectedDepartments = departmentData
         .filter((dept) => assignedDepartmentIds.includes(dept.id))
         .map((dept) => ({
@@ -44,78 +53,61 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
       setSelectedDepartments(preselectedDepartments);
     }
   }, [agentData, departmentData]);
-
-
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, user: { ...prev.user, [name]: value } }));
+
+    setFormData((prev) => {
+      if (name === "AgentStatus") {
+        // Update AgentStatus directly
+        return { ...prev, [name]: value };
+      }
+      // Update user fields
+      return { ...prev, user: { ...prev.user, [name]: value } };
+    });
   };
 
   const handleDepartmentsChange = (selectedOptions: MultiValue<OptionType>) => {
     setSelectedDepartments(selectedOptions as OptionType[]);
-    setFormData((prev) => ({
-      ...prev,
-      departments: selectedOptions?.map((opt) => ({
-        id: opt.value,
-        title: opt.label,
-      })) || [],
-    }));
   };
+
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setFormData((prev) => ({
-            ...prev,
-            user: {
-              ...prev.user,
-              profilePicture: event.target.result as string,
-            },
-          }));
-        }
-      };
-      reader.readAsDataURL(file);
+      setProfilePhotoFile(e.target.files[0]);
     }
   };
 
   const handleUpdate = () => {
-    onUpdate(formData);
-    onClose();
+    const updatedData = {
+      ...formData,
+      assignedDepartments: selectedDepartments.map((opt) => opt.value),
+      profilePicture: profilePhotoFile || formData.user.profilePicture,
+    };
+
+
+    // Mock API call using a dummy URL
+    fetch(`${API_DOMAIN}/admin/operations/update-agent/${agentData.id}`, {
+      method: "POST",
+      body: JSON.stringify(updatedData),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Update successful:", data);
+        onUpdate(updatedData);
+        onClose();
+      })
+      .catch((error) => {
+        console.error("Update failed:", error);
+        alert("Failed to update agent.");
+      });
   };
 
   if (!isOpen) return null;
-
-  const FloatingInput = (props: {
-    label: string;
-    name: string;
-    type?: string;
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => (
-    <div className="relative">
-      <input
-        type={props.type || "text"}
-        name={props.name}
-        value={props.value}
-        onChange={props.onChange}
-        placeholder=" "
-        className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
-      />
-      <label
-        className={`absolute text-sm text-gray-500 transform -translate-y-4 scale-75 top-2 left-4 bg-white px-1 ${
-          props.value ? "scale-75 -translate-y-4" : "peer-placeholder-shown:translate-y-3 peer-placeholder-shown:scale-100"
-        } peer-focus:scale-75 peer-focus:-translate-y-4`}
-      >
-        {props.label}
-      </label>
-    </div>
-  );
 
   const departmentOptions: OptionType[] =
     departmentData?.map((dept) => ({
@@ -138,60 +130,55 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
         </div>
 
         {/* Profile Picture Section */}
-        <div className="flex flex-col items-center mb-6">
-          <div className="relative">
-            <img
-              src={
-                formData.user.profilePicture || "https://via.placeholder.com/80"
-              }
-              alt="Profile"
-              className="w-20 h-20 object-cover rounded-full border border-gray-300"
-            />
-            <label
-              htmlFor="profilePhoto"
-              className="mt-2 block text-sm font-medium text-[#147341] cursor-pointer"
-            >
-              Change
-            </label>
-            <input
-              type="file"
-              id="profilePhoto"
-              accept="image/*"
-              onChange={handlePhotoChange}
-              className="hidden"
-            />
-          </div>
-        </div>
+
 
         {/* Form Section */}
         <div className="space-y-4">
-          <FloatingInput
-            label="Full Name"
-            name="firstname"
-            value={formData?.user?.firstname || ""}
-            onChange={handleChange}
-          />
-          <FloatingInput
-            label="Username"
-            name="username"
-            value={formData?.user?.username || ""}
-            onChange={handleChange}
-          />
+          <div className="relative">
+            <input
+              type="text"
+              name="firstname"
+              value={formData?.user?.firstname || ""}
+              onChange={handleChange}
+              disabled
+              placeholder="First Name"
+              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
+            />
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              name="username"
+              value={formData?.user?.username || ""}
+              onChange={handleChange}
+              placeholder="Username"
+              disabled
+              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
+            />
+          </div>
+          <div className="relative">
+            <input
+              type="email"
+              name="email"
+              value={formData?.user?.email || ""}
+              onChange={handleChange}
+              placeholder="Email"
+              disabled
+              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341]"
+            />
+          </div>
 
           {/* Role Dropdown */}
           <div className="relative">
             <select
-              name="role"
-              value={formData.user.role}
+              name="AgentStatus"
+              value={formData.AgentStatus}
               onChange={handleChange}
               className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] focus:border-[#147341] bg-white"
             >
-              <option value="Agent">Agent</option>
-              <option value="Admin">Admin</option>
+              <option value="online">Online</option>
+              <option value="offline">Offline</option>
             </select>
-            <label className="absolute text-sm text-gray-500 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1">
-              Role
-            </label>
           </div>
 
           {/* Departments Dropdown */}
@@ -204,28 +191,6 @@ const AgentEditProfileModal: React.FC<AgentEditProfileModalProps> = ({
               placeholder="Select Departments"
               className="text-sm"
             />
-          </div>
-
-          {/* Password */}
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              name="password"
-              value={formData.user.password}
-              onChange={handleChange}
-              placeholder=" "
-              className="peer w-full border border-gray-300 rounded-lg px-4 py-3 text-base text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#147341] pr-10"
-            />
-            <label className="absolute text-sm text-gray-500 transform -translate-y-4 scale-75 top-3 left-4 bg-white px-1">
-              Password
-            </label>
-            <button
-              type="button"
-              onClick={() => setShowPassword((prev) => !prev)}
-              className="absolute top-1/2 transform -translate-y-1/2 right-4 text-gray-500"
-            >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </button>
           </div>
         </div>
 

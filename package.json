@@ -16,7 +16,7 @@
     "build": "electron-vite build",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
+    "build:win": "electron-vite build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
@@ -25,6 +25,7 @@
     "@electron-toolkit/utils": "^3.0.0",
     "@tanstack/react-query": "^5.62.7",
     "axios": "^1.7.9",
+    "electron-router-dom": "^2.0.0",
     "electron-store": "^10.0.0",
     "electron-updater": "^6.1.7",
     "formik": "^2.4.6",

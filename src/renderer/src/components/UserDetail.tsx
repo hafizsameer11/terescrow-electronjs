@@ -1,4 +1,6 @@
 import { useAuth } from "@renderer/context/authContext"
+import EditProfileModal from "./modal/EditProfileModal";
+import { useState } from "react";
 
 const customer = {
   id: 1,
@@ -20,7 +22,8 @@ const customer = {
 }
 
 const UserDetail = () => {
-   const {userData}=useAuth();
+  const { userData } = useAuth();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   return (
     <>
       {/* Profile Section */}
@@ -49,7 +52,7 @@ const UserDetail = () => {
           </div>
         </div>
         <div className='flex items-end'>
-          <button className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium">
+          <button className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium" onClick={() => setIsEditModalOpen(true)}>
             Edit Profile
           </button>
         </div>
@@ -68,6 +71,23 @@ const UserDetail = () => {
           </tbody>
         </table>
       </div>
+
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        userData={{
+          firstname: userData?.firstname || "",
+          lastname: userData?.lastname || "",
+          username: userData?.username || "",
+          email: userData?.email || "",
+          phoneNumber: userData?.phoneNumber || "",
+          gender: userData?.gender || "",
+
+          country: userData?.country || "",
+          profilePhoto: userData?.profilePicture || "",
+          id: userData?.id.toString() || "",
+        }}
+      />
     </>
   )
 }

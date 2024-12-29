@@ -62,7 +62,7 @@ const Settings = () => {
   const [isUserViewed, setIsUserViewed] = useState(false)
   const [selectAgentActivityId, setSelectAgentActivityId] = useState(1)
   const navigate = useNavigate();
-  const{userData}=useAuth();
+  const { userData } = useAuth();
   const handleRoleChange = (role: 'Manager' | 'Agent' | 'Roles') => {
     setSelectedRole(role)
   }
@@ -119,33 +119,34 @@ const Settings = () => {
             <div>
               <button
                 onClick={() => setActiveTab('profile')}
-                className={`px-4 py-2 rounded-tl-lg rounded-bl-lg font-medium ${
-                  activeTab === 'profile'
+                className={`px-4 py-2 rounded-tl-lg rounded-bl-lg font-medium ${activeTab === 'profile'
                     ? 'text-white bg-green-700'
                     : 'text-gray-800 border border-gray-300'
-                }`}
+                  }`}
               >
                 Profile
               </button>
             </div>
-            <div>
-              <button
-                onClick={() => setActiveTab('role_management')}
-                className={`px-4 py-2 rounded-tr-lg rounded-br-lg font-medium ${
-                  activeTab === 'role_management'
-                    ? 'text-white bg-green-700'
-                    : 'text-gray-800 border border-gray-300'
-                }`}
-              >
-                Role Management
-              </button>
-            </div>
+            {
+              userData?.role === 'admin' &&
+              <div>
+                <button
+                  onClick={() => setActiveTab('role_management')}
+                  className={`px-4 py-2 rounded-tr-lg rounded-br-lg font-medium ${activeTab === 'role_management'
+                      ? 'text-white bg-green-700'
+                      : 'text-gray-800 border border-gray-300'
+                    }`}
+                >
+                  Role Management
+                </button>
+              </div>
+            }
           </div>
         </div>
         {activeTab === 'profile' ? (
           <div className="flex justify-end items-center flex-1">
             <button className="px-4 py-2 rounded-xl font-normal bg-red-600 text-white w-1/5"
-            onClick={handlogout}
+              onClick={handlogout}
             >
               Logout
             </button>
@@ -178,6 +179,8 @@ const Settings = () => {
             onUserViewed={changeView}
             onEditHanlder={(agentId) => handleEditClick(agentId)}
           />
+
+
         </div>
       )}
     </div>

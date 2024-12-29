@@ -23,7 +23,7 @@ const AgentsPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('') // State for search query
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null)
-  const {token}=useAuth();
+  const { token } = useAuth();
   const [selectedDepartment, setSelectedDepartment] = useState<Department[] | null>([])
 
   const {
@@ -36,11 +36,11 @@ const AgentsPage: React.FC = () => {
     queryFn: () => getDepartments({ token }),
     enabled: !!token
   })
-useEffect(()=>{
-  if(!token){
-    window.location.href="/"
-  }
-})
+  useEffect(() => {
+    if (!token) {
+      window.location.href = "/"
+    }
+  })
   // Effect to Set Filtered Departments
   useEffect(() => {
     if (departmentsData) {

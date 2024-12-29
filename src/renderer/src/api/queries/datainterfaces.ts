@@ -119,6 +119,11 @@ export interface AllCustomerRespone {
   message: string
   data: Customer[]
 }
+export interface SIngleCustomerResponse {
+  status: string
+  message: string
+  data: Customer
+}
 export interface CustomerTransactionResponse {
   status: string
   message: string
