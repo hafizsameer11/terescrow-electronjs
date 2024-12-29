@@ -27,6 +27,7 @@ import Transaction from './pages/Transaction';
 import Services from './pages/Services';
 import { AuthProvider } from './context/authContext';
 import TeamChat from './components/TeamChat';
+import PendingChats from './pages/PendingChats';
 
 function App(): JSX.Element {
   const location = useLocation();
@@ -38,6 +39,7 @@ function App(): JSX.Element {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/customers" element={<CustomersPage />} />
       <Route path="/chats" element={<Chat />} />
+      <Route path="/pending-chats" element={<PendingChats />} />
       <Route path="/rates" element={<RatesHistory />} />
       <Route path="/log" element={<LogPage />} />
       <Route path="/departments" element={<Departments />} />

@@ -7,6 +7,7 @@ import NewNotificationModal from './modal/NewNotificationModal'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getNotification, getBanner, deleteNotification, deleteBanner } from '@renderer/api/queries/adminqueries'
 import { useAuth } from '@renderer/context/authContext'
+import { getImageUrl } from '@renderer/api/helper'
 
 const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: string) => void }> = ({
   textMsg,
@@ -146,7 +147,7 @@ const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: str
             {filteredBanners.map((banner: any) => (
               <tr key={banner.id} className="border-b">
                 <td className="px-4 py-2">
-                  <img src={banner.image} alt="Banner" className="w-32 h-20 object-cover rounded-md" />
+                  <img src={getImageUrl(banner.image)} alt="Banner" className="w-32 h-20 object-cover rounded-md" />
                 </td>
                 <td className="px-4 py-2">{new Date(banner.createdAt).toLocaleString()}</td>
                 <td className="px-4 py-2 space-x-2">

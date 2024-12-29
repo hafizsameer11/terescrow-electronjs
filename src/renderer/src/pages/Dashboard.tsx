@@ -8,9 +8,16 @@ import TransactionsFilter from '@renderer/components/TransactionsFilter'
 import { useAuth } from '@renderer/context/authContext'
 import { useQuery } from '@tanstack/react-query'
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const Dashboard: React.FC = () => {
   const { token, userData } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!token) {
+      navigate('/'); // Redirect to the login page
+    }
+  }, [token, navigate]);
   const {
     data: customerTransactions,
     isLoading,

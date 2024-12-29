@@ -1,9 +1,12 @@
+import { getImageUrl } from '@renderer/api/helper'
 import PermissionTable from '@renderer/components/PermissionTable'
 import RoleManagement from '@renderer/components/RoleManagement'
 import TeamFilterHeader from '@renderer/components/TeamFilterHeader'
 import UserDetail from '@renderer/components/UserDetail'
 import { Images } from '@renderer/constant/Image'
+import { useAuth } from '@renderer/context/authContext'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 const sampleData = [
   {
     id: 1,
@@ -58,7 +61,8 @@ const Settings = () => {
   const [selectedAgent, setSelectedAgent] = useState<Agent>()
   const [isUserViewed, setIsUserViewed] = useState(false)
   const [selectAgentActivityId, setSelectAgentActivityId] = useState(1)
-
+  const navigate = useNavigate();
+  const{userData}=useAuth();
   const handleRoleChange = (role: 'Manager' | 'Agent' | 'Roles') => {
     setSelectedRole(role)
   }
@@ -71,15 +75,18 @@ const Settings = () => {
     const agent = sampleData.find((item) => item.id === agentId)
     if (agent) {
       setSelectedAgent({
-        fullName: agent.name,
-        username: agent.username,
-        role: agent.role,
+        fullName: userData?.firstname,
+        username: userData.username,
+        role: userData.role,
         departments: agent.department || [],
         password: agent.password,
-        profilePhoto: agent.avatar || ''
+        profilePhoto: getImageUrl(userData?.profilePicture) || ''
       })
       setIsEditClick(true)
     }
+  }
+  const handlogout = () => {
+    navigate('/', { replace: true })
   }
 
   const changeView = (selectedUserUd: number) => {
@@ -137,7 +144,9 @@ const Settings = () => {
         </div>
         {activeTab === 'profile' ? (
           <div className="flex justify-end items-center flex-1">
-            <button className="px-4 py-2 rounded-xl font-normal bg-red-600 text-white w-1/5">
+            <button className="px-4 py-2 rounded-xl font-normal bg-red-600 text-white w-1/5"
+            onClick={handlogout}
+            >
               Logout
             </button>
           </div>

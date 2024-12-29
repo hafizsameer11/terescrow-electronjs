@@ -15,7 +15,8 @@ interface HeaderProps {
   onClose: () => void
   onSendRate: (rate: string, amountDollar: string, amountNaira: string) => void // Adjusted here
   onLogChat: () => void
-  onStatusChange: (status: string, reason?: string) => void // Callback for status change
+  onStatusChange: (status: string, reason?: string) => void // Callback for status change,
+  status: string
 }
 
 const ChatHeader: React.FC<HeaderProps> = ({
@@ -25,7 +26,7 @@ const ChatHeader: React.FC<HeaderProps> = ({
   onClose,
   onSendRate,
   onLogChat,
-  onStatusChange
+  onStatusChange,status
 }) => {
   console.log("THis is the ChatHeader");
   console.log(name, username);
@@ -131,6 +132,8 @@ const ChatHeader: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Section */}
+        {
+          status === 'pending' && (
         <div className="flex items-center space-x-2">
           {/* Send Rate Button */}
           <button
@@ -147,12 +150,12 @@ const ChatHeader: React.FC<HeaderProps> = ({
           )}
 
           {/* Log Chat Button */}
-          <button
+          {/* <button
             className="px-4 py-2 text-sm text-white bg-green-700 rounded-lg hover:bg-green-800"
             onClick={onLogChat}
           >
             Log Chat
-          </button>
+          </button> */}
 
           <div className="relative">
             {/* Notes Icon */}
@@ -205,7 +208,7 @@ const ChatHeader: React.FC<HeaderProps> = ({
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
                 <ul className="text-sm text-gray-700">
-                  {['Successful', 'Pending', 'Failed', 'Unsuccessful'].map((option) => (
+                  {['Successful', 'Pending', 'Failed'].map((option) => (
                     <li
                       key={option}
                       className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
@@ -226,6 +229,9 @@ const ChatHeader: React.FC<HeaderProps> = ({
             )}
           </div>
         </div>
+
+          )
+        }
       </div>
 
       {/* Modals */}

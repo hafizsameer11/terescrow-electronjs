@@ -16,7 +16,7 @@ interface EditProfileModalProps {
     firstname: string;
     lastname: string;
     country: string;
-    password: string;
+
     profilePhoto?: string;
   };
 }
@@ -76,7 +76,6 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
       data: {
         username: formData.username,
         email: formData.email,
-        password: formData.password,
         phoneNumber: formData.phoneNumber,
         gender: formData.gender,
         firstname: formData.firstname,
@@ -166,7 +165,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </select>
           </label>
 
-          <label className="block relative">
+          {/* <label className="block relative">
             <span className="block text-sm font-medium text-gray-700">Password</span>
             <input
               type={showPassword ? "text" : "password"}
@@ -182,7 +181,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </button>
-          </label>
+          </label> */}
 
           <div className="mt-6">
             <button

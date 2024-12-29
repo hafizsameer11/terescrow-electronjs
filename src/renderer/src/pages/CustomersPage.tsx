@@ -1,3 +1,4 @@
+import { getCustomerStats } from "@renderer/api/queries/admin.chat.queries";
 import { gettAllCustomerss } from "@renderer/api/queries/adminqueries";
 import CustomerFilters from "@renderer/components/CustomerFilters";
 import CustomerTable from "@renderer/components/CustomerTable";
@@ -9,13 +10,17 @@ import React, { useEffect, useState } from "react";
 // Define the Customer Interface
 
 const CustomersPage: React.FC = () => {
-  const {token}=useAuth();
+  const { token } = useAuth();
   const [filters, setFilters] = useState({
     gender: "All",
     country: "All",
     search: "",
   });
-
+  const { data: customerStats } = useQuery({
+    queryKey: ['customerStats'],
+    queryFn: () => getCustomerStats({ token }),
+    enabled: !!token,
+  });
   // Fetch customers using React Query
   const { data: customersData, isLoading, isError, error } = useQuery({
     queryKey: ["customersData"],
@@ -58,13 +63,13 @@ const CustomersPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <StatsCard
           title="Total Customers"
-          value={customersData?.data.length|| "0"}
+          value={customerStats?.data?.users || "0"}
           change="+1%"
           isPositive={true}
         />
         <StatsCard
           title="Active Now"
-          value="20" // Example static value
+          value={customerStats?.data?.verifiedUser || "0"}
           change="+1%"
           isPositive={true}
         />
@@ -100,7 +105,7 @@ const CustomersPage: React.FC = () => {
       />
 
       {/* Customer Table */}
-      <CustomerTable data={filteredCustomers } />
+      <CustomerTable data={filteredCustomers} />
     </div>
   );
 };

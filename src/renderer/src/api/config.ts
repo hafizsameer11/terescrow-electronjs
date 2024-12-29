@@ -60,14 +60,32 @@ const API_ENDPOINT = {
     GetCustomerStats: API_DOMAIN + '/admin/operations/get-customer-stats',
     GetTransactionStats: API_DOMAIN + '/admin/operations/get-transaction-stats',
 
-    CreateChatGroup: API_DOMAIN + '/admin/create-chat-group'
+    CreateChatGroup: API_DOMAIN + '/admin/create-chat-group',
+    CreateNoteForCustomer: API_DOMAIN + '/agent/utilities/create-note',
+    GetNotesForCustomer: API_DOMAIN + '/agent/utilities/get-notes',
+    DeleteNote: API_DOMAIN + '/agent/utilities/delete-note',
+
+    GetTeamNotifications: API_DOMAIN + '/agent/utilities/get-team-notifications',
+    GetCustomerNotifications: API_DOMAIN + '/agent/utilities/get-customer-notifications',
+    SendMessageToCustomer:API_DOMAIN+ '/agent/send-to-customer',
+
   },
   COMMON: {
     login: API_DOMAIN + '/public/login',
     GetTeamChatDetails: API_DOMAIN + '/get-team-chat-details',
     SendMessageToTeam: API_DOMAIN + '/send-message-to-team',
-    MarkAllAsRead: API_DOMAIN + '/public/read-all-messages'
+    MarkAllAsRead: API_DOMAIN + '/public/read-all-messages',
+    GetActionSubacategories: API_DOMAIN + '/public/subcategories',
     // GetTeamChatDetails: API_DOMAIN + 'get-team-chat-details',
+  },
+  AGENT:{
+    CreateCryptoTransaction:
+    API_DOMAIN + '/agent/create-crypto-transaction',
+  CreateCardTransaction: API_DOMAIN + '/agent/create-card-transaction',
+  ChangeChatStatus: API_DOMAIN + '/agent/change-chat-status',
+  GetPendingChats: API_DOMAIN + '/agent/utilities/get-all-default-chats',
+  TakeOverDefaultChat: API_DOMAIN + '/agent/utilities/take-over-chat',
+
   }
 }
 const token =

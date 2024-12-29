@@ -81,7 +81,7 @@ const SellGiftCardInputs: React.FC<SellGiftCardInputsProps> = (props) => {
     },
     {
       id: '10',
-      isClickable: false,
+      isClickable: true,
       icon: '',
       text: 'Dave',
       label: 'Name of Agent',

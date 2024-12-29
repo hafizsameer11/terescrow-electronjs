@@ -45,3 +45,78 @@ export const sendMessageToTeam = async (
     token
   );
 };
+
+
+//notifications
+export const getTeamNotifications = async (token: string): Promise<IInAppNotificationResponse> => {
+  return await apiCall(
+    API_ENDPOINT.OPERATIONS.GetTeamNotifications,
+    'GET',
+    undefined,
+    token
+  );
+
+}
+
+
+export const getCustomerNotifications = async (token: string): Promise<IInAppNotificationResponse> => {
+  return await apiCall(
+    API_ENDPOINT.OPERATIONS.GetCustomerNotifications,
+    'GET',
+    undefined,
+    token
+  );
+
+}
+
+export const getSubCategories = async (
+  token: string,
+  departmentId: string,
+  categoryId: string
+): Promise<ISubCategoryResponse> => {
+  return await apiCall(
+    `${API_ENDPOINT.COMMON.GetActionSubacategories}?departmentId=${departmentId}&categoryId=${categoryId}`,
+    'GET',
+    undefined,
+    token
+  );
+};
+
+
+export interface ISubCategoryResponse extends ApiResponse {
+  data: {
+    departmentId: string;
+    categoryId: string;
+    subCategories: [
+      {
+        subCategory: {
+          id: number;
+          title: string;
+          createdAt: Date;
+          updatedAt: Date;
+          price: number;
+        };
+      }
+    ];
+  };
+}
+export interface IInAppNotificationResponse extends ApiResponse {
+  data: InAppNotifications[]
+}
+interface TransactionStateResponse {
+  status: string;
+  message: string;
+  data: {
+    transactionAmountTotal: number,
+    transactionAmountTotalNaira: number
+  }
+}
+export interface InAppNotifications {
+  id: number,
+  title: string,
+  description: string,
+  type: string,
+  createdAt: string,
+  isRead: boolean,
+
+}

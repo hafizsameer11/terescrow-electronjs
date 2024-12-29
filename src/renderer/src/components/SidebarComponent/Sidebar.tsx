@@ -1,17 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import NavItem from './NavItem';
 import { FaBell, FaCog, FaUserTag } from 'react-icons/fa';
 import { RiTeamFill } from 'react-icons/ri';
 import { Images } from '@renderer/constant/Image';
 import { useAuth, UserRoles } from '@renderer/context/authContext';
 import TeamChat from '../TeamChat'; // Import the TeamChat modal component
+import { useNavigate } from 'react-router-dom';
 
 export const Sidebar = () => {
   const { userData } = useAuth();
   const initialActiveItem = userData?.role === UserRoles.admin ? 'dashboard' : 'chats';
   const [activeItem, setActiveItem] = useState(initialActiveItem);
+  const {token}=useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
-
+ const navigate = useNavigate();
+  useEffect(() => {
+    if (!token) {
+      navigate('/'); // Redirect to the login page
+    }
+  }, [token, navigate]);
   const adminMenuItems = [
     { label: 'Dashboard', icon: Images.dashboard, href: '/dashboard', id: 'dashboard' },
     { label: 'Customers', icon: Images.customer, href: '/customers', id: 'customers' },
@@ -24,7 +31,11 @@ export const Sidebar = () => {
     { label: 'Teams', icon: Images.teams, href: '/teams', id: 'teams' },
     { label: 'Users', icon: Images.users, href: '/usersall', id: 'users' },
   ];
-
+  const agentMenuItems = [
+    { label: 'Chats', icon: Images.chats, href: '/chats', id: 'chats' },
+    { label: 'Pending Chats', icon: Images.chats, href: '/pending-chats', id: 'pending-chats' },
+    { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' }
+  ]
   const bottomMenuItems = [
     { label: 'Notifications', icon: <FaBell />, href: '/notifications', id: 'notifications' },
     { label: 'Settings', icon: <FaCog />, href: '/settings', id: 'settings' },
@@ -36,7 +47,7 @@ export const Sidebar = () => {
     },
   ];
 
-  const menuItems = adminMenuItems;
+  const menuItems = userData?.role===UserRoles.admin ? adminMenuItems :agentMenuItems;
 
   return (
     <aside className="lg:w-[280px] h-screen bg-white px-[20px] lg:px-[30px] text-gray-800 flex flex-col border-r border-[#989898] overflow-auto">

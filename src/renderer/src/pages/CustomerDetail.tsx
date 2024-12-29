@@ -9,7 +9,7 @@ import KYCDetailsModal from "@renderer/components/modal/KYCDetailsModal";
 import NotesHistoryModal from "@renderer/components/modal/NotesHistoryModal";
 import EditProfileModal from "@renderer/components/modal/EditProfileModal";
 
-import { getCustomerDetails } from "@renderer/api/queries/adminqueries";
+import { getCustomerDetails, getNotesForCustomer } from "@renderer/api/queries/adminqueries";
 import { FaTicketAlt } from "react-icons/fa";
 import { Customer } from "@renderer/api/queries/datainterfaces";
 import { useAuth } from "@renderer/context/authContext";
@@ -46,8 +46,16 @@ const CustomerDetails: React.FC = () => {
     queryFn: () => getCustomerDetails({ token, id: id! }),
     enabled: !!id,
   });
-
   const customer: Customer | undefined = data?.data;
+  const {
+    data: notDetailsData,
+    isLoading: notDetailsLoading,
+    isError: isChatDetailsError,
+    error: chatDetailsError,
+  } = useQuery({
+    queryKey: ['notes-for-customer'],
+    queryFn: () => getNotesForCustomer(token, id!),
+  });
 
   const kycData = {
     surname: customer?.lastname || "",
@@ -107,6 +115,9 @@ const CustomerDetails: React.FC = () => {
     { label: "Password Reset", date: "Nov 7, 2024 - 04:30 PM" },
 
   ]
+
+  //fetch all notes
+
   return (
     <div className="min-h-screen w-full">
       {/* Tabs */}
@@ -208,7 +219,7 @@ const CustomerDetails: React.FC = () => {
       <NotesHistoryModal
         isOpen={isNotesModalOpen}
         onClose={() => setIsNotesModalOpen(false)}
-        notes={notes}
+        notes={notDetailsData.data || []}
         onNewNote={handleNewNote}
         onEdit={handleEditNote}
         onDelete={handleDeleteNote}
@@ -223,7 +234,7 @@ const CustomerDetails: React.FC = () => {
           email: customer?.email || "",
           phoneNumber: customer?.phoneNumber || "",
           gender: customer?.gender || "",
-          password: customer?.password || "",
+        
           country: customer?.country || "",
           profilePhoto: customer?.profilePicture || "",
           id: customer?.id || "",

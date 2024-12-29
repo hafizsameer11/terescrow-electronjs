@@ -36,7 +36,11 @@ const AgentsPage: React.FC = () => {
     queryFn: () => getDepartments({ token }),
     enabled: !!token
   })
-
+useEffect(()=>{
+  if(!token){
+    window.location.href="/"
+  }
+})
   // Effect to Set Filtered Departments
   useEffect(() => {
     if (departmentsData) {

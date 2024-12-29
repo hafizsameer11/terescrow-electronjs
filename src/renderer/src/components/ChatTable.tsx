@@ -7,6 +7,7 @@ import { AgentToAgentChatData, AgentToCustomerChatData } from '@renderer/api/que
 import { getImageUrl } from '@renderer/api/helper'
 import AdminChatApplication from './AdminChatApplication'
 import AdminChatApplicationTeam from './AdminChatApplicationTeam'
+import { useAuth } from '@renderer/context/authContext'
 // import TeamChat from '../TeamChat';
 
 interface Transaction {
@@ -49,6 +50,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
   const [activeChatId, setActiveChatId] = useState<number | null>(null); // Track the active chat ID
   const [currentItem, setCurrentItem] = useState<AgentToCustomerChatData | null>(null);
   const [currentItem2, setCurrentItem2] = useState<AgentToAgentChatData | null>(null);
+  const {userData}=useAuth();
   const toggleMenu = (id: number) => {
     setActiveMenu(activeMenu === id ? null : id)
   }
@@ -77,7 +79,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
             <tr>
               <th className="py-3 w-[5%]"></th> {/* First column with 5% width */}
               <th className="py-3 px-4 w-[20%]">Name, Chat</th>
-              {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[15%]">Id</th>}
+              {/* {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[15%]">Id</th>} */}
               {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[15%]">Amount</th>}
               {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[15%]">Agent</th>}
               <th className="py-3 px-4 w-[20%]">Date</th>
@@ -97,11 +99,11 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                 </td>
                 <td className="py-3 px-4">
                   <div>
-                    <span className="font-semibold">{item.customer.username}</span>
+                    <span className="font-semibold">{item.customer.username}{'-'} {item.department.title}</span>
                     <p className="text-sm text-gray-500 m-0">{item.recentMessage?.message}</p>
                   </div>
                 </td>
-                <td className='py-3 px-4'>{item.id}</td>
+                {/* <td className='py-3 px-4'>{item.id}</td> */}
                 {activeFilterInTeam === 'Customer' && (
                   <td className="py-3 px-4">
                     <div>
@@ -203,12 +205,22 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                               />
                             </svg>
                           </button>
-                          <AdminChatApplication
+
+                          {/* check if userDatta.role is admin than show adminapplication otherwise else */}
+                          {userData?.role === 'admin' ? (
+                            <AdminChatApplication
                             data={currentItem}
                             id={activeChatId || 0}
                             onClose={() => setIsChatOpen(false)}
                             isAdmin={true}
                           />
+                          ) : (
+                            <ChatApplication
+                            data={currentItem}
+                            id={activeChatId || 0}
+                            onClose={() => setIsChatOpen(false)}
+                          />
+                          )}
                         </div>
                       </div>
                     )}

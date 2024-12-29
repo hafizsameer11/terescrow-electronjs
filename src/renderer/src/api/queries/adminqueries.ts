@@ -10,6 +10,7 @@ import {
   AllBannerResponse,
   AllCustomerRespone,
   AlluserResponse,
+  ApiResponse,
   Banner,
   Category,
   CategroiesResponse,
@@ -347,16 +348,28 @@ export const getAccountActivities = async ({
   )
 }
 
-export const getAllAgentss = async ({
-  token,
-}: {
-  token: string;
-}): Promise<AllAgentsResponse> => {
-  console.log('Url: ', API_ENDPOINT.OPERATIONS.GetAllAgents);
+export const getAllAgentss = async ({ token }: { token: string }): Promise<AllAgentsResponse> => {
+  console.log('Url: ', API_ENDPOINT.OPERATIONS.GetAllAgents)
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetAllAgents}`, 'GET', undefined, token)
+}
+export const getNotesForCustomer = async (token: string, id: string): Promise<any> => {
   return await apiCall(
-    `${API_ENDPOINT.OPERATIONS.GetAllAgents}`,
+    ` ${API_ENDPOINT.OPERATIONS.GetNotesForCustomer}/${id}`,
     'GET',
     undefined,
     token
-  );
-};
+  )
+}
+export const createNoteForCustomer = async (
+  data: CreateNoteForCustomerReq,
+  token: string
+): Promise<ApiResponse> =>
+  await apiCall(API_ENDPOINT.OPERATIONS.CreateNoteForCustomer, 'POST', data, token)
+export const deleteNoteForCustomer = async (noteId: number, token: string): Promise<ApiResponse> =>
+  await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteNote}/${noteId}`, 'GET', undefined, token)
+
+export interface CreateNoteForCustomerReq {
+  userId: number
+  note: string
+  title?: string
+}

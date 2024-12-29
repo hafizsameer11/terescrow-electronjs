@@ -1,3 +1,5 @@
+import { useAuth } from "@renderer/context/authContext"
+
 const customer = {
   id: 1,
   name: 'Qamardeen Abdulmalik',
@@ -18,6 +20,7 @@ const customer = {
 }
 
 const UserDetail = () => {
+   const {userData}=useAuth();
   return (
     <>
       {/* Profile Section */}
@@ -27,17 +30,17 @@ const UserDetail = () => {
             {customer.name.charAt(0)}
           </div>
           <div className="mt-2">
-            <h1 className="text-lg font-bold mb-2">{customer.name}</h1>
-            <div className="text-sm text-white">{customer.username}</div>
+            <h1 className="text-lg font-bold mb-2">{userData?.firstname}</h1>
+            <div className="text-sm text-white">{userData?.username}</div>
             <ul className="mt-3 flex items-center text-sm gap-8">
               <li className="flex items-center gap-1">
                 <span className="font-medium me-5">Email:</span>
-                <span className="text-white font-bold">{customer.email}</span>
+                <span className="text-white font-bold">{userData?.email}</span>
               </li>
-              <li className="flex items-center gap-1">
+              {/* <li className="flex items-center gap-1">
                 <span className="font-medium me-5">Gender:</span>
-                <span className="text-white font-bold">{customer.gender}</span>
-              </li>
+                <span className="text-white font-bold">{userData?.gender}</span>
+              </li> */}
               <li className="flex items-center gap-1">
                 <span className="font-medium me-5">Date Added:</span>
                 <span className="text-white font-bold">{customer.dateJoined}</span>

@@ -5,6 +5,8 @@ import NewBannerModal from '@renderer/components/modal/NewBannerModal' // Import
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createBanner } from '@renderer/api/queries/adminqueries'
 import { useAuth } from '@renderer/context/authContext'
+import { useQuery } from "@tanstack/react-query";
+import { getCustomerNotifications, getTeamNotifications } from '@renderer/api/queries/commonqueries'
 interface Notification {
   type: 'Team' | 'Customer'
   message: string
@@ -36,6 +38,26 @@ const Notifications = () => {
   )
   const queryClient = useQueryClient()
   const {token}=useAuth();
+  const {
+    data: teamNotifications,
+    isLoading: teamNotificationsLoading,
+    isError: isTeamNotificationsError,
+    error: teamNotificationsError,
+  } = useQuery({
+    queryKey: ['teamnotifications'],
+    refetchInterval: 3000,
+    queryFn: () => getTeamNotifications(token),
+  });
+  const {
+    data: customerNotifications,
+    isLoading: customerNotificationsLoading,
+    isError: isCustomerNotificationsError,
+    error: customerNotificationsError,
+  } = useQuery({
+    queryKey: ['customernotifications'],
+    refetchInterval: 3000,
+    queryFn: () => getCustomerNotifications(token),
+  });
   const { mutate: uploadBanner } = useMutation({
     mutationFn: async (file: File | null) => {
       if (!file) throw new Error('No file selected')
@@ -124,33 +146,31 @@ const Notifications = () => {
           <div className="flex gap-6">
             <div className=" border bg-white rounded-md w-1/2 p-8 shadow-md">
               <h2 className="font-bold text-lg mb-4">Team Notification</h2>
-              {notifications
-                .filter((n) => n.type === 'Team')
+              {teamNotifications?.data
+
                 .map((notification, index) => (
                   <div key={index} className='py-2'>
                     <p>
-                      <span className="font-bold">{notification.message}</span>
-                      {notification.isImportant && (
-                        <span className="text-red-500 font-bold ml-1">•</span>
-                      )}
-                      <span className="text-green-600 ml-2 cursor-pointer">view details</span>
+                      <span className="font-bold">{notification.description}</span>
+
+                      {/* <span className="text-green-600 ml-2 cursor-pointer">view details</span> */}
                     </p>
-                    <p className="text-gray-500 pt-2 text-sm">{notification.time}</p>
+                    <p className="text-gray-500 pt-2 text-sm">{notification.createdAt.split('T')[0]}</p>
                   </div>
                 ))}
             </div>
 
             <div className="border bg-white rounded-md p-8 w-1/2 shadow-md">
               <h2 className="font-bold text-lg mb-4">Customer Notification</h2>
-              {notifications
-                .filter((n) => n.type === 'Customer')
+              {customerNotifications?.data
+
                 .map((notification, index) => (
                   <div key={index} className="py-2">
                     <span>
-                      <span className="font-bold">{notification.message}</span>
-                      <span className="text-green-600 ml-2 cursor-pointer ">view transaction</span>
+                      <span className="font-bold">{notification.description}</span>
+                      {/* <span className="text-green-600 ml-2 cursor-pointer ">view transaction</span> */}
                     </span>
-                    <p className="text-gray-500 text-sm pt-2">{notification.time}</p>
+                    <p className="text-gray-500 text-sm pt-2">{notification.createdAt.split('T')[0]}</p>
                   </div>
                 ))}
             </div>

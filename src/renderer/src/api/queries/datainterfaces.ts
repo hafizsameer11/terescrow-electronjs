@@ -177,8 +177,6 @@ export interface PostCustomerData {
   profilePicture?: string | null
   gender?: string
   role?: string
-
-  password?: string
 }
 
 export interface UPdateCustomerResponse {

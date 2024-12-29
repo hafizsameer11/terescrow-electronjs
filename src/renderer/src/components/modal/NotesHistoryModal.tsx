@@ -8,10 +8,9 @@ interface NotesHistoryModalProps {
   onClose: () => void;
   notes: Array<{
     id: number;
-    content: string;
-    date: string;
-    savedBy: string;
-    isHighlighted?: boolean;
+    note: string;
+    createdAt: string;
+    agent:any
   }>;
   onNewNote: () => void;
   onEdit: (id: number) => void;
@@ -42,12 +41,12 @@ const NotesHistoryModal: React.FC<NotesHistoryModalProps> = ({
           <div className="flex justify-between items-center pb-4 mb-4 border-b">
 
             <h2 className="text-lg font-semibold text-gray-700">Notes History</h2>
-            <button
+            {/* <button
               onClick={onNewNote}
               className="bg-[#147341] text-white px-4 py-2 rounded-lg hover:bg-green-700"
             >
               New Note
-            </button>
+            </button> */}
           </div>
 
         </div>
@@ -60,21 +59,16 @@ const NotesHistoryModal: React.FC<NotesHistoryModalProps> = ({
           {notes.map((note) => (
             <div
               key={note.id}
-              className={`p-4 flex items-center gap-1 rounded-lg mb-4 ${note.isHighlighted ? "bg-[#B3FFD7]" : "bg-gray-50"
-                }`} >
+              className={`p-4 flex items-center gap-1 rounded-lg mb-4 `} >
 
-              <div>
-                {note.isHighlighted && (
-                  <MdPushPin className="text-[#00000080] text-lg" />
-                )}
-              </div>
+
               <div className="w-full">
 
                 <div className="flex justify-between items-center">
 
                   <div className="flex items-center gap-2">
 
-                    <span className="font-semibold text-gray-700">{note.content}</span>
+                    <span className="font-semibold text-gray-700">{note.note}</span>
                   </div>
 
                 </div>
@@ -83,9 +77,9 @@ const NotesHistoryModal: React.FC<NotesHistoryModalProps> = ({
                 <div className="mt-2 text-sm text-gray-500  flex justify-between">
                   <div>
 
-                    {note.date} <span className="font-semibold">Saved by {note.savedBy}</span>
+                    {note.createdAt} <span className="font-semibold">Saved by {note.agent.user.username}</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  {/* <div className="flex items-center gap-2">
                     <button
                       onClick={() => onEdit(note.id)}
                       className="text-blue-600 hover:text-blue-800"
@@ -98,7 +92,7 @@ const NotesHistoryModal: React.FC<NotesHistoryModalProps> = ({
                     >
                       Delete
                     </button>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </div>
