@@ -187,7 +187,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
   return (
     <div className="fixed inset-y-0 right-0 w-full m-4 md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col z-50">
       <ChatHeader
-        avatar={data?.customer?.profilePicture || 'https://via.placeholder.com/40'}
+        avatar={getImageUrl(data?.customer?.profilePicture) || 'https://via.placeholder.com/40'}
         name={data?.customer?.firstname}
         username={data?.customer?.username}
         onClose={onClose}
