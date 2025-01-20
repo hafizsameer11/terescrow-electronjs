@@ -11,7 +11,8 @@ interface CustomerFiltersProps {
 
 const UsersFilter: React.FC<CustomerFiltersProps> = ({ filters, onChange }) => {
   const genderOptions = ['All', 'male', 'female']
-  const categoryOptions = ['All', 'agent', 'customer'] // Add more countries if needed
+  const categoryOptions = ['All', 'agent', 'customer','other'
+  ] // Add more countries if needed
 
   return (
     <div className="flex flex-wrap justify-between items-center mb-4">

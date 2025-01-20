@@ -20,7 +20,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
   title,
   subTitle,
 }) => {
-  const statusOptions = ['All', 'successful', 'pending', 'declined'];
+  const statusOptions = ['All', 'successful', 'pending'];
   const typeOption = ['All', 'buy', 'sell'];
   const category = ['All', 'crypto', 'giftcard'];
 

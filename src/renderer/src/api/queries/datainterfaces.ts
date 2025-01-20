@@ -3,9 +3,9 @@
 export interface Customer {
   id: number
   username: string
-  email?: string
-  firstname?: string
-  lastname?: string
+  email: string
+  firstname: string
+  lastname: string
   country?: string
   phoneNumber?: string
   profilePicture?: string | null
@@ -16,8 +16,29 @@ export interface Customer {
   updatedAt: string
   password?: string
   agent?: Agent
+  KycStateTwo?: KycStateTwo
+  AccountActivity?: AccountActivity[]
+  inappNotification?: InappNotification[]
+  status: string
+}
+export interface InappNotification {
+  id: number
+  title: string
+  description: string
+  type: string
+  createdAt: string
 }
 
+export interface KycStateTwo {
+  id: number
+  userId: number
+  bvn: string
+  surName: string
+  firtName: string
+  dob?: string
+  status?: string
+  state: string
+}
 // export intergac
 export interface Department {
   id: number
@@ -73,7 +94,13 @@ export interface Agent {
   userId: number
   AgentStatus: string
   user: Customer
-  assignedDepartments?: AssignedDepartments[]
+  assignedDepartments: AssignedDepartments[]
+}
+export interface TeamMember {
+  id: number
+  userId: number
+  customRoleId: number
+  user: Customer
 }
 
 interface Transaction {
@@ -96,6 +123,10 @@ interface Transaction {
   status: string
   createdAt: string
   updatedAt: string
+  subCategory: {
+    id: number
+    title: string
+  }
 
   // References
   department: Department
@@ -154,6 +185,11 @@ export interface TeamResponse {
   status: string
   message: string
   data: Agent[]
+}
+export interface TeamResponse2 {
+  status: string
+  message: string
+  data: Customer[]
 }
 export interface CategroiesResponse {
   status: string
@@ -282,7 +318,7 @@ export interface AccountActivity {
   id: number
   userId: number
   description: string
-  createAt: string
+  createdAt: string
 }
 
 export interface AgentToCustomerChatResponse {
@@ -497,12 +533,34 @@ export interface ChatStats {
   status: string // Status of the API response
   message: string // Response message
   data: {
-    totalChats: number // Total number of chats
-    successfulllTransactions: number // Number of successful transactions
-    pendingChats: number // Number of pending chats
-    declinedChats: number // Number of declined chats
+    totalChats: {
+      count: number
+      change: 'positive' | 'negative'
+      percentage: number
+    }
+    successfulTransactions: {
+      count: number
+      change: 'positive' | 'negative'
+      percentage: number
+    }
+    pendingChats: {
+      count: number
+      change: 'positive' | 'negative'
+      percentage: number
+    }
+    declinedChats: {
+      count: number
+      change: 'positive' | 'negative'
+      percentage: number
+    }
+    unsuccessfulChats: {
+      count: number
+      change: 'positive' | 'negative'
+      percentage: number
+    }
   }
 }
+
 export interface ApiResponse {
   status: 'success' | 'error'
   message: string
@@ -548,45 +606,66 @@ export interface ITeamChatResponse extends ApiResponse {
   data: ITeamChatDetailsResponse['data'][]
 }
 
-
-
 export interface IResMessage {
-  id: number;
-  createdAt: Date;
-  updatedAt: Date;
-  chatId: number;
-  message: string;
-  senderId: number;
-  receiverId: number;
-  isRead: boolean;
-  image?: string;
+  id: number
+  createdAt: Date
+  updatedAt: Date
+  chatId: number
+  message: string
+  senderId: number
+  receiverId: number
+  isRead: boolean
+  image?: string
 }
 
 export interface ISendMessageToTeamResponse extends ApiResponse {
-  data: IResMessage;
+  data: IResMessage
 }
 
-
-
 export interface IUser {
-  id: number;
-  username: string;
-  firstname: string;
-  lastname: string;
-  profilePicture: string | null;
+  id: number
+  username: string
+  firstname: string
+  lastname: string
+  profilePicture: string | null
 }
 export interface AllAgentsResponse extends ApiResponse {
   data: {
-    user: IUser;
-    id: number;
+    user: IUser
+    id: number
     assignedDepartments: {
-      departmentId: number;
-    }[];
-    AgentStatus: AgentStatus;
-  }[];
+      departmentId: number
+    }[]
+    AgentStatus: AgentStatus
+  }[]
 }
 
 enum AgentStatus {
   online = 'online',
-  offline = 'offline',
+  offline = 'offline'
+}
+
+export interface Role {
+  id: number
+  name: string // Role name (e.g., "Manager", "Accountant")
+  permissions: Permission[] // List of permissions associated with the role
+  createdAt: string // ISO string of creation timestamp
+  updatedAt: string // ISO string of update timestamp
+}
+export interface Permission {
+  moduleName: string // Name of the module (e.g., "Customer", "Chat")
+  canCreate: boolean
+  canUpdate: boolean
+  canDelete: boolean
+  canSee: boolean
+}
+export interface RolesResponse {
+  status: string
+  message: string
+  data: Role[]
+}
+
+export interface CreatePermissionsRequest {
+  roleName: string // Name of the role (e.g., "Manager", "Accountant")
+  permissions: Permission[] // Array of permissions associated with the role
 }

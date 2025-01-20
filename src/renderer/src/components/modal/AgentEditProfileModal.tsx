@@ -19,7 +19,7 @@ interface AgentEditProfileModalProps {
       firstname: string;
       username: string;
       email: string;
-      profilePicture?: string;
+      profilePicture?: string | null;
     };
     AgentStatus: string;
   };

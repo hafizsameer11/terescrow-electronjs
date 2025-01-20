@@ -10,9 +10,9 @@ interface NotesHistoryModalProps {
     id: number;
     note: string;
     createdAt: string;
-    agent:any
+    agent: any
   }>;
-  onNewNote: () => void;
+  onNewNote: (newNote:string) => void;
   onEdit: (id: number) => void;
   onDelete: (id: number) => void;
 }
@@ -41,12 +41,12 @@ const NotesHistoryModal: React.FC<NotesHistoryModalProps> = ({
           <div className="flex justify-between items-center pb-4 mb-4 border-b">
 
             <h2 className="text-lg font-semibold text-gray-700">Notes History</h2>
-            {/* <button
+            <button
               onClick={onNewNote}
               className="bg-[#147341] text-white px-4 py-2 rounded-lg hover:bg-green-700"
             >
               New Note
-            </button> */}
+            </button>
           </div>
 
         </div>
@@ -77,22 +77,9 @@ const NotesHistoryModal: React.FC<NotesHistoryModalProps> = ({
                 <div className="mt-2 text-sm text-gray-500  flex justify-between">
                   <div>
 
-                    {note.createdAt} <span className="font-semibold">Saved by {note.agent.user.username}</span>
+                    {note.createdAt} <span className="font-semibold">Saved by {note.agent.username}</span>
                   </div>
-                  {/* <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onEdit(note.id)}
-                      className="text-blue-600 hover:text-blue-800"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => onDelete(note.id)}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Delete
-                    </button>
-                  </div> */}
+
                 </div>
               </div>
             </div>

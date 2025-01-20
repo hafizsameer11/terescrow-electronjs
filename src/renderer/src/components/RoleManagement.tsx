@@ -76,7 +76,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                   <td className="py-3 px-4">
                     <div>
                       <span className="block font-semibold">{transaction.amount}</span>
-                      <span className="text-sm text-gray-500">NGN170,000</span>
+                      <span className="text-sm text-gray-500">₦170,000</span>
                     </div>
                   </td>
                 )}
@@ -85,7 +85,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                 {activeFilterInTeam === 'Customer' && (
                   <td className="py-3 px-4">
                     <span
-                      className={`flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-lg border 
+                      className={`flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-lg border
     ${
       transaction.status === 'Successful'
         ? 'bg-green-100 text-green-700 border-green-500'
@@ -99,7 +99,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
     }`}
                     >
                       <span
-                        className={`w-2 h-2 rounded-full 
+                        className={`w-2 h-2 rounded-full
       ${
         transaction.status === 'Successful'
           ? 'bg-green-700'

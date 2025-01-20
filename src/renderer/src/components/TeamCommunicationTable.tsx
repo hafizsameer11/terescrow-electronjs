@@ -81,7 +81,7 @@ const TeamCommunicationTable: React.FC<TransactionsTableProps> = ({
                   <td className="py-3 px-4">
                     <div>
                       <span className="block font-semibold">{transaction.amount}</span>
-                      <span className="text-sm text-gray-500">NGN170,000</span>
+                      <span className="text-sm text-gray-500">₦170,000</span>
                     </div>
                   </td>
                 )}

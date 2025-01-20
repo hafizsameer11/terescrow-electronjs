@@ -1,6 +1,6 @@
 {
-  "name": "terescrow-app",
-  "version": "1.2.0",
+  "name": "Tercescrow",
+  "version": "1.5.0",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -64,9 +64,28 @@
   },
   "build": {
     "appId": "com.example.yourapp",
+    "productName": "Tercescrow",
     "mac": {
-      "target": "dmg",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "resources/mac.icns",
       "minimumSystemVersion": "10.15"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ],
+      "icon": "resources/win.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "resources/icons"
     },
     "files": [
       "dist/**/*",

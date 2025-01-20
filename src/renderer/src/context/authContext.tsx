@@ -1,3 +1,4 @@
+import { AccountActivity, Role } from '@renderer/api/queries/datainterfaces'
 import React, { createContext, useContext, useReducer, ReactNode } from 'react'
 
 export enum UserRoles {
@@ -16,6 +17,10 @@ interface AuthContextType {
     email: string
     role: UserRoles | string
     profilePicture: string | null
+    customRole?: Role[],
+    accountActivity?: AccountActivity[]
+    // status: string
+//
   } | null
   dispatch: React.Dispatch<AuthAction>
 }

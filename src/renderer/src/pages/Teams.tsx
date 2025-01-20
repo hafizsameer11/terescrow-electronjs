@@ -7,12 +7,14 @@ import AgentEditProfileModal from '@renderer/components/modal/AgentEditProfileMo
 import { Images } from '@renderer/constant/Image.js'
 import ActivityHistory from '@renderer/components/ActivityHistory.js'
 import TeamTable from '@renderer/components/TeamsTable.js'
-import { getDepartments, getTeam } from '@renderer/api/queries/adminqueries.js'
+import { getDepartments, getTeam, getTeam2 } from '@renderer/api/queries/adminqueries.js'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@renderer/context/authContext.js'
 import { getTeamStats } from '@renderer/api/queries/admin.chat.queries.js'
 import { Department } from '@renderer/api/queries/datainterfaces.js'
 import AddAgentProfileModal from '@renderer/components/modal/AddAgentProfileModal.js'
+import AddTeamMemberModal from '@renderer/components/modal/AddTeamMember.js'
+import { useSocket } from '@renderer/context/socketContext.js'
 
 interface Agent {
   fullName: string
@@ -60,7 +62,7 @@ const Teams = () => {
     }
   ]
 
-  const [activeTab, setActiveTab] = useState<'online' | 'offline'>('online')
+  const [activeTab, setActiveTab] = useState<'online' | 'offline' | 'All'>('online')
   const [selectedRole, setSelectedRole] = useState<'agent' | 'customer' | 'All'>('All')
   const [searchValue, setSearchValue] = useState('')
   const [isEditClick, setIsEditClick] = useState(false)
@@ -76,7 +78,7 @@ const Teams = () => {
   }
   const { data: teamData, isLoading, isError, error } = useQuery({
     queryKey: ['teamData'],
-    queryFn: () => getTeam({ token }),
+    queryFn: () => getTeam2({ token }),
     enabled: !!token,
   });
   const { data: teamStats, isLoading: teamStatsloading } = useQuery({
@@ -84,6 +86,7 @@ const Teams = () => {
     queryFn: () => getTeamStats({ token }),
     enabled: !!token,
   });
+  const { onlineAgents } = useSocket();
   const {
     data: departmentsData,
     isLoading: isDepartmetnLoading,
@@ -129,16 +132,27 @@ const Teams = () => {
   }
 
   const filteredData = teamData?.data.filter((member) => {
+    const isOnline = onlineAgents.some((onlineAgent) => onlineAgent.userId == member.id);
+
     const matchesTab =
-      activeTab === 'online' ? member.AgentStatus === 'online' : member.AgentStatus === 'offline'
-    // const matchesRole = selectedRole === 'All' || member.user.role === selectedRole
+      activeTab === 'All'
+        ? true
+        : activeTab === 'online'
+          ? isOnline
+          : !isOnline;
+
     const matchesSearch =
       searchValue === '' ||
-      member.user.firstname?.toLowerCase().includes(searchValue.toLowerCase()) ||
-      member.user.username.toLowerCase().includes(searchValue.toLowerCase())
+      member.firstname?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      member.username.toLowerCase().includes(searchValue.toLowerCase());
 
-    return matchesTab && matchesSearch
-  })
+    return matchesTab && matchesSearch;
+  });
+
+  useEffect(() => {
+    console.log("Filtered Data:", filteredData);
+  }, [filteredData]);
+
   useEffect(() => {
     console.log("here is team data", teamData?.data);
     console.log("here is filtered data", filteredData);
@@ -209,10 +223,10 @@ const Teams = () => {
       )}
       {
         isAddModalOpen && (
-          <AddAgentProfileModal
+          <AddTeamMemberModal
             isOpen={isAddModalOpen}
             onClose={() => setIsAddModalOpen(false)}
-            departmentData={selectedDepartment}
+          // departmentData={selectedDepartment}
           />
         )
       }

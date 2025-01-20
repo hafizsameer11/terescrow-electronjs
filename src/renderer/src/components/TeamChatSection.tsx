@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { IoImageOutline, IoSend } from 'react-icons/io5';
+import { IoClose, IoImageOutline, IoSend } from 'react-icons/io5';
 // import { ITeamChatDetailsResponse } from '@renderer/api/types';
-import { getTeamChatDetails, readAllMessages, sendMessageToTeam } from '@renderer/api/queries/commonqueries';
+import { getTeamChatDetails, markAllMessageread, readAllMessages, sendMessageToTeam } from '@renderer/api/queries/commonqueries';
 import { ITeamChatDetailsResponse } from '@renderer/api/queries/datainterfaces';
 import { getImageUrl } from '@renderer/api/helper';
 import { useAuth } from '@renderer/context/authContext'
+import { useSocket } from '@renderer/context/socketContext';
 type TeamChatSectionProps = {
   chatId: number;
 };
@@ -13,6 +14,7 @@ type TeamChatSectionProps = {
 const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
   const [inputValue, setInputValue] = useState<string>('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [messages, setMessages] = useState<ITeamChatDetailsResponse['data']['messages']>([]);
   const currParticipantsIds = useRef<number[]>([]);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
@@ -25,7 +27,12 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
     queryFn: () => getTeamChatDetails(token, chatId),
     refetchInterval: 1000, // Refetch every second
   });
+  const { data: response } = useQuery({
+    queryKey: ['markingAllRead', chatId],
+    queryFn: () => markAllMessageread(token),
+  })
 
+  const { onlineAgents } = useSocket()
   // Update messages and participants on data change
   useEffect(() => {
     if (chatDetailsData?.data) {
@@ -75,8 +82,9 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
       formData.append('image', uploadedImage);
       setUploadedImage(null); // Clear the uploaded image after sending
     }
-
+    setImagePreview(null); // Clear the image preview
     sendMessage(formData);
+
     setInputValue(''); // Clear the input field
   };
 
@@ -85,7 +93,19 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
     const file = e.target.files?.[0];
     if (file) {
       setUploadedImage(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setImagePreview(event.target.result as string);
+          console.log("Image Preview", imagePreview)
+        }
+      };
+      reader.readAsDataURL(file);
     }
+  };
+  const handleCancelUpload = () => {
+    setUploadedImage(null);
+    setImagePreview(null);
   };
 
   return (
@@ -97,9 +117,8 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
             src={
               chatDetailsData?.data.chatGroup?.groupProfile
                 ? getImageUrl(chatDetailsData?.data.chatGroup?.groupProfile)
-                : chatDetailsData?.data.participants?.[0]?.user?.profilePicture
-                  ? getImageUrl(chatDetailsData?.data.participants[0].user.profilePicture)
-                  : '/default-avatar.png' // Use a valid fallback image URL
+                : getImageUrl(chatDetailsData?.data.participants?.[0]?.user?.profilePicture)
+
             }
             alt={chatDetailsData?.data.chatGroup?.groupName || 'Chat Avatar'}
             className="w-10 h-10 rounded-full mr-4"
@@ -111,8 +130,6 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
           </div>
         </div>
       </div>
-
-      {/* Messages */}
       <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto bg-gray-50">
         {isError && <p className="text-red-500">Failed to load chat details.</p>}
         {messages.map((message) => (
@@ -143,6 +160,31 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
       </div>
 
       {/* Input Field */}
+      {/* if image preview exist than show it here */}
+      {imagePreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="relative bg-white p-4 rounded-lg max-w-sm w-full">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+              onClick={handleCancelUpload}
+            >
+              <IoClose className="w-6 h-6" />
+            </button>
+            <img
+              src={imagePreview}
+              alt="Preview"
+              className="w-full h-auto rounded-lg mb-4"
+              style={{ maxHeight: '300px' }}
+            />
+            <button
+              onClick={handleSendMessage}
+              className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex items-center p-4 border-t bg-white">
         {/* Image Upload */}
         <label

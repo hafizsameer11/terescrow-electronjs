@@ -45,44 +45,8 @@ const DepartmentDetails: React.FC = () => {
     ],
   };
 
-  const notes = [
-    {
-      id: 1,
-      content: "Adecrypto Vendor - NGN1670/$1",
-      date: "Nov 7, 2024 - 10:22 am",
-      savedBy: "Alucard",
-      isHighlighted: true,
-    },
-    {
-      id: 2,
-      content:
-        "Customer is kind and reputable and respectful, does not like waiting for too long",
-      date: "Nov 7, 2024 - 10:22 am",
-      savedBy: "Dave",
-    },
-  ];
 
-  const handleKYCUpdate = (status: string) => {
-    console.log("Updated Status:", status);
-    setIsKYCModalOpen(false);
-  };
 
-  const handleEditProfile = (updatedData: Record<string, string>) => {
-    console.log("Updated Profile Data:", updatedData);
-    setIsEditModalOpen(false);
-  };
-
-  const handleNewNote = () => {
-    console.log("New Note");
-  };
-
-  const handleEditNote = (id: number) => {
-    console.log("Edit Note", id);
-  };
-
-  const handleDeleteNote = (id: number) => {
-    console.log("Delete Note", id);
-  };
   const handleTabChange = (tab: "details" | "transactions") => {
     setActiveTab(tab);
     if (tab === "details") {
@@ -175,37 +139,6 @@ const DepartmentDetails: React.FC = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Modals */}
-      <KYCDetailsModal
-        isOpen={isKYCModalOpen}
-        onClose={() => setIsKYCModalOpen(false)}
-        kycData={kycData}
-        onUpdate={handleKYCUpdate}
-      />
-      <NotesHistoryModal
-        isOpen={isNotesModalOpen}
-        onClose={() => setIsNotesModalOpen(false)}
-        notes={notes}
-        onNewNote={handleNewNote}
-        onEdit={handleEditNote}
-        onDelete={handleDeleteNote}
-      />
-      <EditProfileModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        userData={{
-          fullName: customer.name,
-          username: customer.username,
-          email: customer.email,
-          phoneNumber: customer.mobileNumber,
-          gender: customer.gender,
-          password: customer.password,
-        }}
-
-        // onUpdate={handleEditProfile}
-        onUpdate={()=>{console.log("Updated Data:");}}
-      />
     </div>
   );
 };

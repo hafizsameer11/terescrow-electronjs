@@ -5,6 +5,7 @@ import { Images } from '@renderer/constant/Image';
 import { useAuth } from '@renderer/context/authContext';
 import { useQuery } from '@tanstack/react-query';
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Agent {
   id: number;
@@ -19,20 +20,24 @@ const OnlineAgents: React.FC = () => {
     { id: 3, src: Images.agent1, alt: 'Agent 3' },
 
   ];
-  const {token}=useAuth()
+ 
+  const { token } = useAuth()
   const { data: allAgentsData, isLoading, isError } = useQuery<AllAgentsResponse>({
     queryKey: ['all-agents'],
     queryFn: () => getAllAgentss({ token }),
   });
 
+
   return (
     <div className="flex flex-col items-center ">
       <span className={`text-sm text-[#00000080] mb-2 font-[400]`}>Online Agents</span>
-      <div className="flex -space-x-2">
-        { !isLoading && allAgentsData?.data.map((agent) => (
+      <div className="flex -space-x-2"
+      >
+        {!isLoading && allAgentsData?.data.map((agent) => (
           <img
+
             key={agent.id}
-            src={getImageUrl(agent.user.profilePicture || "") || "N/A"}
+            src={getImageUrl(agent.user.profilePicture)}
             alt={agent.user.username}
             className="w-10 h-10 rounded-full border-2 border-white shadow-md"
           />

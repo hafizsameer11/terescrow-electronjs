@@ -1,24 +1,30 @@
+import { KycStateTwo } from "@renderer/api/queries/datainterfaces";
 import React from "react";
 import { IoCopyOutline } from "react-icons/io5";
 
 interface KYCDetailsProps {
   isOpen: boolean;
   onClose: () => void;
-  kycData: {
-    surname: string;
-    firstName: string;
-    bvn: string;
-    dateOfBirth: string;
-    updateStatus: string;
-  };
-  onUpdate: (status: string) => void;
+  kycData: KycStateTwo
+  onUpdate: (status: string | undefined) => void;
 }
 
 const KYCDetailsModal: React.FC<KYCDetailsProps> = ({ isOpen, onClose, kycData, onUpdate }) => {
-  const [status, setStatus] = React.useState(kycData.updateStatus);
+  // Initialize the status state, falling back to "pending" if kycData.state is not provided
+  const [status, setStatus] = React.useState<string>(
+    kycData.state || "pending"
+  );
+
+  React.useEffect(() => {
+    // Update the status whenever kycData.state changes
+    if (kycData.state) {
+      setStatus(kycData.state);
+    }
+  }, [kycData.state]);
+
 
   if (!isOpen) return null;
-
+  console.log("KYC Data:", kycData);
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg p-6 w-[500px]">
@@ -35,12 +41,12 @@ const KYCDetailsModal: React.FC<KYCDetailsProps> = ({ isOpen, onClose, kycData, 
           {/* Surname */}
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">Surname</span>
-            <span className="text-[16px] font-normal text-right">{kycData.surname}</span>
+            <span className="text-[16px] font-normal text-right">{kycData.surName}</span>
           </div>
           {/* First Name */}
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">First Name</span>
-            <span className="text-[16px] font-normal text-right">{kycData.firstName}</span>
+            <span className="text-[16px] font-normal text-right">{kycData.firtName}</span>
           </div>
           {/* BVN */}
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
@@ -55,33 +61,32 @@ const KYCDetailsModal: React.FC<KYCDetailsProps> = ({ isOpen, onClose, kycData, 
               </button>
             </div>
           </div>
-          {/* Date of Birth */}
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">Date of Birth</span>
-            <span className="text-[16px] font-normal text-right">{kycData.dateOfBirth}</span>
+            <span className="text-[16px] font-normal text-right">{kycData.dob}</span>
           </div>
-          {/* Update Status */}
         </div>
-          <div className="flex flex-col py-1 pb-2 px-4 border   border-[#000000CC] mt-3 rounded-lg">
+        <div className="flex flex-col py-1 pb-2 px-4 border   border-[#000000CC] mt-3 rounded-lg">
           <span className="text-gray-600 text-[14px]">Update Status</span>
           <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-2 bg-white text-[18px] font-normal appearance-none border-none outline-none"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-2 bg-white text-[18px] font-normal appearance-none border-none outline-none"
 
-              style={{
-                backgroundImage:
-                  'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 20\' fill=\'%23333\'%3E%3Cpath fill-rule=\'evenodd\' d=\'M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z\' clip-rule=\'evenodd\'/%3E%3C/svg%3E")',
-                backgroundRepeat: "no-repeat",
-                backgroundPosition: "right 0.75rem center",
-                backgroundSize: "1rem",
-              }}
-            >
-              <option   value="Successful">Successful</option>
-              <option value="Pending">Pending</option>
-              <option value="Failed">Failed</option>
-            </select>
-          </div>
+            style={{
+              backgroundImage:
+                'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 20 20\' fill=\'%23333\'%3E%3Cpath fill-rule=\'evenodd\' d=\'M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z\' clip-rule=\'evenodd\'/%3E%3C/svg%3E")',
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "right 0.75rem center",
+              backgroundSize: "1rem",
+            }}
+          >
+            <option value="verified">Successful</option>
+            <option value="pending">Pending</option>
+            {/* <option value="Pending">Pending</option> */}
+            <option value="failed">Failed</option>
+          </select>
+        </div>
 
         {/* Modal Footer */}
         <div className="mt-6">

@@ -1,30 +1,64 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MdOutlineDescription, MdChatBubbleOutline, MdEdit, MdLock } from "react-icons/md";
 import { MdEmail, MdPhone, MdPerson, MdLocationOn } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import ContactRow from "@renderer/components/ContactRow";
 import KYCDetailsModal from "@renderer/components/modal/KYCDetailsModal";
 import NotesHistoryModal from "@renderer/components/modal/NotesHistoryModal";
 import EditProfileModal from "@renderer/components/modal/EditProfileModal";
 
-import { getCustomerDetails, getNotesForCustomer } from "@renderer/api/queries/adminqueries";
+import { createNoteForCustomer, getCustomerDetails, getNotesForCustomer, updateKycStatus } from "@renderer/api/queries/adminqueries";
 import { FaTicketAlt } from "react-icons/fa";
-import { Customer } from "@renderer/api/queries/datainterfaces";
+import { AccountActivity, Customer, KycStateTwo } from "@renderer/api/queries/datainterfaces";
 import { useAuth } from "@renderer/context/authContext";
+import ChatNewNote from "@renderer/components/ChatNewNote";
+// import { useQueryClient } from "react-query";
 
 
 const CustomerDetails: React.FC = () => {
   const [isKYCModalOpen, setIsKYCModalOpen] = useState(false);
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const {token}=useAuth();
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<"details" | "transactions">("details");
-
+  const [kycData, setKYCData] = useState<KycStateTwo>({} as KycStateTwo);
+  const [accoutnActivity, setAccountActivity] = useState<AccountActivity[]>([]);
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { mutate: addNote } = useMutation({
+    mutationKey: ['add-note'],
+    mutationFn: (data: {
+      note: string,
+      userId: number | string
+    }) => createNoteForCustomer(data, token),
+    onSuccess: () => {
+      alert('Note added successfully')
+      queryClient.invalidateQueries(['notes-for-customer'])
+      // queryClient.invalidateQueries(['notes-for-customer', userId])
+      // onclose()
+      // onClose()
+    },
+    onError: (error) => {
+      console.log(error)
+      alert('Failed to add note')
+    }
 
+  })
+  const onClose = () => {
+    setIsModalOpen(false);
+  }
+  const handleAddNote = (newNote: string) => {
+    addNote({
+      note: newNote,
+      userId: id!
+    })
+    // setAddNotes((prevNotes) => [...prevNotes, newNote]);
+
+  };
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["customerDetails", id],
     queryFn: () => getCustomerDetails({ token, id: id! }),
@@ -39,37 +73,38 @@ const CustomerDetails: React.FC = () => {
     queryFn: () => getNotesForCustomer(token, id!),
   });
 
-  const kycData = {
-    surname: customer?.lastname || "",
-    firstName: customer?.firstname || "",
-    bvn: "234567890",
-    dateOfBirth: "Feb 22, 1986",
-    updateStatus: customer?.isVerified ? "Verified" : "Not Verified",
-  };
-
-  const notes = [
-    {
-      id: 1,
-      content: "Customer is cooperative and punctual.",
-      date: "Nov 7, 2024 - 10:22 am",
-      savedBy: "Admin",
-    },
-    {
-      id: 2,
-      content: "Prompt in replying and good communication skills.",
-      date: "Nov 8, 2024 - 11:45 am",
-      savedBy: "Manager",
-    },
-  ];
-
+  useEffect(() => {
+    setKYCData(customer?.KycStateTwo || {} as KycStateTwo);
+    setAccountActivity(customer?.AccountActivity || []);
+  }, [customer])
   const handleTabChange = (tab: "details" | "transactions") => {
     setActiveTab(tab);
     navigate(tab === "details" ? `/customers/${id}` : `/transaction-details/${id}`);
   };
-
+  const { mutate: updateKyc, isPending: isKYCUpdatePending } = useMutation({
+    mutationKey: ['update-kyc-status'], // Unique mutation key
+    mutationFn: async ({
+      data,
+      token,
+      userId,
+    }: {
+      data: { kycStatus: string };
+      token: string;
+      userId: number | string;
+    }) => {
+      return await updateKycStatus(data, token, userId);
+    },
+    onSuccess: (data) => {
+      // setKYCData(data);
+      alert('KYC status updated successfully.');
+    }, onError: (error) => {
+      alert('Failed to update KYC status. Please try again.');
+    }
+  });
   const handleKYCUpdate = (status: string) => {
     console.log("Updated KYC Status:", status);
-    setIsKYCModalOpen(false);
+    // setIsKYCModalOpen(false);
+    updateKyc({ data: { status }, token, userId: id! });
   };
 
   const handleEditProfile = (updatedData: Record<string, string>) => {
@@ -78,7 +113,8 @@ const CustomerDetails: React.FC = () => {
   };
 
   const handleNewNote = () => {
-    console.log("New Note Added");
+    // setIsNotesModalOpen(true);
+    setIsModalOpen(true);
   };
 
   const handleEditNote = (noteId: number) => {
@@ -91,12 +127,7 @@ const CustomerDetails: React.FC = () => {
 
   if (isLoading) return <p>Loading customer details...</p>;
   if (isError) return <p>Error fetching customer details: {(error as any)?.message}</p>;
-  const accountActivities = [
 
-    { label: "Date Joined", date: "Nov 7, 2024 - 04:30 PM" },
-    { label: "Password Reset", date: "Nov 7, 2024 - 04:30 PM" },
-
-  ]
 
   //fetch all notes
 
@@ -107,8 +138,8 @@ const CustomerDetails: React.FC = () => {
         <button
           onClick={() => handleTabChange("details")}
           className={`px-4 py-2 rounded-md shadow-sm ${activeTab === "details"
-              ? "bg-[#147341] text-white"
-              : "text-gray-700 border border-gray-200"
+            ? "bg-[#147341] text-white"
+            : "text-gray-700 border border-gray-200"
             }`}
         >
           Customer Details and Activities
@@ -116,8 +147,8 @@ const CustomerDetails: React.FC = () => {
         <button
           onClick={() => handleTabChange("transactions")}
           className={`ml-4 px-4 py-2 rounded-md shadow-sm ${activeTab === "transactions"
-              ? "bg-[#147341] text-white"
-              : "text-gray-700 border border-gray-200"
+            ? "bg-[#147341] text-white"
+            : "text-gray-700 border border-gray-200"
             }`}
         >
           Transaction Activities and Balance
@@ -139,13 +170,13 @@ const CustomerDetails: React.FC = () => {
             </p>
             <div className="mt-2 flex items-center gap-2 bg-white text-[#147341] px-4 py-2 rounded-md">
               <span className="text-xs font-medium">
-                KYC Status: {customer?.isVerified ? "Verified" : "Not Verified"}
+                KYC Status: {kycData?.state || "Not Verified"}
               </span>
             </div>
           </div>
         </div>
         <div className="flex gap-3">
-          {customer?.isVerified &&
+          {kycData.bvn &&
             <button
               onClick={() => setIsKYCModalOpen(true)}
               className="bg-white text-[#00000080] rounded-lg p-2 shadow-md"
@@ -182,10 +213,10 @@ const CustomerDetails: React.FC = () => {
         <h2 className="px-6 py-4 font-bold text-gray-700">Account Activities</h2>
         <table className="min-w-full text-left text-sm text-gray-600">
           <tbody>
-            {accountActivities.map((activity, index) => (
+            {accoutnActivity.map((activity, index) => (
               <tr key={index} className="border-t">
-                <td className="px-6 py-4 text-gray-800 font-semibold">{activity.label}</td>
-                <td className="px-6 py-4 text-gray-800 font-semibold text-right">{activity.date}</td>
+                <td className="px-6 py-4 text-gray-800 font-semibold">{activity.description}</td>
+                <td className="px-6 py-4 text-gray-800 font-semibold text-right">{activity.createdAt.split("T")[0]}</td>
               </tr>
             ))}
           </tbody>
@@ -201,27 +232,33 @@ const CustomerDetails: React.FC = () => {
       <NotesHistoryModal
         isOpen={isNotesModalOpen}
         onClose={() => setIsNotesModalOpen(false)}
-        notes={!isNotesLoading ? notDetailsData?.data :[]}
+        notes={!isNotesLoading ? notDetailsData?.data : []}
         onNewNote={handleNewNote}
         onEdit={handleEditNote}
         onDelete={handleDeleteNote}
       />
-    <EditProfileModal
-      isOpen={isEditModalOpen}
-      onClose={() => setIsEditModalOpen(false)}
-      userData={{
-        firstname: customer?.firstname || "",
-        lastname: customer?.lastname || "",
-        username: customer?.username || "",
-        email: customer?.email || "",
-        phoneNumber: customer?.phoneNumber || "",
-        gender: customer?.gender || "",
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        userData={{
+          firstname: customer?.firstname || "",
+          lastname: customer?.lastname || "",
+          username: customer?.username || "",
+          email: customer?.email || "",
+          phoneNumber: customer?.phoneNumber || "",
+          gender: customer?.gender || "",
 
-        country: customer?.country || "",
-        profilePhoto: customer?.profilePicture || "",
-        id: customer?.id.toString() || "",
-      }}
-    />
+          country: customer?.country || "",
+          profilePhoto: customer?.profilePicture || "",
+          id: customer?.id || "",
+        }}
+      />
+      {isModalOpen && (
+        <ChatNewNote
+          onClose={() => setIsModalOpen(false)}
+          onAddNote={handleAddNote}
+        />
+      )}
     </div>
   );
 };

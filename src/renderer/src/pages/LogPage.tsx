@@ -12,7 +12,7 @@ const LogPage: React.FC = () => {
     search: '',
   });
 
-  const {token}=useAuth();
+  const { token } = useAuth();
   const { data: customerTransactions, isLoading, isError, error } = useQuery({
     queryKey: ['customerTransactions'],
     queryFn: () => getTransactions({ token }),
@@ -72,8 +72,8 @@ const LogPage: React.FC = () => {
             <button
               onClick={() => handleFilterChange({ niche: 'All' })}
               className={`px-4 py-2 rounded-md border text-sm font-medium ${filters.niche === 'All'
-                  ? 'bg-[#147341] text-white border-[#147341]'
-                  : 'bg-white text-[#147341] border-[#147341]'
+                ? 'bg-[#147341] text-white border-[#147341]'
+                : 'bg-white text-[#147341] border-[#147341]'
                 }`}
             >
               All
@@ -81,8 +81,8 @@ const LogPage: React.FC = () => {
             <button
               onClick={() => handleFilterChange({ niche: 'giftCard' })}
               className={`px-4 py-2 rounded-md border text-sm font-medium ${filters.niche === 'giftCard'
-                  ? 'bg-[#147341] text-white border-[#147341]'
-                  : 'bg-white text-[#147341] border-[#147341]'
+                ? 'bg-[#147341] text-white border-[#147341]'
+                : 'bg-white text-[#147341] border-[#147341]'
                 }`}
             >
               Gift Card
@@ -90,8 +90,8 @@ const LogPage: React.FC = () => {
             <button
               onClick={() => handleFilterChange({ niche: 'crypto' })}
               className={`px-4 py-2 rounded-md border text-sm font-medium ${filters.niche === 'crypto'
-                  ? 'bg-[#147341] text-white border-[#147341]'
-                  : 'bg-white text-[#147341] border-[#147341]'
+                ? 'bg-[#147341] text-white border-[#147341]'
+                : 'bg-white text-[#147341] border-[#147341]'
                 }`}
             >
               Crypto
@@ -106,8 +106,8 @@ const LogPage: React.FC = () => {
             <button
               onClick={() => handleFilterChange({ type: 'All' })}
               className={`px-4 py-2 rounded-lg border text-sm font-medium ${filters.type === 'All'
-                  ? 'bg-[#147341] text-white border-[#147341]'
-                  : 'bg-white text-[#147341] border-[#147341]'
+                ? 'bg-[#147341] text-white border-[#147341]'
+                : 'bg-white text-[#147341] border-[#147341]'
                 }`}
             >
               All
@@ -115,8 +115,8 @@ const LogPage: React.FC = () => {
             <button
               onClick={() => handleFilterChange({ type: 'buy' })}
               className={`px-4 py-2 rounded-lg border text-sm font-medium ${filters.type === 'buy'
-                  ? 'bg-[#147341] text-white border-[#147341]'
-                  : 'bg-white text-[#147341] border-[#147341]'
+                ? 'bg-[#147341] text-white border-[#147341]'
+                : 'bg-white text-[#147341] border-[#147341]'
                 }`}
             >
               Buy
@@ -124,8 +124,8 @@ const LogPage: React.FC = () => {
             <button
               onClick={() => handleFilterChange({ type: 'sell' })}
               className={`px-4 py-2 rounded-lg border text-sm font-medium ${filters.type === 'sell'
-                  ? 'bg-[#147341] text-white border-[#147341]'
-                  : 'bg-white text-[#147341] border-[#147341]'
+                ? 'bg-[#147341] text-white border-[#147341]'
+                : 'bg-white text-[#147341] border-[#147341]'
                 }`}
             >
               Sell

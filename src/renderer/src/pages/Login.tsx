@@ -18,6 +18,7 @@ const LoginPage = () => {
     mutationFn: loginUser,
     onSuccess: async (data) => {
       console.log(`API response: `, data.data)
+      // alert(`API response: ${data.data}`)
       if (data?.token) {
         dispatch({ type: 'SET_TOKEN', payload: data?.token })
         dispatch({ type: 'SET_USER_DATA', payload: data.data })
@@ -35,13 +36,14 @@ const LoginPage = () => {
       //   position: 'top-right',
       //   autoClose: 3000
       // })
+      alert(`Error: ${error?.message || 'Failed to login'}`)
     }
   })
 
   return (
     <div className=" w-full">
       <div>
-        <img src={Images.logo} alt="" />
+        <img  style={{width: '100px'}} src={Images.logo} alt="" />
       </div>
       <div className="h-full w-full flex items-center justify-center">
         <div className="p-6 rounded-lg shadow-sm bg-white w-[450px] mt-10">

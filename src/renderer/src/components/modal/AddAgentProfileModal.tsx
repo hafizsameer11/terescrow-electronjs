@@ -89,8 +89,8 @@ const AddAgentProfileModal: React.FC<AgentEditProfileModalProps> = ({
       label: dept.title,
     })) || [];
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6 " style={{ overflowY: 'scroll' }}>
-      <div className="bg-white rounded-lg shadow-lg w-[500px] p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 px-6  " style={{ overflowY: 'scroll' }}>
+      <div className="bg-white rounded-lg shadow-lg w-[500px] p-6 mt-32">
         <div className="flex justify-between items-center pb-4 mb-4 border-b">
           <h2 className="text-lg font-semibold text-gray-800">Add new Agent</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-800 text-4xl">

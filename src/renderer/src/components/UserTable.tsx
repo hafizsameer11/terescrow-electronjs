@@ -28,7 +28,7 @@ const UserTable: React.FC<CustomerTableProps> = ({ data }) => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 5
-  const totalPages =10
+  const totalPages = 10
   const paginatedData = data
 
   const toggleMenu = (id: number) => {
@@ -101,13 +101,12 @@ const UserTable: React.FC<CustomerTableProps> = ({ data }) => {
               <td className="py-5 px-4">{customer.gender}</td>
               <td className="py-5">
                 <span
-                  className={`px-3 py-1 text-xs rounded-full ${
-                    customer.isVerified ===true
-                      ? 'bg-green-900'
-                      : customer.isVerified === false
-                        ? 'bg-yellow-900'
-                        : 'bg-red-900 '
-                  }`}
+                  className={`px-3 py-1 text-xs rounded-full ${customer.status === 'active'
+                    ? 'bg-green-900'
+                    : customer.isVerified === false
+                      ? 'bg-yellow-900'
+                      : 'bg-red-900 '
+                    }`}
                 ></span>
               </td>
               <td className="text-right">

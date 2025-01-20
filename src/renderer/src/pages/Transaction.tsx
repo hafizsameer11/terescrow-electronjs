@@ -1,3 +1,4 @@
+import { addThousandSeparator } from '@renderer/api/helper'
 import { getTransactionStats } from '@renderer/api/queries/admin.chat.queries'
 import { getTransactions } from '@renderer/api/queries/adminqueries'
 import StatsCard from '@renderer/components/StatsCard'
@@ -79,7 +80,9 @@ const Transactions: React.FC = () => {
     status: 'All',
     type: 'All',
     dateRange: 'Last 30 days',
-    search: ''
+    search: '',
+    startDate: '',
+    endDate: '',
   })
   const { data: transationStats, isLoading: transactionStatLoading } = useQuery({
     queryKey: ['transactionStats'],
@@ -106,8 +109,11 @@ const Transactions: React.FC = () => {
         transaction.category?.title
           ?.toLowerCase()
           .includes(filters.search.toLowerCase());
+      const matchesDateRange =
+        (!filters.startDate || new Date(transaction.createdAt) >= new Date(filters.startDate)) &&
+        (!filters.endDate || new Date(transaction.createdAt) <= new Date(filters.endDate));
 
-      return matchesStatus && matchesType && matchesSearch;
+      return matchesStatus && matchesType && matchesSearch && matchesDateRange;
     })
     : [];
 
@@ -130,7 +136,33 @@ const Transactions: React.FC = () => {
 
   return (
     <div className="w-full">
-      <h2 className="text-4xl font-semibold text-gray-800 mb-5">Transactions</h2>
+      <div className='flex justify-between items-center mb-7'>
+        <h2 className="text-4xl font-semibold text-gray-800 mb-5">Transactions</h2>
+        <div className="flex space-x-4">
+          <div>
+            <label className="block text-sm text-gray-700">Start Date</label>
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, startDate: e.target.value }))
+              }
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">End Date</label>
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, endDate: e.target.value }))
+              }
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Stats Cards */}
 
@@ -139,23 +171,28 @@ const Transactions: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
           <StatsCard
             title="Total Transactions"
-            value={transationStats?.data.totalTransactions}
-            change="+5%"
-            isPositive={true}
+            value={transationStats?.data?.totalTransactions?.count || "0"}
+            change={`${transationStats?.data?.totalTransactions?.percentage || 0}%`}
+            isPositive={transationStats?.data?.totalTransactions?.change === 'positive'}
           />
           <StatsCard
             title="Crypto Transactions"
-            value={transationStats?.data.cryptoTransactions._sum.amount !==null ? transationStats?.data.cryptoTransactions._sum.amount : 0}
-            change="+5%"
-            isPositive={true}
+            value={`$${transationStats?.data?.cryptoTransactions?._sum?.amount !== null
+              ? addThousandSeparator(transationStats?.data?.cryptoTransactions?._sum?.amount)
+              : 0}`}
+            change={`${transationStats?.data?.cryptoTransactions?.percentage || 0}%`}
+            isPositive={transationStats?.data?.cryptoTransactions?.change === 'positive'}
           />
           <StatsCard
             title="Gift Card Transactions"
-            value={`$${transationStats?.data.giftCardTransactions._sum.amount !== null ? transationStats?.data.giftCardTransactions._sum.amount : 0}`}
-            change="+5%"
-            isPositive={true}
+            value={`$${transationStats?.data?.giftCardTransactions?._sum?.amount !== null
+              ? addThousandSeparator(transationStats?.data?.giftCardTransactions?._sum?.amount)
+              : 0}`}
+            change={`${transationStats?.data?.giftCardTransactions?.percentage || 0}%`}
+            isPositive={transationStats?.data?.giftCardTransactions?.change === 'positive'}
           />
         </div>
+
       }
       <div>
         <div className="mt-10">

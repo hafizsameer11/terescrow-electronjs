@@ -14,8 +14,9 @@ const UsersPage = () => {
     dateRange: 'All', // New date range filter
   });
 
-  const userCategory = ['All', 'customer', 'agent'];
-  const {token}=useAuth();
+  const userCategory = ['All', 'customer', 'agent','other'
+  ];
+  const { token } = useAuth();
   const { data: userData, isLoading, isError, error } = useQuery({
     queryKey: ['userData'],
     queryFn: () => getAllUsers({ token }),
@@ -99,15 +100,12 @@ const UsersPage = () => {
           <button
             key={selectedFilter}
             onClick={() => handleCategoryChange(selectedFilter)}
-            className={`px-4 py-2 text-sm font-medium transition ${
-              filters.category === selectedFilter
+            className={`px-4 py-2 text-sm font-medium transition ${filters.category === selectedFilter
                 ? 'bg-[#147341] text-white'
                 : 'text-gray-600 hover:bg-gray-100'
-            } border ${
-              selectedFilter === 'All' ? 'rounded-l-lg' : ''
-            } ${
-              selectedFilter === 'agent' ? 'rounded-r-lg' : ''
-            }`}
+              } border ${selectedFilter === 'All' ? 'rounded-l-lg' : ''
+              } ${selectedFilter === 'agent' ? 'rounded-r-lg' : ''
+              }`}
           >
             {selectedFilter.charAt(0).toUpperCase() + selectedFilter.slice(1)}
           </button>

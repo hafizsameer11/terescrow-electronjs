@@ -15,6 +15,9 @@ const CustomersPage: React.FC = () => {
     gender: "All",
     country: "All",
     search: "",
+
+    startDate: '',
+    endDate: '',
   });
   const { data: customerStats } = useQuery({
     queryKey: ['customerStats'],
@@ -45,8 +48,11 @@ const CustomersPage: React.FC = () => {
       customer.firstname?.toLowerCase().includes(filters.search.toLowerCase()) ||
       customer.lastname?.toLowerCase().includes(filters.search.toLowerCase()) ||
       customer.username?.toLowerCase().includes(filters.search.toLowerCase());
+    const matchesDateRange =
+      (!filters.startDate || new Date(customer.createdAt) >= new Date(filters.startDate)) &&
+      (!filters.endDate || new Date(customer.createdAt) <= new Date(filters.endDate));
 
-    return matchesGender && matchesCountry && matchesSearch;
+    return matchesGender && matchesCountry && matchesSearch && matchesDateRange;
   });
 
   if (isLoading) return <p>Loading customers...</p>;
@@ -55,37 +61,62 @@ const CustomersPage: React.FC = () => {
   return (
     <div className="w-full mb-10">
       {/* Page Header */}
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-[40px] font-normal text-gray-800">Customers</h1>
+        <div className="flex space-x-4">
+          <div>
+            <label className="block text-sm text-gray-700">Start Date</label>
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, startDate: e.target.value }))
+              }
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-700">End Date</label>
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, endDate: e.target.value }))
+              }
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <StatsCard
           title="Total Customers"
-          value={customerStats?.data?.users || "0"}
-          change="+1%"
-          isPositive={true}
+          value={customerStats?.data?.totalCustomers?.count || "0"}
+          change={`${customerStats?.data?.totalCustomers?.percentage || 0}%`}
+          isPositive={customerStats?.data?.totalCustomers?.change === 'positive'}
         />
         <StatsCard
           title="Active Now"
-          value={customerStats?.data?.verifiedUser || "0"}
-          change="+1%"
-          isPositive={true}
+          value={customerStats?.data?.verifiedCustomers?.count || "0"}
+          change={`${customerStats?.data?.verifiedCustomers?.percentage || 0}%`}
+          isPositive={customerStats?.data?.verifiedCustomers?.change === 'positive'}
         />
         <StatsCard
           title="Offline Now"
-          value="14,980" // Example static value
-          change="+1%"
-          isPositive={true}
+          value={customerStats?.data?.offlineNow?.count || "0"}
+          change={`${customerStats?.data?.offlineNow?.percentage || 0}%`}
+          isPositive={customerStats?.data?.offlineNow?.change === 'positive'}
         />
         <StatsCard
-          title="Total Transactions"
-          value="1,500" // Example static value
-          change="-1%"
-          isPositive={false}
+          title="Total Customer Chats"
+          value={customerStats?.data?.totalCustomerChats?.count || "0"}
+          change={`${customerStats?.data?.totalCustomerChats?.percentage || 0}%`}
+          isPositive={customerStats?.data?.totalCustomerChats?.change === 'positive'}
         />
       </div>
+
 
       <div>
         <h2 className="text-[30px] font-normal text-black">

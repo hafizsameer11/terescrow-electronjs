@@ -10,7 +10,7 @@ const RatesHistory: React.FC = () => {
   const [filterDate, setFilterDate] = useState("Last 30 Days");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const {token}=useAuth();
+  const { token } = useAuth();
   const { data: ratesData, isLoading, isError, error } = useQuery({
     queryKey: ["ratesData"],
     queryFn: () => getRate({ token }),
@@ -60,12 +60,12 @@ const RatesHistory: React.FC = () => {
       <h1 className="text-[40px] font-semibold text-gray-800 mb-4">Rates</h1>
 
       <div className="flex justify-between items-center mb-6">
-        {/* <div>
-          <h2 className="text-[30px] font-medium text-gray-600">Rates History</h2>
+        <div>
+          <h2 className="text-[30px] font-[400] text-gray-600">Rates History</h2>
           <p className="text-[20px] text-gray-500">View rates history table</p>
-        </div> */}
+        </div>
         <div className="flex gap-4">
-          <select
+          {/* <select
             value={filterService}
             onChange={(e) => setFilterService(e.target.value)}
             className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-green-500"
@@ -76,7 +76,7 @@ const RatesHistory: React.FC = () => {
                 {rate.agent}
               </option>
             ))}
-          </select>
+          </select> */}
 
           <select
             value={filterDate}
@@ -92,7 +92,7 @@ const RatesHistory: React.FC = () => {
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <table className="min-w-full text-left text-sm text-gray-700">
-          <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
+          <thead className=" text-[#00000080] uppercase text-xs">
             <tr>
               <th className="py-3 px-4">Date</th>
               <th className="py-3 px-4">Time</th>
@@ -108,10 +108,14 @@ const RatesHistory: React.FC = () => {
                 <tr key={index} className="border-t hover:bg-gray-50">
                   <td className="py-3 px-4">{date}</td>
                   <td className="py-3 px-4">{time}</td>
-                  <td className="py-3 px-4">NGN{rate.rate}/$1</td>
+                  <td className="py-3 px-4">₦{rate.rate}/$1</td>
                   <td className="py-3 px-4">{rate.agent}</td>
-                  <td className="py-3 px-4">
-                    ${rate.amount} / NGN{rate.amountNaira}
+                  <td className="py-3 px-4 flex flex-col">
+                    <span>${rate.amount}</span>
+                    <span className=" text-[#00000080] text-[14px]">
+                      ₦{rate.amountNaira}
+
+                    </span>
                   </td>
                 </tr>
               );
@@ -124,11 +128,10 @@ const RatesHistory: React.FC = () => {
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg text-sm ${
-            currentPage === 1
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
+          className={`px-4 py-2 rounded-lg text-sm ${currentPage === 1
+            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+            : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
         >
           Previous
         </button>
@@ -138,11 +141,10 @@ const RatesHistory: React.FC = () => {
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg text-sm ${
-            currentPage === totalPages
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
+          className={`px-4 py-2 rounded-lg text-sm ${currentPage === totalPages
+            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+            : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
         >
           Next
         </button>

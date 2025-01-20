@@ -1,106 +1,97 @@
-import { API_ENDPOINT } from "../config";
-import { apiCall } from "../customApiCall";
-import { ApiResponse } from "./datainterfaces";
+import { API_ENDPOINT } from '../config'
+import { apiCall } from '../customApiCall'
+import { ApiResponse } from './datainterfaces'
 
 export const sendMessageToCustomer = async (
   data: FormData,
   token: string
 ): Promise<IMesssageToCustomer> => {
-  console.log(data);
-  return await apiCall(
-    API_ENDPOINT.OPERATIONS.SendMessageToCustomer,
-    'POST',
-    data,
-    token
-  );
-};
+  // console.log(data);
+  return await apiCall(API_ENDPOINT.OPERATIONS.SendMessageToCustomer, 'POST', data, token)
+}
 export const createCryptoTransaction = async ({
   data,
-  token,
+  token
 }: {
-  data: ICryptoTransactionReq;
-  token: string;
+  data: ICryptoTransactionReq
+  token: string
 }): Promise<ApiResponse> => {
-  return await apiCall(
-    API_ENDPOINT.AGENT.CreateCryptoTransaction,
-    'POST',
-    data,
-    token
-  );
-};
+  return await apiCall(API_ENDPOINT.AGENT.CreateCryptoTransaction, 'POST', data, token)
+}
 
 export const createCardTransaction = async ({
   data,
-  token,
+  token
 }: {
-  data: ICardTransactionReq;
-  token: string;
+  data: ICardTransactionReq
+  token: string
 }): Promise<ApiResponse> => {
-  return await apiCall(
-    API_ENDPOINT.AGENT.CreateCardTransaction,
-    'POST',
-    data,
-    token
-  );
-};
+  return await apiCall(API_ENDPOINT.AGENT.CreateCardTransaction, 'POST', data, token)
+}
 export const changeChatStatus = async (
   data: { chatId: string; setStatus: ChatStatus },
   token: string
 ): Promise<ApiResponse> => {
-  return apiCall(API_ENDPOINT.AGENT.ChangeChatStatus, 'POST', data, token);
-};
+  return apiCall(API_ENDPOINT.AGENT.ChangeChatStatus, 'POST', data, token)
+}
 
-export const overTakeChat = async (
-  chatId: string,
+export const overTakeChat = async (chatId: string, token: string): Promise<ApiResponse> =>
+  await apiCall(`${API_ENDPOINT.AGENT.TakeOverDefaultChat}/${chatId}`, 'POST', undefined, token)
+export const createQuickReply = async (
+  data: { message: string },
   token: string
-): Promise<ApiResponse> => (
-  await apiCall(
-    `${API_ENDPOINT.AGENT.TakeOverDefaultChat}/${chatId}`,
-    'POST',
-    undefined,
-    token
-  )
-)
+): Promise<ApiResponse> =>
+  await apiCall(`${API_ENDPOINT.AGENT.CreateQuickReplies}`, 'POST', data, token)
+export const updateQuickReply = async (
+  data: { message: string },
+  token: string,
+  id: number
+): Promise<ApiResponse> =>
+  await apiCall(`${API_ENDPOINT.AGENT.UpdateQuickReploy}/${id}`, 'POST', data, token)
+
+
+
 export enum ChatStatus {
   pending = 'pending',
   successful = 'successful',
   declined = 'declined',
+  unsuccessful = 'unsucessful'
 }
 
 interface ITransactionReq {
-  subCategoryId: number;
-  countryId: number;
-  chatId: number;
-  amount: number;
-  exchangeRate: number;
-  amountNaira: number;
+  subCategoryId: number
+  countryId: number
+  chatId: number
+  amount: number
+  exchangeRate: number
+  amountNaira: number
 }
 interface ICryptoTransactionReq extends ITransactionReq {
-  cryptoAmount: number;
-  departmentId?: number;
-  categoryId?: number;
-  toAddress: string;
-  fromAddress: string;
+  cryptoAmount: number
+  departmentId?: number
+  categoryId?: number
+  toAddress: string
+  fromAddress: string
 }
 
 interface ICardTransactionReq extends ITransactionReq {
-  cardType: string;
-  cardNumber: string;
-  departmentId?: number;
-  categoryId?: number;
+  cardType: string
+  cardNumber: string
+  departmentId?: number
+  categoryId?: number
 }
 interface IMesssageToCustomer extends ApiResponse {
-  data: IResMessage;
+  data: IResMessage
 }
 
 export interface IResMessage {
-  id: number;
-  createdAt: Date;
-  updatedAt: Date;
-  chatId: number;
-  message: string;
-  senderId: number;
-  receiverId: number;
-  isRead: boolean;
-  image?: string;
+  id: number
+  createdAt: Date
+  updatedAt: Date
+  chatId: number
+  message: string
+  senderId: number
+  receiverId: number
+  isRead: boolean
+  image?: string
 }

@@ -1,7 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NewNotificationModal from "./modal/NewNotificationModal";
 import NotificationHistoryModal from "./modal/NotificationHistoryModal";
+import { InappNotification } from "@renderer/api/queries/datainterfaces";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { chnageUserStatus } from "@renderer/api/queries/adminqueries";
+import { useAuth } from "@renderer/context/authContext";
 
 interface Customer {
   id: number;
@@ -16,6 +20,8 @@ interface Customer {
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;
+  inappNotification?: InappNotification[]
+  status: string
 }
 
 interface CustomerTableProps {
@@ -24,21 +30,27 @@ interface CustomerTableProps {
 
 const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
   const navigate = useNavigate();
+  const { token } = useAuth();
+  const queryClient = useQueryClient();
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [isNotificationModalOpen, setIsNotificationModalOpen] =
     useState<boolean>(false);
   const [isNewNotificationModalOpen, setIsNewNotificationModalOpen] =
     useState<boolean>(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      content: "Your trade was successfully completed!",
-      date: "Nov 7, 2024 - 10:22 am",
-      sentBy: "Alucard",
-      status: "Delivered",
-    },
-  ]);
+  const [notifications, setNotifications] = useState<InappNotification[]>([]);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenu(null); // Close the active menu
+      }
+    };
 
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -52,6 +64,15 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
     setActiveMenu(activeMenu === id ? null : id);
   };
 
+  const { mutate: mutation, isPending } = useMutation({
+
+    mutationFn: (data: { id: number, status: string }) => chnageUserStatus({ id: data.id.toString(), data: { status: data.status }, token: token }),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['customersData']);
+      alert(data.message);
+    },
+    onError: () => alert('Failed to change status.'),
+  })
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
@@ -62,25 +83,32 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
     setIsNotificationModalOpen(false);
     setIsNewNotificationModalOpen(true);
   };
-
-  const handleNewNotificationSubmit = (formData: {
-    title: string;
-    message: string;
-    image: File | null;
-  }) => {
-    console.log("New Notification Data:", formData);
-    setIsNewNotificationModalOpen(false);
-    setNotifications((prev) => [
-      ...prev,
-      {
-        id: prev.length + 1,
-        content: formData.title,
-        date: new Date().toLocaleString(),
-        sentBy: "You",
-        status: "Pending",
-      },
-    ]);
-  };
+  const handleNotificationModalClick = (item: Customer) => {
+    setNotifications(item?.inappNotification || [])
+    setIsNotificationModalOpen(true);
+  }
+  const hanldeStatusChange = (id: number, status: string) => {
+    console.log('status', status)
+    mutation({ id, status })
+  }
+  // const handleNewNotificationSubmit = (formData: {
+  //   title: string;
+  //   message: string;
+  //   image: File | null;
+  // }) => {
+  //   console.log("New Notification Data:", formData);
+  //   setIsNewNotificationModalOpen(false);
+  //   setNotifications((prev) => [
+  //     ...prev,
+  //     {
+  //       id: prev.length + 1,
+  //       content: formData.title,
+  //       date: new Date().toLocaleString(),
+  //       sentBy: "You",
+  //       status: "Pending",
+  //     },
+  //   ]);
+  // };
 
   return (
     <div className="mt-6 bg-white rounded-lg shadow-md">
@@ -119,11 +147,10 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
               <td className="py-3 px-4">{customer.gender}</td>
               <td className="py-3 px-4">
                 <span
-                  className={`px-2 py-1 text-xs rounded-lg ${
-                    customer.isVerified
-                      ? "bg-green-100 text-green-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
+                  className={`px-2 py-1 text-xs rounded-lg ${customer.isVerified
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                    }`}
                 >
                   {customer.isVerified ? "Verified" : "Not Verified"}
                 </span>
@@ -133,12 +160,13 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
                   onClick={() => toggleMenu(customer.id)}
                   className="text-gray-500 hover:text-gray-700 focus:outline-none"
                 >
-                  &#x22EE; {/* Vertical ellipsis */}
+                  &#x22EE;
                 </button>
                 {activeMenu === customer.id && (
                   <div
+                    ref={menuRef}
                     className="absolute right-0 mt-2 bg-white rounded-md shadow-lg z-50"
-                    style={{ width: "150px" }}
+                    style={{ width: "240px" }}
                   >
                     <button
                       onClick={() => navigate(`/customers/${customer.id}`)}
@@ -155,10 +183,18 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
                       View Transaction Details
                     </button>
                     <button
-                      onClick={() => setIsNotificationModalOpen(true)}
+                      onClick={() => handleNotificationModalClick(customer)}
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                     >
                       Notification
+                    </button>
+                    <button
+                      onClick={() =>
+                        hanldeStatusChange(customer.id, customer.status === 'active' ? 'block' : 'active')
+                      }
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      {customer.status === 'active' ? "Block User" : "Unblock User"}
                     </button>
                   </div>
                 )}
@@ -173,11 +209,10 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
         <button
           onClick={() => handlePageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg text-sm ${
-            currentPage === 1
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
+          className={`px-4 py-2 rounded-lg text-sm ${currentPage === 1
+            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+            : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
         >
           Previous
         </button>
@@ -187,11 +222,10 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
         <button
           onClick={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg text-sm ${
-            currentPage === totalPages
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-          }`}
+          className={`px-4 py-2 rounded-lg text-sm ${currentPage === totalPages
+            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+            : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
         >
           Next
         </button>
@@ -208,10 +242,10 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
       )}
       {isNewNotificationModalOpen && (
         <NewNotificationModal
-        actionType="add"
+          actionType="add"
           isOpen={isNewNotificationModalOpen}
           onClose={() => setIsNewNotificationModalOpen(false)}
-          onSubmit={handleNewNotificationSubmit}
+        // onSubmit={handleNewNotificationSubmit}
         />
       )}
     </div>

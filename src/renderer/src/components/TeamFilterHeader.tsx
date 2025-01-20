@@ -1,10 +1,10 @@
 import React from 'react'
 
 interface TeamFilterHeaderProps {
-  activeTab: 'online' | 'offline' | undefined
+  activeTab: 'online' | 'offline' | 'All' | undefined
   selectedRole: 'Manager' | 'Agent' | 'Roles'
   searchValue: string
-  onTabChange: (tab: 'online' | 'offline') => void
+  onTabChange: (tab: 'online' | 'offline' | 'All') => void
   onRoleChange: (role: 'Manager' | 'Agent' | 'Roles') => void
   onSearchChange: (value: string) => void
 }
@@ -25,17 +25,22 @@ const TeamFilterHeader: React.FC<TeamFilterHeaderProps> = ({
         {activeTab !== undefined && (
           <div className="flex border rounded-lg overflow-hidden">
             <button
-              className={`px-4 py-2 text-sm ${
-                activeTab === 'online' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
-              } focus:outline-none`}
+              className={`px-4 py-2 text-sm ${activeTab === 'All' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
+                } focus:outline-none`}
+              onClick={() => onTabChange('All')}
+            >
+              All
+            </button>
+            <button
+              className={`px-4 py-2 text-sm ${activeTab === 'online' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
+                } focus:outline-none`}
               onClick={() => onTabChange('online')}
             >
               Online
             </button>
             <button
-              className={`px-4 py-2 text-sm ${
-                activeTab === 'offline' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
-              } focus:outline-none`}
+              className={`px-4 py-2 text-sm ${activeTab === 'offline' ? 'bg-green-700 text-white' : 'bg-white text-gray-700'
+                } focus:outline-none`}
               onClick={() => onTabChange('offline')}
             >
               Offline

@@ -10,6 +10,7 @@ const NewBannerModal = ({ modalVisible, setModalVisible, onSend }) => {
       setSelectedImageFile(file) // Store the file for upload
       setPreviewImage(URL.createObjectURL(file)) // Preview the image
     }
+    onSend(file)
   }
 
   const closeModal = () => {

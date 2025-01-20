@@ -1,11 +1,17 @@
+import { token } from '@renderer/api/config'
 import { getImageUrl } from '@renderer/api/helper'
+import { createRol } from '@renderer/api/queries/rolemanagement'
+import PrivacyPageModal from '@renderer/components/modal/PrivacyPageModal'
+import RoleModal from '@renderer/components/modal/RoleModal'
 import PermissionTable from '@renderer/components/PermissionTable'
 import RoleManagement from '@renderer/components/RoleManagement'
 import TeamFilterHeader from '@renderer/components/TeamFilterHeader'
 import UserDetail from '@renderer/components/UserDetail'
 import { Images } from '@renderer/constant/Image'
 import { useAuth } from '@renderer/context/authContext'
+import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
+// import { useMutation } from 'react-query'
 import { useNavigate } from 'react-router-dom'
 const sampleData = [
   {
@@ -58,11 +64,23 @@ const Settings = () => {
   const [selectedRole, setSelectedRole] = useState<'Manager' | 'Agent' | 'Roles'>('Roles')
   const [searchValue, setSearchValue] = useState('')
   const [isEditClick, setIsEditClick] = useState(false)
+  const [isPrivacyModal, setIsPrivacyModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent>()
   const [isUserViewed, setIsUserViewed] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [selectAgentActivityId, setSelectAgentActivityId] = useState(1)
   const navigate = useNavigate();
   const { userData } = useAuth();
+  const { mutate: createRole } = useMutation({
+    mutationFn: (data: { name: string }) => createRol(token, data),
+    onSuccess: () => alert('Role created successfully.'),
+    onError: () => alert('Failed to create role.'),
+  });
+
+  const handleCreateRole = (roleName: string) => {
+    createRole({ name: roleName });
+  };
   const handleRoleChange = (role: 'Manager' | 'Agent' | 'Roles') => {
     setSelectedRole(role)
   }
@@ -96,8 +114,7 @@ const Settings = () => {
 
   // Filter the data dynamically based on filters
   const filteredData = sampleData.filter((member) => {
-    // Match the `activeTab` to filter by status
-    // Match the `selectedRole` to filter by role
+
     const matchesRole = selectedRole === 'Roles' || member.role === selectedRole
 
     // Match the `searchValue` to filter by name or username
@@ -120,8 +137,8 @@ const Settings = () => {
               <button
                 onClick={() => setActiveTab('profile')}
                 className={`px-4 py-2 rounded-tl-lg rounded-bl-lg font-medium ${activeTab === 'profile'
-                    ? 'text-white bg-green-700'
-                    : 'text-gray-800 border border-gray-300'
+                  ? 'text-white bg-green-700'
+                  : 'text-gray-800 border border-gray-300'
                   }`}
               >
                 Profile
@@ -133,8 +150,8 @@ const Settings = () => {
                 <button
                   onClick={() => setActiveTab('role_management')}
                   className={`px-4 py-2 rounded-tr-lg rounded-br-lg font-medium ${activeTab === 'role_management'
-                      ? 'text-white bg-green-700'
-                      : 'text-gray-800 border border-gray-300'
+                    ? 'text-white bg-green-700'
+                    : 'text-gray-800 border border-gray-300'
                     }`}
                 >
                   Role Management
@@ -144,45 +161,59 @@ const Settings = () => {
           </div>
         </div>
         {activeTab === 'profile' ? (
-          <div className="flex justify-end items-center flex-1">
-            <button className="px-4 py-2 rounded-xl font-normal bg-red-600 text-white w-1/5"
-              onClick={handlogout}
-            >
-              Logout
-            </button>
-          </div>
+          userData?.role === 'admin' && (
+            <div className="flex justify-end items-center flex-1">
+              <button
+                className="px-4 py-2 rounded-xl font-normal bg-[#147341] text-white w-1/5"
+                onClick={() => setIsPrivacyModal(true)}
+              >
+                Privacy Policy Page Links
+              </button>
+            </div>
+          )
         ) : (
           <div className="flex justify-end items-end flex-1">
-            <button className="px-4 py-2 rounded-xl font-normal bg-green-800 text-white w-1/5">
+            <button
+              className="px-4 py-2 rounded-xl font-normal bg-green-800 text-white w-1/5"
+              onClick={() => setIsModalOpen(true)}
+            >
               Create Role
             </button>
           </div>
         )}
+
       </div>
       {activeTab === 'profile' ? (
+
         <UserDetail />
       ) : (
         <div>
           <PermissionTable />
-          <TeamFilterHeader
+          {/* <TeamFilterHeader
             activeTab={undefined}
             selectedRole={selectedRole}
             searchValue={searchValue}
             onTabChange={() => undefined}
             onRoleChange={handleRoleChange}
             onSearchChange={handleSearchChange}
-          />
-          <RoleManagement
+          /> */}
+          {/* <RoleManagement
             data={filteredData}
             isTeam={true}
             isTeamCommunition={false}
             onUserViewed={changeView}
             onEditHanlder={(agentId) => handleEditClick(agentId)}
+          /> */}
+          <RoleModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSubmit={handleCreateRole}
           />
-
 
         </div>
       )}
+      <PrivacyPageModal isOpen={isPrivacyModal} onClose={() => setIsPrivacyModal(false)} />
+
     </div>
   )
 }

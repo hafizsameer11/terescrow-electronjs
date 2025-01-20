@@ -7,7 +7,6 @@ export interface Country {
   id: number;
   title?: string;
 }
-
 export interface Transaction {
   id: number;
   transactionId: string;
@@ -23,10 +22,14 @@ export interface Transaction {
   // References
   department: Department;
   category: Category;
-  agent?: Agent;
+  agent?: Customer;
+  subCategory: {
+    id: number;
+    title: string;
+  }
   customer?: Customer;
+  profit: number
 }
-
 export interface Department {
   id: number;
   title?: string;
@@ -35,8 +38,10 @@ export interface Department {
   noOfAgents?: number;
   createdAt?: string;
   updatedAt?: string;
-}
+  niche: string
+  Type: string
 
+}
 export interface Category {
   id: number;
   title?: string;
@@ -46,14 +51,13 @@ export interface Category {
   updatedAt?: string;
 
 }
-
 interface TransactionsTableProps {
   data: Transaction[];
   showCustomerDetailsButton?: boolean;
   onRowClick?: (transaction: Transaction) => void;
   showTransactionDetailsModal?: boolean;
+  showTranModal?: boolean
 }
-
 const LogTabe: React.FC<TransactionsTableProps> = ({
   data,
   showCustomerDetailsButton = true,
@@ -66,7 +70,7 @@ const LogTabe: React.FC<TransactionsTableProps> = ({
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
 
   const handleRowClick = (transaction: Transaction) => {
-    console.log("row clicked",transaction)
+    console.log("row clicked", transaction)
     if (onRowClick) {
       onRowClick(transaction);
     } else if (showTransactionDetailsModal) {
@@ -180,9 +184,17 @@ const LogTabe: React.FC<TransactionsTableProps> = ({
             nairaAmount: selectedTransaction.amountNaira.toString(),
             serviceType: selectedTransaction?.department?.title || '',
             category: selectedTransaction?.category?.title || '',
-            transactionId: selectedTransaction.transactionId,
-            assignedAgent: selectedTransaction.agent?.user?.username || '',
+            transactionId: `Teres-${selectedTransaction.id.toString()}`,
+            assignedAgent: selectedTransaction.agent?.username || '',
             status: selectedTransaction.status,
+            niche: selectedTransaction.department.niche,
+            type: selectedTransaction.department.Type,
+            toAddress: selectedTransaction.toAddress,
+            subCategory: selectedTransaction.subCategory.title,
+            fromAddress: selectedTransaction.fromAddress,
+            giftCardNumber: selectedTransaction.cardNumber,
+            giftCardSubType: selectedTransaction.cardType,
+            profit: selectedTransaction.profit
           }}
         />
       )}

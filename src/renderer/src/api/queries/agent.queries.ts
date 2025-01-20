@@ -6,6 +6,12 @@ export const getAllDefaultChats = async (token: string): Promise<IDefaultChats> 
   return await apiCall(API_ENDPOINT.AGENT.GetPendingChats, 'GET', undefined, token)
 }
 
+export const getAllQuickReplies = async (token: string): Promise<QuickReplyResponse> => {
+  return await apiCall(API_ENDPOINT.AGENT.GetQuickReplies, 'GET', undefined, token)
+}
+export const deleteQuickReply = async (id: number, token: string): Promise<ApiResponse> => {
+  return await apiCall(`${API_ENDPOINT.AGENT.DeleteQuickReply}/${id}`, 'GET', undefined, token)
+}
 export interface IResMessage {
   id: number
   createdAt: Date
@@ -57,4 +63,13 @@ export enum ChatType {
   customer_to_agent = 'customer_to_agent',
   team_chat = 'team_chat',
   group_chat = 'group_chat'
+}
+export interface QuickReply {
+  id: number
+  message: string
+  userId: number
+  createdAt: string
+}
+export interface QuickReplyResponse extends ApiResponse {
+  data: QuickReply[]
 }

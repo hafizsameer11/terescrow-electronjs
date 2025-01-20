@@ -24,8 +24,8 @@ interface Transaction {
 }
 
 interface TransactionsTableProps {
-  data: AgentToCustomerChatData[]
-  teamData?: AgentToAgentChatData[]
+  data: AgentToCustomerChatData[] | undefined
+  teamData?: AgentToAgentChatData[] | undefined
   isChat?: boolean
   isTeam?: boolean
   onEditHanlder?: (agentId: number) => void
@@ -50,7 +50,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
   const [activeChatId, setActiveChatId] = useState<number | null>(null); // Track the active chat ID
   const [currentItem, setCurrentItem] = useState<AgentToCustomerChatData | null>(null);
   const [currentItem2, setCurrentItem2] = useState<AgentToAgentChatData | null>(null);
-  const {userData}=useAuth();
+  const { userData } = useAuth();
   const toggleMenu = (id: number) => {
     setActiveMenu(activeMenu === id ? null : id)
   }
@@ -71,6 +71,19 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
     setActiveChatId(id)
     setIsTeamChatOpen(true)
   }
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(data?.length ?? 0 / itemsPerPage);
+  const paginatedData = data?.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
   if (activeFilterInTeam === 'Customer') {
     return (
       <div className="mt-6 bg-white rounded-lg shadow-md">
@@ -89,7 +102,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
           </thead>
 
           <tbody>
-            {data.map((item) => (
+            {paginatedData?.map((item) => (
               // {console.log(item)}
               <tr key={item.id} className="border-t hover:bg-gray-50 relative">
                 <td className="py-3 ps-5">
@@ -99,7 +112,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                 </td>
                 <td className="py-3 px-4">
                   <div>
-                    <span className="font-semibold">{item.customer.username}{'-'} {item.department.title}</span>
+                    <span className="font-semibold">{item.customer.username}</span>
                     <p className="text-sm text-gray-500 m-0">{item.recentMessage?.message}</p>
                   </div>
                 </td>
@@ -110,7 +123,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                       <span className="block font-semibold">
                         {item?.transactions?.[0]?.amount ?? 0}
                       </span>
-                      <span className="text-sm text-gray-500">NGN   {item?.transactions?.[0]?.amountNaira ?? 0}</span>
+                      <span className="text-sm text-gray-500">₦   {item?.transactions?.[0]?.amountNaira ?? 0}</span>
                     </div>
                   </td>
                 )}
@@ -126,7 +139,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                             ? 'bg-red-100 text-red-700 border-red-500'
                             : item.chatStatus === 'pending'
                               ? 'bg-yellow-100 text-yellow-700 border-yellow-500'
-                              : item.chatStatus === 'Unanswered'
+                              : item.chatStatus === 'unsucessful'
                                 ? 'bg-gray-100 text-gray-500 border-gray-500'
                                 : 'bg-pink-100 text-pink-700 border-pink-500'
                         }`}
@@ -139,7 +152,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                               ? 'bg-red-700'
                               : item.chatStatus === 'pending'
                                 ? 'bg-yellow-700'
-                                : item.chatStatus === 'Unanswered'
+                                : item.chatStatus === 'unsucessful'
                                   ? 'bg-gray-700'
                                   : 'bg-pink-700'
                           }`}
@@ -171,60 +184,58 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                       </svg>
                     </button>
 
-                    <button
-                      onClick={() => toggleMenu(item.id)}
-                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                    >
-                      &#x22EE; {/* Vertical ellipsis */}
-                    </button>
+
                     {/* Drop down */}
                   </div>
 
                   {/* ChatApplication Component */}
                   {isTeamCommunition &&
                     isChatOpen && (
-                      <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-                        <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative">
-                          {/* Close Button */}
-                          <button
-                            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
-                            onClick={() => setIsChatOpen(false)}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="1.5"
-                              stroke="currentColor"
-                              className="w-6 h-6"
+                      <div className='bg-gray-900 bg-opacity-50 w-full h-full inset-0 flex  justify-center items-center z-50'>
+                        <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+                          <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative overflow-visible">
+                            {/* Close Button */}
+                            <button
+                              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                              onClick={() => setIsChatOpen(false)}
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          </button>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="1.5"
+                                stroke="currentColor"
+                                className="w-6 h-6"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
 
-                          {/* check if userDatta.role is admin than show adminapplication otherwise else */}
-                          {userData?.role === 'admin' ? (
-                            <AdminChatApplication
-                            data={currentItem}
-                            id={activeChatId || 0}
-                            onClose={() => setIsChatOpen(false)}
-                            isAdmin={true}
-                          />
-                          ) : (
-                            <ChatApplication
-                            data={currentItem}
-                            id={activeChatId || 0}
-                            onClose={() => setIsChatOpen(false)}
-                          />
-                          )}
+                            {/* Check User Role and Render Appropriate Component */}
+                            {userData?.role !== 'agent' ? (
+                              <AdminChatApplication
+                                data={currentItem}
+                                id={activeChatId || 0}
+                                onClose={() => setIsChatOpen(false)}
+                                isAdmin={true}
+                              />
+                            ) : (
+                              <ChatApplication
+                                data={currentItem}
+                                id={activeChatId || 0}
+                                onClose={() => setIsChatOpen(false)}
+                              />
+                            )}
+                          </div>
                         </div>
                       </div>
-                    )}
 
+                    )}
+                  {/*
                   {activeMenu === item.id && (
                     <div
                       className="absolute right-10 mt-2 top-10 bg-[#F6F7FF] rounded-md w-48 z-50"
@@ -245,12 +256,37 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                         Role Chat
                       </button>
                     </div>
-                  )}
+                  )} */}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="flex justify-between items-center p-4">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded-lg text-sm ${currentPage === 1
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded-lg text-sm ${currentPage === totalPages
+              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+              : "bg-white text-gray-700 hover:bg-gray-100"
+              }`}
+          >
+            Next
+          </button>
+        </div>
       </div>
     )
   }
@@ -318,37 +354,37 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
         </table>
         {/* Chat Application */}
         {teamModal && (
-            <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-              <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative">
-                {/* Close Button */}
-                <button
-                  className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
-                  onClick={() => setIsChatOpen(false)}
+          <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+            <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative">
+              {/* Close Button */}
+              <button
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                onClick={() => setIsChatOpen(false)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="w-6 h-6"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="w-6 h-6"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-                <AdminChatApplicationTeam
-                  data={currentItem2}
-                  id={activeChatId || 0}
-                  onClose={() => setTeamModal(false)}
-                  isAdmin={true}
-                />
-              </div>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+              <AdminChatApplicationTeam
+                data={currentItem2}
+                id={activeChatId || 0}
+                onClose={() => setTeamModal(false)}
+                isAdmin={true}
+              />
             </div>
-          )}
+          </div>
+        )}
       </div>
     )
   }

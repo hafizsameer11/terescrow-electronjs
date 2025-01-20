@@ -122,22 +122,22 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ userId }) => {
     if (errorAccitivData) {
       console.error(errorAccitivData)
     }
-    console.log(accountActivityData)
+    // console.log(accountActivityData)
   }, [accountActivityData])
   useEffect(() => {
     if (chatError) {
       console.error(chatError)
     }
-    console.log(chatsData)
+    // console.log(chatsData)
   }, [chatsData])
   useEffect(() => {
     if (teamChaterror) {
-      console.error(teamChaterror)
+      // console.error(teamChaterror)
     }
     console.log(TeamChatsData)
   }, [TeamChatsData])
 
-  console.log("user selected ", id)
+  // console.log("user selected ", id)
   const handleFilterChange = (filter: string) => {
     setActiveFilter(filter)
     if (filter === 'Customer') {

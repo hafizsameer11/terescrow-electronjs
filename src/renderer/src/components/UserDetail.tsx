@@ -1,6 +1,7 @@
 import { useAuth } from "@renderer/context/authContext"
 import EditProfileModal from "./modal/EditProfileModal";
 import { useState } from "react";
+import ChangePasswordModal from "./modal/ChangePasswordModal";
 
 const customer = {
   id: 1,
@@ -24,6 +25,9 @@ const customer = {
 const UserDetail = () => {
   const { userData } = useAuth();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { token } = useAuth();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
   return (
     <>
       {/* Profile Section */}
@@ -40,10 +44,7 @@ const UserDetail = () => {
                 <span className="font-medium me-5">Email:</span>
                 <span className="text-white font-bold">{userData?.email}</span>
               </li>
-              {/* <li className="flex items-center gap-1">
-                <span className="font-medium me-5">Gender:</span>
-                <span className="text-white font-bold">{userData?.gender}</span>
-              </li> */}
+
               <li className="flex items-center gap-1">
                 <span className="font-medium me-5">Date Added:</span>
                 <span className="text-white font-bold">{customer.dateJoined}</span>
@@ -51,9 +52,12 @@ const UserDetail = () => {
             </ul>
           </div>
         </div>
-        <div className='flex items-end'>
+        <div className='flex items-end gap-3'>
           <button className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium" onClick={() => setIsEditModalOpen(true)}>
             Edit Profile
+          </button>
+          <button className="bg-white text-black px-4 py-2 rounded-md text-sm font-medium mr-3" onClick={() => setIsPasswordModalOpen(true)}>
+            Change Password
           </button>
         </div>
       </div>
@@ -62,10 +66,10 @@ const UserDetail = () => {
         <div className="px-6 py-4 font-semibold text-gray-900 ">Account Activities</div>
         <table className="min-w-full text-left text-sm text-gray-600">
           <tbody>
-            {customer.accountActivities.map((activity, index) => (
+            {userData?.accountActivity?.map((activity, index) => (
               <tr key={index} className="border-t">
-                <td className="px-6 py-4 text-gray-800 font-normal">{activity.label}</td>
-                <td className="px-6 py-4 text-gray-800 font-normal text-right">{activity.date}</td>
+                <td className="px-6 py-4 text-gray-800 font-normal">{activity.description}</td>
+                <td className="px-6 py-4 text-gray-800 font-normal text-right">{activity.createdAt.split('T')[0]}</td>
               </tr>
             ))}
           </tbody>
@@ -87,6 +91,11 @@ const UserDetail = () => {
           profilePhoto: userData?.profilePicture || "",
           id: userData?.id.toString() || "",
         }}
+      />
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        token={token}
       />
     </>
   )

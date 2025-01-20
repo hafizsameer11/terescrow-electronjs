@@ -39,7 +39,7 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
       type: 'sent'
     }
   ])
-  const {token}=useAuth();
+  const { token } = useAuth();
   const [dataa, setData] = useState<any>(data)
   const [currentStatus, setCurrentStatus] = useState('Pending')
   const [notification, setNotification] = useState<{
@@ -95,7 +95,7 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
   return (
     <div className="fixed inset-y-0 right-0 w-full m-4 md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col z-50">
       <AdminChatHeader
-        avatar="https://via.placeholder.com/40"
+        avatar={getImageUrl(data.customer ?. profilePicture)}
         name={data.customer.firstname}
         username={data.customer.username}
         onClose={onClose}
@@ -132,28 +132,7 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
       }
 
       {/* Notification Banner */}
-      {notification && (
-        <div className="px-4 py-2">
-          <NotificationBanner
-            message={notification.message}
-            backgroundColor={notification.backgroundColor}
-            textColor={notification.textColor}
-            borderColor={notification.borderColor}
-            icon={
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-5 h-5"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            }
-          />
-        </div>
-      )}
+   
 
 
 

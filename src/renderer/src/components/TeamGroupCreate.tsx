@@ -5,6 +5,7 @@ import { AllAgentsResponse } from '@renderer/api/queries/datainterfaces';
 import { getAllAgentss } from '@renderer/api/queries/adminqueries';
 import { createChatGroup } from '@renderer/api/queries/admin.chat.mutation';
 import { useAuth } from '@renderer/context/authContext';
+import { getImageUrl } from '@renderer/api/helper';
 // import { createChatGroup, getAllAgentss } from '@renderer/api/queries/adminQueries';
 // import { AllAgentsResponse } from '@renderer/api/types';
 
@@ -18,7 +19,7 @@ const TeamGroupCreate: React.FC<TeamGroupCreateProps> = ({ onClose, onGroupCreat
   const [searchValue, setSearchValue] = useState('');
   const [groupName, setGroupName] = useState('');
   const queryClient = useQueryClient();
-  const {token}=useAuth();
+  const { token } = useAuth();
   // Fetch all agents
   const { data: allAgentsData, isLoading, isError } = useQuery<AllAgentsResponse>({
     queryKey: ['all-agents'],
@@ -35,8 +36,8 @@ const TeamGroupCreate: React.FC<TeamGroupCreateProps> = ({ onClose, onGroupCreat
   );
 
   // Mutation for creating group
-  const { mutate: createGroup,isPending: creatingGroup
-   } = useMutation({
+  const { mutate: createGroup, isPending: creatingGroup
+  } = useMutation({
     mutationFn: (data: { groupName: string; participants: { id: number }[] }) =>
       createChatGroup({ data, token }),
     onSuccess: () => {
@@ -61,6 +62,8 @@ const TeamGroupCreate: React.FC<TeamGroupCreateProps> = ({ onClose, onGroupCreat
         groupName,
         participants: selectedUsers.map((id) => ({ id })),
       });
+      //close group modal also
+      onClose();
     }
   };
 
@@ -76,7 +79,7 @@ const TeamGroupCreate: React.FC<TeamGroupCreateProps> = ({ onClose, onGroupCreat
 
         {/* Group Name Input */}
         <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Group Name</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Group Name</label>
           <input
             type="text"
             placeholder="Enter group name"
@@ -113,7 +116,7 @@ const TeamGroupCreate: React.FC<TeamGroupCreateProps> = ({ onClose, onGroupCreat
               >
                 <div className="flex items-center">
                   <img
-                    src={agent.user.profilePicture || '/default-avatar.png'}
+                    src={getImageUrl(agent.user.profilePicture)}
                     alt={`${agent.user.firstname} ${agent.user.lastname}`}
                     className="w-10 h-10 rounded-full mr-4 object-cover"
                   />
@@ -139,11 +142,10 @@ const TeamGroupCreate: React.FC<TeamGroupCreateProps> = ({ onClose, onGroupCreat
         <button
           onClick={handleCreateGroup}
           disabled={creatingGroup || !groupName.trim() || selectedUsers.length === 0}
-          className={`w-full mt-4 px-4 py-2 rounded-lg ${
-            creatingGroup || !groupName.trim() || selectedUsers.length === 0
-              ? 'bg-gray-400 cursor-not-allowed'
-              : 'bg-green-700 text-white hover:bg-green-800'
-          }`}
+          className={`w-full mt-4 px-4 py-2 rounded-lg ${creatingGroup || !groupName.trim() || selectedUsers.length === 0
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-green-700 text-white hover:bg-green-800'
+            }`}
         >
           {creatingGroup ? 'Creating...' : 'Create Group'}
         </button>

@@ -156,7 +156,7 @@ const TeamChat: React.FC<TeamChatProps> = ({ onClose }) => {
       {/* Group Modal */}
       {isGroupModalOpen && (
         <TeamGroupCreate
-          users={users}
+
           onClose={() => setIsGroupModalOpen(false)}
           onCreateGroup={handleCreateGroup}
         />

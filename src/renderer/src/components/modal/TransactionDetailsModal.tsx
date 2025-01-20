@@ -1,9 +1,6 @@
 import React from "react";
 import { IoCopyOutline } from "react-icons/io5";
 import { MdCheckCircle } from "react-icons/md";
-import { FiUpload } from "react-icons/fi"; // Upload icon
-import { FiPrinter } from "react-icons/fi"; // Print icon
-import { FiTrash2 } from "react-icons/fi"; // Trash icon
 
 interface TransactionDetailsModalProps {
   isOpen: boolean;
@@ -15,11 +12,17 @@ interface TransactionDetailsModalProps {
     category?: string;
     giftCardSubType?: string;
     quantity?: number;
-    // code: string;
     transactionId: string;
     assignedAgent?: string;
     status: string;
-    detail?:string[];
+    detail?: string[];
+    niche?: string
+    type?: string
+    subCategory?: string;
+    fromAddress?: string | undefined | null
+    toAddress?: string | undefined | null
+    giftCardNumber?: string | null
+    profit ?: number
   };
 }
 
@@ -31,8 +34,8 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg w-[600px] p-6 relative">
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 overflow-y-scroll pt-32 pb-10">
+      <div className="bg-white rounded-lg shadow-lg w-[600px] p-6 relative ">
         {/* Modal Header */}
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-800 text-center w-full">
@@ -67,8 +70,9 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             </span>
           </div>
 
+
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-            <span className="text-gray-600">Service Type</span>
+            <span className="text-gray-600">Department</span>
             <span className="text-[16px] font-normal text-right">
               {transactionData.serviceType}
             </span>
@@ -76,26 +80,26 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
 
           {transactionData.category && (
             <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-              <span className="text-gray-600">Gift Card Type</span>
+              <span className="text-gray-600">Category</span>
               <span className="text-[16px] font-normal text-right">
                 {transactionData.category}
               </span>
             </div>
           )}
 
-          {transactionData.giftCardSubType && (
+          {transactionData.subCategory && (
             <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-              <span className="text-gray-600">Gift Card Sub Type</span>
+              <span className="text-gray-600">Sub Category</span>
               <span className="text-[16px] font-normal text-right">
-                {transactionData.giftCardSubType}
+                {transactionData.subCategory}
               </span>
             </div>
           )}
 
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-            <span className="text-gray-600">Quantity</span>
-            <span className="text-[16px] font-normal text-right">
-              {transactionData.quantity}
+            <span className="text-gray-600">Type</span>
+            <span className="text-[16px] font-normal text-right" style={{ textTransform: 'capitalize' }}>
+              {transactionData.type}
             </span>
           </div>
 
@@ -111,6 +115,42 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
               </button>
             </div>
           </div> */}
+          {
+            transactionData?.niche === "giftCard" && (
+              <>
+                <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+                  <span className="text-gray-600">GIft Card Type</span>
+                  <span className="text-[16px] font-normal text-right">
+                    {transactionData.giftCardSubType}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+                  <span className="text-gray-600">Gift Card Number</span>
+                  <span className="text-[16px] font-normal text-right">
+                    {transactionData.giftCardNumber}
+                  </span>
+                </div>
+              </>
+            )
+          }
+          {
+            transactionData?.niche === "crypto" && (
+              <>
+                <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+                  <span className="text-gray-600">To Address</span>
+                  <span className="text-[16px] font-normal text-right">
+                    {transactionData.toAddress}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+                  <span className="text-gray-600">From Address</span>
+                  <span className="text-[16px] font-normal text-right">
+                    {transactionData.fromAddress}
+                  </span>
+                </div>
+              </>
+            )
+          }
 
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">Transaction ID</span>
@@ -126,6 +166,12 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
           </div>
 
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+            <span className="text-gray-600">Profit</span>
+            <span className="text-[16px] font-normal text-right">
+              {transactionData.profit}
+            </span>
+          </div>
+          <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">Assigned Agent</span>
             <span className="text-[16px] font-normal text-right">
               {transactionData.assignedAgent}
@@ -135,13 +181,13 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
             <span className="text-gray-600">Transaction Status</span>
             <span
-              className={`px-2 py-1 flex items-center gap-2 text-sm font-medium rounded-lg border ${transactionData.status === "Successful"
+              className={`px-2 py-1 flex items-center gap-2 text-sm font-medium rounded-lg border ${transactionData.status === "successful"
                 ? "bg-green-100 text-green-700 border-green-500"
                 : "bg-red-100 text-red-700 border-red-500"
                 }`}
             >
               <span
-                className={`w-2 h-2 rounded-full ${transactionData.status === "Successful" ? "bg-green-700" : "bg-red-700"
+                className={`w-2 h-2 rounded-full ${transactionData.status === "successful" ? "bg-green-700" : "bg-red-700"
                   }`}
               ></span>
               {transactionData.status}

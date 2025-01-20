@@ -11,6 +11,7 @@ import galley from '../assets/images/galleryPic.png'
 import chats from '../assets/images/chats.svg'
 import users from '../assets/images/users.svg'
 import dashboard from '../assets/images/dashboard.svg'
+// import dashbpard2 from '../assets/images/dashboard2.svg'
 import settings from '../assets/images/settings.svg'
 import customer from '../assets/images/customers.svg'
 import transactions from '../assets/images/transactions.svg'
@@ -19,13 +20,16 @@ import log from '../assets/images/log.svg'
 import department from '../assets/images/department.svg'
 import teams from '../assets/images/Teams.svg'
 import notification from '../assets/images/notifications.svg'
-
+import email from '../assets/images/email.png'
+import logout from '../assets/images/logout.png'
 export const Images = {
   logo,
+  logout,
   notification,
   galley,
   tableImg,
   agent1,
+  email,
   galleryImg,
   teams,
   agent2,

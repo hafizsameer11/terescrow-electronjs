@@ -8,18 +8,18 @@ const DetailsDepartment: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => setIsModalOpen(true);
-  const {token}=useAuth();
+  const { token } = useAuth();
   const handleCloseModal = () => setIsModalOpen(false);
-//get if from route
-const departmentId = useParams().id;
-const { data, isLoading, isError } = useQuery(
-  {
-    queryKey: ['singleDepartment', departmentId],
-    queryFn: () => getSingleDepartment({ token, id: departmentId! }),
-    enabled: !!departmentId
-  }
-);
-console.log("department id", departmentId);
+  //get if from route
+  const departmentId = useParams().id;
+  const { data, isLoading, isError } = useQuery(
+    {
+      queryKey: ['singleDepartment', departmentId],
+      queryFn: () => getSingleDepartment({ token, id: departmentId! }),
+      enabled: !!departmentId
+    }
+  );
+  console.log("department id", departmentId);
   const customer = {
     id: 1,
     name: 'Qamardeen Abdulmalik',
@@ -57,31 +57,10 @@ console.log("department id", departmentId);
             <h1 className="text-lg font-bold mb-4">{data?.data.title}</h1>
             <p className="text-[16px] text-white my-1">
               {data?.data.noOfAgents} Agents</p>
-           <p className="text-md my-0 text-white">Date Created: {data?.data.createdAt?.split('T')[0]}</p>
+            <p className="text-md my-0 text-white">Date Created: {data?.data.createdAt?.split('T')[0]}</p>
           </div>
         </div>
       </div>
-
-      <div className="bg-white rounded-lg shadow-md mt-11">
-        <h2 className="px-6 py-4 font-bold text-gray-700">Department Activities</h2>
-        <table className="min-w-full text-left text-sm text-gray-600">
-          <tbody>
-            {customer.accountActivities.map((activity, index) => (
-              <tr key={index} className="border-t">
-                <td className="px-6 py-4 text-gray-800 font-semibold">{activity.label}</td>
-                <td className="px-6 py-4 text-gray-800 font-semibold text-right">
-                  {activity.date}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {/* <AddDepartmentModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onUpdate={() => {}}
-      /> */}
     </div>
   )
 }

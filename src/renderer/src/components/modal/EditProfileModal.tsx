@@ -7,7 +7,7 @@ interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   userData: {
-    id: string;
+    id: string | number;
     username: string;
     email: string;
     phoneNumber: string;
@@ -48,7 +48,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
     if (isOpen) {
       setFormData(userData);
       setPreviewPhoto(userData.profilePhoto);
-      setProfilePhotoFile(null); // Reset file state
+      setProfilePhotoFile(null);
     }
   }, [isOpen, userData]);
 

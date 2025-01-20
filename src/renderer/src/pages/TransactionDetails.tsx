@@ -100,7 +100,7 @@ const TransactionDetails: React.FC = () => {
             />
             <StatsCard
               title="Completed Transactions"
-              value={`${filteredData?.filter((txn) => txn.status === 'completed').length || 0
+              value={`${filteredData?.filter((txn) => txn.status === 'successful').length || 0
                 }`}
               change="+10%"
               isPositive={true}

@@ -17,10 +17,10 @@ const ContactRow: React.FC<RowProps> = ({ icon, label, value }) => {
       {/* Label and Value */}
       <div className="flex justify-between items-center w-full">
         <div>
-          <p className="text-[#8A8A8A] text-xl m-0">{label}:</p>
+          <p className="text-[#8A8A8A] text-lg m-0">{label}:</p>
         </div>
         <div className="text-right">
-          <p className="text-black font-semibold text-xl m-0">{value || "None"}</p>
+          <p className="text-black font-semibold text-[16px] m-0">{value || "None"}</p>
         </div>
       </div>
     </div>

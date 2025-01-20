@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
 // Components
 import { Content, MainContent, RootLayout } from './components';
@@ -29,6 +29,9 @@ import { AuthProvider } from './context/authContext';
 import TeamChat from './components/TeamChat';
 import PendingChats from './pages/PendingChats';
 import { SocketProvider } from './context/socketContext';
+import SmtpPage from './pages/SmtpPage';
+import Kyc from './pages/Kyc';
+import QuickReplies from './pages/QuickReplies';
 
 function App(): JSX.Element {
   const location = useLocation();
@@ -37,14 +40,23 @@ function App(): JSX.Element {
 
   const renderProtectedRoutes = () => (
     <>
+      <Route path="/" element={<LoginPage />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/customers" element={<CustomersPage />} />
+      <Route path="/smtp" element={<SmtpPage />} />
       <Route path="/chats" element={<Chat />} />
       <Route path="/pending-chats" element={<PendingChats />} />
+      <Route path="/quick-replies" element={<QuickReplies />} />
       <Route path="/rates" element={<RatesHistory />} />
       <Route path="/log" element={<LogPage />} />
       <Route path="/departments" element={<Departments />} />
       <Route path="/notifications" element={<Notifications />} />
+      <Route
+        path="/notifications/in-app/banners"
+        element={
+          <Navigate to="/notifications?tab=In-App Notification&state=Banner" replace />
+        }
+      />
       <Route path="/team" element={<LogPage />} />
       <Route path="/customers/:id" element={<CustomerDetails />} />
       <Route path="/department-agent" element={<AgentsPage />} />
@@ -56,6 +68,7 @@ function App(): JSX.Element {
       <Route path="/teams" element={<Teams />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/transactions" element={<Transaction />} />
+      <Route path="/kyc" element={<Kyc />} />
     </>
   );
 

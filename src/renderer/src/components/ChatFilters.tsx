@@ -6,15 +6,15 @@ interface TransactionsFilterProps {
     type: string;
     dateRange: string;
     search: string;
-    category: string; // Category filter should not be optional
+    category: string;
   };
   onChange: (updatedFilters: Partial<TransactionsFilterProps['filters']>) => void;
-  title?: string; // Optional title
-  subtitle?: string; // Optional subtitle
+  title?: string;
+  subtitle?: string;
 }
 
 const ChatFilters: React.FC<TransactionsFilterProps> = ({ filters, onChange, title, subtitle }) => {
-  const statusOptions = ['All', 'successful', 'pending', 'declined'];
+  const statusOptions = ['All', 'successful', 'pending', 'declined', 'unsucessful'];
   const typeOptions = ['All', 'buy', 'sell'];
   const categoryOptions = ['All', 'crypto', 'giftCard']; // Correct category options
 
@@ -22,7 +22,6 @@ const ChatFilters: React.FC<TransactionsFilterProps> = ({ filters, onChange, tit
     <div>
       <div className="m flex flex-row justify-between">
         <div className="ext">
-          {/* Title and Subtitle */}
           <h2 className="text-[30px] font-semibold text-gray-800 ">
             {title || 'Transactions on the app'}
           </h2>
@@ -33,18 +32,15 @@ const ChatFilters: React.FC<TransactionsFilterProps> = ({ filters, onChange, tit
       </div>
 
       <div className="flex items-center justify-between mb-4">
-        {/* Status Filter */}
         <div className="flex items-center">
           {statusOptions.map((status, index) => (
             <button
               key={status}
-              className={`px-6 py-2 text-sm font-medium transition ${
-                filters.status === status
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${
-                index === statusOptions.length - 1 ? 'rounded-r-lg' : ''
-              }`}
+              className={`px-6 py-2 text-sm font-medium transition ${filters.status === status
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${index === statusOptions.length - 1 ? 'rounded-r-lg' : ''
+                }`}
               onClick={() => onChange({ status })}
             >
               {status}
@@ -57,13 +53,11 @@ const ChatFilters: React.FC<TransactionsFilterProps> = ({ filters, onChange, tit
           {typeOptions.map((type, index) => (
             <button
               key={type}
-              className={`px-6 py-2 text-sm font-medium transition ${
-                filters.type === type
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${
-                index === typeOptions.length - 1 ? 'rounded-r-lg' : ''
-              }`}
+              className={`px-6 py-2 text-sm font-medium transition ${filters.type === type
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${index === typeOptions.length - 1 ? 'rounded-r-lg' : ''
+                }`}
               onClick={() => onChange({ type })}
             >
               {type}
@@ -76,13 +70,11 @@ const ChatFilters: React.FC<TransactionsFilterProps> = ({ filters, onChange, tit
           {categoryOptions.map((category, index) => (
             <button
               key={category}
-              className={`px-6 py-2 text-sm font-medium transition ${
-                filters.category === category
-                  ? 'bg-green-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${
-                index === categoryOptions.length - 1 ? 'rounded-r-lg' : ''
-              }`}
+              className={`px-6 py-2 text-sm font-medium transition ${filters.category === category
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${index === categoryOptions.length - 1 ? 'rounded-r-lg' : ''
+                }`}
               onClick={() => onChange({ category })}
             >
               {category}

@@ -9,12 +9,12 @@ import { getNotification, getBanner, deleteNotification, deleteBanner } from '@r
 import { useAuth } from '@renderer/context/authContext'
 import { getImageUrl } from '@renderer/api/helper'
 
-const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: string) => void }> = ({
+const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: string) => void, isBanner?: boolean, notificationTyp?: string }> = ({
   textMsg,
-  onTitleChange
+  onTitleChange, notificationTyp
 }) => {
   const queryClient = useQueryClient()
-  const {token}=useAuth();
+  const { token } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [notificationType, setNotificationType] = useState<string>('Notification')
   const [selectedNotification, setSelectedNotification] = useState<any>(null)
@@ -28,7 +28,12 @@ const TransactionsTable: React.FC<{ textMsg: boolean; onTitleChange: (title: str
     queryFn: () => getNotification({ token }),
     enabled: !!token,
   })
+  useEffect(() => {
+    if (notificationTyp) {
+      notificationTyp == 'Banner' ? setNotificationType('Banner') : setNotificationType('Notification')
+    }
 
+  }, [notificationTyp])
   const { data: bannersData, isLoading: loadingBanners } = useQuery({
     queryKey: ['bannersData'],
     queryFn: () => getBanner({ token }),

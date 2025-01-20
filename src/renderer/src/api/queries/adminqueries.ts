@@ -26,12 +26,15 @@ import {
   NotificationsResponse,
   PostCustomerData,
   RateResponse,
+  RolesResponse,
   SingleCategoryResponse,
   SIngleCustomerResponse,
   SIngleDepartmentResponse,
   SubcategoriesResponse,
   SubCategory,
+  TeamMember,
   TeamResponse,
+  TeamResponse2,
   UPdateCustomerResponse
 } from './datainterfaces'
 // import * from './index'
@@ -64,6 +67,19 @@ export const getCustomerTransactions = async ({
     undefined,
     token
   )
+}
+export const chnageUserStatus = async ({
+  token,
+  id,
+  data
+}: {
+  token: string
+  id: string
+  data: {
+    status: string
+  }
+}): Promise<ApiResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.ChangeStatus}/${id}`, 'POST', data, token)
 }
 export const getTransactions = async ({
   token
@@ -118,6 +134,10 @@ export const getRate = async ({ token }: { token: string }): Promise<RateRespons
 export const getTeam = async ({ token }: { token: string }): Promise<TeamResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetTeam}`, 'GET', undefined, token)
 }
+
+export const getTeam2 = async ({ token }: { token: string }): Promise<TeamResponse2> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetTeam2}`, 'GET', undefined, token)
+}
 export const getCategories = async ({ token }: { token: string }): Promise<CategroiesResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetCategories}`, 'GET', undefined, token)
 }
@@ -158,7 +178,7 @@ export const updateCustomer = async ({
   data
 }: {
   token: string
-  id: string
+  id: string | number
   data: PostCustomerData
 }): Promise<UPdateCustomerResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateCustomer}/${id}`, 'POST', data, token)
@@ -332,6 +352,15 @@ export const createAgent = async ({
 }): Promise<createAgentResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateAgent}`, 'POST', data, token)
 }
+export const createTeamMember = async ({
+  token,
+  data
+}: {
+  token: string
+  data: TeamMember
+}): Promise<ApiResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.CreatTeamMemer}`, 'POST', data, token)
+}
 
 //account activites
 export const getAccountActivities = async ({
@@ -348,9 +377,12 @@ export const getAccountActivities = async ({
     token
   )
 }
+export const getRolesList = async ({ token }: { token: string }): Promise<RolesResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetRolesList}`, 'GET', undefined, token)
+}
 
 export const getAllAgentss = async ({ token }: { token: string }): Promise<AllAgentsResponse> => {
-  console.log('Url: ', API_ENDPOINT.OPERATIONS.GetAllAgents)
+  // console.log('Url: ', API_ENDPOINT.OPERATIONS.GetAllAgents)
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetAllAgents}`, 'GET', undefined, token)
 }
 export const getNotesForCustomer = async (token: string, id: string): Promise<any> => {
@@ -361,16 +393,67 @@ export const getNotesForCustomer = async (token: string, id: string): Promise<an
     token
   )
 }
+export const updateKycStatus = async (
+  data: KYCStatusReq,
+  token: string,
+  userId: number | string
+): Promise<ApiResponse> =>
+  await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateKycStatus}/${userId}`, 'POST', data, token)
 export const createNoteForCustomer = async (
   data: CreateNoteForCustomerReq,
   token: string
 ): Promise<ApiResponse> =>
   await apiCall(API_ENDPOINT.OPERATIONS.CreateNoteForCustomer, 'POST', data, token)
+
+
+
+export const createSMTP = async (
+  data: SMTPRequestData,
+  token: string
+): Promise<ApiResponse> => await apiCall(API_ENDPOINT.OPERATIONS.UpdateSmtp, 'POST', data, token)
+
+export const getSMTP = async (token: string): Promise<GETSMTPFINALRESPONSE> => {
+  return await apiCall(` ${API_ENDPOINT.OPERATIONS.GetSMTP}`, 'GET', undefined, token)
+}
+
+
+
+
 export const deleteNoteForCustomer = async (noteId: number, token: string): Promise<ApiResponse> =>
   await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteNote}/${noteId}`, 'GET', undefined, token)
 
+export const getNotificationForUser = async (token: string, id: string): Promise<ApiResponse> =>
+  await apiCall(`${API_ENDPOINT.OPERATIONS.GetNotificationForUser}/${id}`, 'GET', undefined, token)
 export interface CreateNoteForCustomerReq {
   userId: number
   note: string
   title?: string
+}
+export interface KYCStatusReq {
+  kycSatus: string
+}
+
+export interface SMTPRequestData {
+  host: string // SMTP host
+  from: string // Sender's email address
+  email: string // Email address used for authentication
+  port: number // SMTP port
+  password: string // SMTP password
+  encryption: string // Encryption type (e.g., SSL, TLS)
+}
+
+export interface GETSMTPFINALRESPONSE{
+  status: string
+  message: string
+  data: GetSMTPResponse
+}
+export interface GetSMTPResponse {
+  id: number // Unique identifier for the SMTP configuration
+  host: string // SMTP host
+  from: string // Sender's email address
+  email: string // Email address used for authentication
+  port: number // SMTP port
+  password: string // SMTP password
+  encryption: string // Encryption type (e.g., SSL, TLS)
+  createdAt: string // Timestamp when the configuration was created
 }

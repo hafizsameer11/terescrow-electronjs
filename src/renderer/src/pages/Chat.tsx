@@ -49,9 +49,12 @@ const Chat = () => {
     dateRange: 'Last 30 days',
     search: '',
     transactionType: 'All',
-    category: 'All'
+    category: 'All',
+    // type: 'All',
+    startDate: '',
+    endDate: '',
   })
-  const {token}=useAuth();
+  const { token } = useAuth();
   const { data: chatStatsData } = useQuery({
     queryKey: ['chatStats'],
     queryFn: () => getChatStats({ token }),
@@ -97,8 +100,11 @@ const Chat = () => {
     const selectedDateRange = calculateDateRange(filters.dateRange);
     const matchesDateRange =
       !selectedDateRange || new Date(item.createdAt) >= selectedDateRange;
+    const matchesDateRange2 =
+      (!filters.startDate || new Date(item.createdAt) >= new Date(filters.startDate)) &&
+      (!filters.endDate || new Date(item.createdAt) <= new Date(filters.endDate));
 
-    return matchesStatus && matchesCategory && matchesType && matchesSearch && matchesDateRange;
+    return matchesStatus && matchesCategory && matchesType && matchesSearch && matchesDateRange && matchesDateRange2;
   });
 
 
@@ -113,20 +119,72 @@ const Chat = () => {
 
             {/* Toggle Buttons */}
 
+
+          </div>
+          <div className="flex space-x-4">
+            <div>
+              <label className="block text-sm text-gray-700">Start Date</label>
+              <input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, startDate: e.target.value }))
+                }
+                className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-700">End Date</label>
+              <input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, endDate: e.target.value }))
+                }
+                className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
+              />
+            </div>
           </div>
 
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <StatsCard title="Total Chat" value={chatStatsData?.data?.totalChats} />
-          <StatsCard title="Successful Transaction" value={chatStatsData?.data?.successfulllTransactions} />
-          <StatsCard title="Pending Chat" value={chatStatsData?.data?.pendingChats} />
-          <StatsCard title="Declined Chat" value={chatStatsData?.data?.declinedChats} />
+          <StatsCard
+            title="Total Chats"
+            value={chatStatsData?.data?.totalChats?.count || "0"}
+            change={`${chatStatsData?.data?.totalChats?.percentage || 0}%`}
+            isPositive={chatStatsData?.data?.totalChats?.change === 'positive'}
+          />
+          <StatsCard
+            title="Unsuccessful Chats"
+            value={chatStatsData?.data?.unsuccessfulChats?.count || "0"}
+            change={`${chatStatsData?.data?.unsuccessfulChats?.percentage || 0}%`}
+            isPositive={chatStatsData?.data?.unsuccessfulChats?.change === 'positive'}
+          />
+          <StatsCard
+            title="Successful Transactions"
+            value={chatStatsData?.data?.successfulTransactions?.count || "0"}
+            change={`${chatStatsData?.data?.successfulTransactions?.percentage || 0}%`}
+            isPositive={chatStatsData?.data?.successfulTransactions?.change === 'positive'}
+          />
+          <StatsCard
+            title="Pending Chats"
+            value={chatStatsData?.data?.pendingChats?.count || "0"}
+            change={`${chatStatsData?.data?.pendingChats?.percentage || 0}%`}
+            isPositive={chatStatsData?.data?.pendingChats?.change === 'positive'}
+          />
+          <StatsCard
+            title="Declined Chats"
+            value={chatStatsData?.data?.declinedChats?.count || "0"}
+            change={`${chatStatsData?.data?.declinedChats?.percentage || 0}%`}
+            isPositive={chatStatsData?.data?.declinedChats?.change === 'positive'}
+          />
         </div>
 
+
         {/* Transactions Table */}
-        <div>
+        <div >
           <ChatFilters
             filters={filters}
             title="Chat History"

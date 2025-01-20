@@ -3,6 +3,9 @@ import CustomRateModal from './CustomRateModal'
 import ChatNoteModal from './ChatNoteModal'
 import ChatCancelModal from './ChatCancelModal'
 import ChatConfirmModal from './ChatConfirmModal'
+import { getNotesForCustomer } from '@renderer/api/queries/adminqueries'
+import { useAuth } from '@renderer/context/authContext'
+import { useQuery } from '@tanstack/react-query'
 // import ChatConfirmModal from './ChatConfirmModal';
 // import ChatCancelModal from './ChatCancelModal';
 // import ChatNoteModal from './ChatNoteModal';
@@ -10,8 +13,9 @@ import ChatConfirmModal from './ChatConfirmModal'
 
 interface HeaderProps {
   avatar: string
-  name: string
-  username: string
+  name: string | undefined
+  username: string | undefined
+  id?: string | number | undefined
   onClose: () => void
   onSendRate: (rate: string, amountDollar: string, amountNaira: string) => void // Adjusted here
   onLogChat: () => void
@@ -26,7 +30,7 @@ const ChatHeader: React.FC<HeaderProps> = ({
   onClose,
   onSendRate,
   onLogChat,
-  onStatusChange,status
+  onStatusChange, status, id
 }) => {
   console.log("THis is the ChatHeader");
   console.log(name, username);
@@ -34,7 +38,8 @@ const ChatHeader: React.FC<HeaderProps> = ({
   const [selectedOption, setSelectedOption] = useState<string>('Pending')
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
-
+  // console.log()
+  const { token } = useAuth();
   const [isCustomRateModalOpen, setIsCustomRateModalOpen] = useState(false)
 
   const handleOptionClick = (option: string) => {
@@ -49,6 +54,7 @@ const ChatHeader: React.FC<HeaderProps> = ({
       onStatusChange(option) // Directly update for options like "Pending" or "Unsuccessful"
     }
   }
+
 
   const handleConfirm = () => {
     onStatusChange('Successful')
@@ -71,6 +77,13 @@ const ChatHeader: React.FC<HeaderProps> = ({
   const handleCloseNoteModal = () => {
     setIsNoteModalOpen(false)
   }
+  const {
+    data: notDetailsData,
+    isLoading: isNotesLoading,
+  } = useQuery({
+    queryKey: ['notes-for-customer'],
+    queryFn: () => getNotesForCustomer(token, id),
+  });
   const notesData = [
     {
       id: 1,
@@ -134,101 +147,95 @@ const ChatHeader: React.FC<HeaderProps> = ({
         {/* Right Section */}
         {
           status === 'pending' && (
-        <div className="flex items-center space-x-2">
-          {/* Send Rate Button */}
-          <button
-            className="px-4 py-2 text-sm text-green-700 border border-green-700 rounded-lg hover:bg-green-50"
-            onClick={handleRateModal}
-          >
-            Send Rate
-          </button>
-          {isCustomRateModalOpen && (
-            <CustomRateModal
-              onSendRate={onSendRate}
-              onClose={() => setIsCustomRateModalOpen(false)}
-            />
-          )}
+            <div className="flex items-center space-x-2">
 
-          {/* Log Chat Button */}
-          {/* <button
+              {isCustomRateModalOpen && (
+                <CustomRateModal
+                  onSendRate={onSendRate}
+                  onClose={() => setIsCustomRateModalOpen(false)}
+                />
+              )}
+
+              {/* Log Chat Button */}
+              {/* <button
             className="px-4 py-2 text-sm text-white bg-green-700 rounded-lg hover:bg-green-800"
             onClick={onLogChat}
           >
             Log Chat
           </button> */}
 
-          <div className="relative">
-            {/* Notes Icon */}
-            <button
-              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
-              onClick={handleNotesIconClick}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-5 h-5 text-gray-700"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M7.5 11.25h6M7.5 14.25h3m3-10.5H7.5c-2.1 0-3 1.1-3 3v10.5c0 2.1 1.1 3 3 3h9c2.1 0 3-1.1 3-3v-9l-4.5-4.5z"
-                />
-              </svg>
-            </button>
+              <div className="relative">
+                {/* Notes Icon */}
+                <button
+                  className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
+                  onClick={handleNotesIconClick}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-5 h-5 text-gray-700"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M7.5 11.25h6M7.5 14.25h3m3-10.5H7.5c-2.1 0-3 1.1-3 3v10.5c0 2.1 1.1 3 3 3h9c2.1 0 3-1.1 3-3v-9l-4.5-4.5z"
+                    />
+                  </svg>
+                </button>
 
-            {/* Modal */}
-            {isNoteModalOpen && <ChatNoteModal notes={notesData} onClose={handleCloseNoteModal} />}
-          </div>
-
-          {/* Three Dots Menu */}
-          <div className="relative inline-block">
-            <button
-              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="w-5 h-5 text-gray-700"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zm0 4.5a.75.75 0 110-1.5.75.75 0 010 1.5zm0 4.5a.75.75 0 110-1.5.75.75 0 010 1.5z"
-                />
-              </svg>
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
-                <ul className="text-sm text-gray-700">
-                  {['Successful', 'Pending', 'Failed'].map((option) => (
-                    <li
-                      key={option}
-                      className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => handleOptionClick(option)}
-                    >
-                      <input
-                        type="radio"
-                        name="status"
-                        checked={selectedOption === option}
-                        onChange={() => setSelectedOption(option)}
-                        className="mr-2"
-                      />
-                      {option}
-                    </li>
-                  ))}
-                </ul>
+                {/* Modal */}
+                {isNoteModalOpen && <ChatNoteModal notes={notDetailsData.data ?? []} onClose={handleCloseNoteModal} userId={id} />}
               </div>
-            )}
-          </div>
-        </div>
+
+              {/* Three Dots Menu */}
+              <div className="relative inline-block">
+                <button
+                  className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-5 h-5 text-gray-700"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zm0 4.5a.75.75 0 110-1.5.75.75 0 010 1.5zm0 4.5a.75.75 0 110-1.5.75.75 0 010 1.5z"
+                    />
+                  </svg>
+                </button>
+
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border z-50">
+                    <ul className="text-sm text-gray-700">
+                      {['Successful', 'Pending', 'Failed', 'unsucessful'].map((option) => (
+                        <li
+                          key={option}
+                          className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => handleOptionClick(option)}
+                        >
+                          <input
+                            type="radio"
+                            name="status"
+                            checked={selectedOption === option}
+                            onChange={() => setSelectedOption(option)}
+                            className="mr-2"
+                          />
+                          {option}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
 
           )
         }

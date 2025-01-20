@@ -1,95 +1,117 @@
-import { useState } from 'react'
-import TransactionsTable from '@renderer/components/NotificationTable'
-import NewNotificationModal from '@renderer/components/modal/NewNotificationModal'
-import NewBannerModal from '@renderer/components/modal/NewBannerModal' // Import NewBannerModal
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { createBanner } from '@renderer/api/queries/adminqueries'
-import { useAuth } from '@renderer/context/authContext'
-import { useQuery } from "@tanstack/react-query";
-import { getCustomerNotifications, getTeamNotifications } from '@renderer/api/queries/commonqueries'
+import { useEffect, useState } from 'react';
+import TransactionsTable from '@renderer/components/NotificationTable';
+import NewNotificationModal from '@renderer/components/modal/NewNotificationModal';
+import NewBannerModal from '@renderer/components/modal/NewBannerModal';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+// import { createBanner, getCustomerNotifications, getTeamNotifications } from '@renderer/api/queries';
+import { useAuth } from '@renderer/context/authContext';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { getCustomerNotifications, getTeamNotifications } from '@renderer/api/queries/commonqueries';
+import { createBanner } from '@renderer/api/queries/adminqueries';
+
 interface Notification {
-  type: 'Team' | 'Customer'
-  message: string
-  time: string
-  isImportant?: boolean
+  type: 'Team' | 'Customer';
+  message: string;
+  time: string;
+  isImportant?: boolean;
 }
 
-const notifications: Notification[] = [
-  { type: 'Team', message: 'Agent Sarah sent you a chat.', time: 'Nov 7, 2024, 9:26 AM' },
-  { type: 'Team', message: 'Agent Sarah sent you a chat.', time: 'Nov 7, 2024, 9:26 AM' },
-  { type: 'Team', message: 'Agent Sarah sent you a chat.', time: 'Nov 7, 2024, 9:26 AM' },
-  {
-    type: 'Team',
-    message: 'Agent Alucard just cancelled a trade.',
-    time: 'Nov 7, 2024, 9:26 AM',
-    isImportant: true
-  },
-  { type: 'Team', message: 'Agent Sarah sent you a chat.', time: 'Nov 7, 2024, 9:26 AM' },
-  { type: 'Customer', message: '@Ade01 just bought a gift card.', time: 'Nov 7, 2024, 9:26 AM' },
-  { type: 'Customer', message: '@Ade01 just sold USDT.', time: 'Nov 7, 2024, 9:26 AM' }
-]
-
 const Notifications = () => {
-  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false)
-  const [title, setTitle] = useState<string>('Notifications')
-  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false) // State for NewBannerModal
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [title, setTitle] = useState<string>('Notifications');
+  const [isBannerModalOpen, setIsBannerModalOpen] = useState(false); // State for NewBannerModal
   const [activeOption, setActiveOption] = useState<'Notifications' | 'In-App Notification'>(
     'Notifications'
-  )
-  const queryClient = useQueryClient()
-  const {token}=useAuth();
+  );
+  const [state, setState] = useState<'Default' | 'Banner'>('Default');
+
+  const queryClient = useQueryClient();
+  const { token, userData } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Extract and update state and tab from query params
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const tab = searchParams.get('tab');
+    const stateParam = searchParams.get('state');
+
+    if (tab) {
+      setActiveOption(tab as 'Notifications' | 'In-App Notification');
+    }
+    if (stateParam) {
+      setState(stateParam as 'Default' | 'Banner');
+    }
+  }, [location.search]);
+
   const {
     data: teamNotifications,
     isLoading: teamNotificationsLoading,
-    isError: isTeamNotificationsError,
-    error: teamNotificationsError,
   } = useQuery({
     queryKey: ['teamnotifications'],
     refetchInterval: 3000,
     queryFn: () => getTeamNotifications(token),
   });
+
   const {
     data: customerNotifications,
     isLoading: customerNotificationsLoading,
-    isError: isCustomerNotificationsError,
-    error: customerNotificationsError,
   } = useQuery({
     queryKey: ['customernotifications'],
     refetchInterval: 3000,
     queryFn: () => getCustomerNotifications(token),
   });
+
   const { mutate: uploadBanner } = useMutation({
     mutationFn: async (file: File | null) => {
-      if (!file) throw new Error('No file selected')
-      const formData = new FormData()
-      formData.append('image', file)
-      return createBanner({ token, data: formData })
+      if (!file) throw new Error('No file selected');
+      const formData = new FormData();
+      formData.append('image', file);
+      return createBanner({ token, data: formData });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['banners'])
-      alert('Banner uploaded successfully!')
-      setIsBannerModalOpen(false)
+      queryClient.invalidateQueries(['banners']);
+      alert('Banner uploaded successfully!');
+      setIsBannerModalOpen(false);
     },
     onError: (error) => {
-      console.error('Failed to upload banner:', error)
-    }
-  })
+      console.error('Failed to upload banner:', error);
+    },
+  });
+
   const handleSendBanner = (file: File | null) => {
-    uploadBanner(file)
-  }
+    uploadBanner(file);
+  };
+
   const handleOpenNotificationModal = () => {
-    setIsNotificationModalOpen(true)
-  }
+    setIsNotificationModalOpen(true);
+  };
+
   const handleCloseNotificationModal = () => {
-    setIsNotificationModalOpen(false)
-  }
+    setIsNotificationModalOpen(false);
+  };
+
   const handleOpenBannerModal = () => {
-    setIsBannerModalOpen(true)
-  }
+    setIsBannerModalOpen(true);
+  };
+
+  const handleOptionChange = (option: 'Notifications' | 'In-App Notification') => {
+    setActiveOption(option);
+    const searchParams = new URLSearchParams(location.search);
+
+    if (option === 'Notifications') {
+      searchParams.delete('tab');
+      searchParams.delete('state');
+    } else {
+      searchParams.set('tab', 'In-App Notification');
+      searchParams.set('state', state); // Retain the current state
+    }
+    navigate(`/notifications?${searchParams.toString()}`, { replace: true });
+  };
 
   const titleChange = (newTitle: string) => {
-    setTitle(newTitle)
-  }
+    setTitle(newTitle);
+  };
 
   return (
     <div className="w-full">
@@ -99,25 +121,27 @@ const Notifications = () => {
           {title === 'Notifications' && (
             <div className="flex">
               <button
-                onClick={() => setActiveOption('Notifications')}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  activeOption === 'Notifications'
-                    ? 'text-white bg-green-700'
-                    : 'text-gray-800 border border-gray-300'
-                }`}
+                onClick={() => handleOptionChange('Notifications')}
+                className={`px-4 py-2 rounded-lg font-medium ${activeOption === 'Notifications'
+                  ? 'text-white bg-green-700'
+                  : 'text-gray-800 border border-gray-300'
+                  }`}
               >
                 Notifications
               </button>
-              <button
-                onClick={() => setActiveOption('In-App Notification')}
-                className={`px-4 py-2 rounded-lg font-medium ${
-                  activeOption === 'In-App Notification'
+              {userData?.role === 'admin' && (
+
+
+                <button
+                  onClick={() => handleOptionChange('In-App Notification')}
+                  className={`px-4 py-2 rounded-lg font-medium ${activeOption === 'In-App Notification'
                     ? 'text-white bg-green-700'
                     : 'text-gray-800 border border-gray-300'
-                }`}
-              >
-                In-App Notification
-              </button>
+                    }`}
+                >
+                  In-App Notification
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -142,37 +166,34 @@ const Notifications = () => {
       </div>
 
       {activeOption === 'Notifications' && (
-        <div className="w-full p-6 ">
+        <div className="w-full p-6">
           <div className="flex gap-6">
-            <div className=" border bg-white rounded-md w-1/2 p-8 shadow-md">
+            <div className="border bg-white rounded-md w-1/2 p-8 shadow-md">
               <h2 className="font-bold text-lg mb-4">Team Notification</h2>
-              {teamNotifications?.data
-
-                .map((notification, index) => (
-                  <div key={index} className='py-2'>
-                    <p>
-                      <span className="font-bold">{notification.description}</span>
-
-                      {/* <span className="text-green-600 ml-2 cursor-pointer">view details</span> */}
-                    </p>
-                    <p className="text-gray-500 pt-2 text-sm">{notification.createdAt.split('T')[0]}</p>
-                  </div>
-                ))}
+              {teamNotifications?.data?.map((notification, index) => (
+                <div key={index} className="py-2">
+                  <p>
+                    <span className="font-bold">{notification.description}</span>
+                  </p>
+                  <p className="text-gray-500 pt-2 text-sm">
+                    {notification.createdAt.split('T')[0]}
+                  </p>
+                </div>
+              ))}
             </div>
 
             <div className="border bg-white rounded-md p-8 w-1/2 shadow-md">
               <h2 className="font-bold text-lg mb-4">Customer Notification</h2>
-              {customerNotifications?.data
-
-                .map((notification, index) => (
-                  <div key={index} className="py-2">
-                    <span>
-                      <span className="font-bold">{notification.description}</span>
-                      {/* <span className="text-green-600 ml-2 cursor-pointer ">view transaction</span> */}
-                    </span>
-                    <p className="text-gray-500 text-sm pt-2">{notification.createdAt.split('T')[0]}</p>
-                  </div>
-                ))}
+              {customerNotifications?.data?.map((notification, index) => (
+                <div key={index} className="py-2">
+                  <span>
+                    <span className="font-bold">{notification.description}</span>
+                  </span>
+                  <p className="text-gray-500 text-sm pt-2">
+                    {notification.createdAt.split('T')[0]}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -180,7 +201,7 @@ const Notifications = () => {
 
       {activeOption === 'In-App Notification' && (
         <div>
-          <TransactionsTable textMsg={true} onTitleChange={titleChange} />
+          <TransactionsTable textMsg={true} onTitleChange={titleChange} isBanner={state === 'Banner'} notificationTyp={state} />
         </div>
       )}
 
@@ -188,7 +209,7 @@ const Notifications = () => {
         isOpen={isNotificationModalOpen}
         onClose={handleCloseNotificationModal}
         onSubmit={handleCloseNotificationModal}
-        actionType='add'
+        actionType="add"
       />
 
       <NewBannerModal
@@ -197,7 +218,7 @@ const Notifications = () => {
         onSend={handleSendBanner}
       />
     </div>
-  )
-}
+  );
+};
 
-export default Notifications
+export default Notifications;
