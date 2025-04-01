@@ -37,7 +37,6 @@ const CustomersPage: React.FC = () => {
     }
   }, [customersData]);
 
-  // Filter customers based on filters state
   const filteredCustomers = customersData?.data.filter((customer) => {
     const matchesGender =
       filters.gender === "All" || customer.gender === filters.gender;

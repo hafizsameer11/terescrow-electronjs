@@ -49,6 +49,7 @@ export const Sidebar = () => {
     { label: 'SMTP', icon: Images.email, href: '/smtp', id: 'smtp' },
     { label: 'KYC', icon: <MdOutlinePermIdentity />, href: '/kyc', id: 'kyc' },
     { label: 'Banners', icon: <PiSlideshowThin />, href: '/notifications/in-app/banners', id: 'banner' },
+    { label: 'Ways Of Hearing', icon: <PiSlideshowThin />, href: '/WaysOfHearing', id: 'WaysOfHearing' },
   ];
 
   const agentMenuItems = [

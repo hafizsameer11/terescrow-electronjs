@@ -105,7 +105,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         // setCurrentStatus('Successful');
       } else if (chatsData?.data.chatDetails.status == 'declined') {
         setNotification({
-          message: `Invalid,unactivated or code has already been redeemed.`,
+          message: `This Trade was declined. Reason : Invalid,unactivated or code has already been redeemed.`,
           backgroundColor: 'bg-red-100',
           textColor: 'text-red-800',
           borderColor: 'border-red-300',
@@ -190,7 +190,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
     } else if (status === 'Failed' && reason) {
       changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.declined }, token)
       setNotification({
-        message: `This trade was declined by you with reason "${reason}"`,
+        message: `This Trade was declined. Reason : Invalid,unactivated or code has already been redeemed.`,
         backgroundColor: 'bg-red-100',
         textColor: 'text-red-800',
         borderColor: 'border-red-300',
@@ -220,6 +220,12 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
   const handleQuickReplyClick = (message: string) => {
     setInputValue((prev) => (prev ? `${prev} ${message}` : message));
     setShowQuickReplies(false);
+  };
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevent new line on Enter key
+      sendMessage();
+    }
   };
 
   return (
@@ -310,6 +316,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
                 type="text"
                 placeholder="Type a message"
                 value={inputValue}
+                onKeyDown={(e) => handleKeyDown(e)}
                 onChange={(e) => setInputValue(e.target.value)}
                 className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring focus:ring-gray-200"
               />

@@ -88,7 +88,7 @@ const CustomerDetails: React.FC = () => {
       token,
       userId,
     }: {
-      data: { kycStatus: string };
+      data: { kycStatus: string, reason: string };
       token: string;
       userId: number | string;
     }) => {
@@ -101,10 +101,10 @@ const CustomerDetails: React.FC = () => {
       alert('Failed to update KYC status. Please try again.');
     }
   });
-  const handleKYCUpdate = (status: string) => {
-    console.log("Updated KYC Status:", status);
+  const handleKYCUpdate = (kycStatus: string, reason: string) => {
+    console.log("Updated KYC Status:", kycStatus);
     // setIsKYCModalOpen(false);
-    updateKyc({ data: { status }, token, userId: id! });
+    updateKyc({ data: { kycStatus, reason }, token, userId: id! });
   };
 
   const handleEditProfile = (updatedData: Record<string, string>) => {

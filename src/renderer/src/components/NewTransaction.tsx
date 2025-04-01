@@ -22,6 +22,7 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
     cryptoAmount: '',
     fromAddress: '',
     toAddress: '',
+    profit: '',
   });
 
   const closeModal = () => {
@@ -75,7 +76,7 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
   const handleInputChange = (field, value) => {
     const updatedData = { ...formData, [field]: value };
 
-    // Automatically calculate "Amount in Naira" when "Amount" and "Exchange Rate" are updated
+
     if (field === 'amount' || field === 'exchangeRate') {
       const amount = parseFloat(updatedData.amount) || 0;
       const exchangeRate = parseFloat(updatedData.exchangeRate) || 0;
@@ -86,7 +87,7 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
   };
 
   const handleSubmit = () => {
-    const { subcategory, amount, exchangeRate, amountNaira, cardType, cardNumber, cryptoAmount, fromAddress, toAddress } = formData;
+    const { subcategory, amount, exchangeRate, amountNaira, cardType, cardNumber, cryptoAmount, fromAddress, toAddress, profit } = formData;
 
     const commonData = {
       subCategoryId: parseInt(subcategory),
@@ -95,6 +96,7 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
       amount: parseFloat(amount),
       exchangeRate: parseFloat(exchangeRate),
       amountNaira: parseFloat(amountNaira),
+      profit: parseFloat(profit),
     };
 
     if (type === 'giftCard') {
@@ -164,6 +166,9 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
                   </option>
                 ))}
               </select>
+
+              <label className="block text-gray-700">Profit</label>
+              <input type="number" value={formData.profit} onChange={(e) => handleInputChange('profit', e.target.value)} className="w-full p-2 border rounded-lg mb-4" />
 
               <label className="block text-gray-700">Amount (USD)</label>
               <input type="number" value={formData.amount} onChange={(e) => handleInputChange('amount', e.target.value)} className="w-full p-2 border rounded-lg mb-4" />

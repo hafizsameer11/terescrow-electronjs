@@ -1,6 +1,6 @@
 {
-  "name": "Tercescrow",
-  "version": "1.5.0",
+  "name": "Tercescrow Admin", ,
+  "version": "1.6.0",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -63,15 +63,20 @@
     "vite": "^5.3.1"
   },
   "build": {
-    "appId": "com.example.yourapp",
-    "productName": "Tercescrow",
+    "appId": "com.tercescrow.admin",
+    "productName": "Tercescrow Admin",
     "mac": {
       "target": [
-        "dmg",
-        "zip"
+        "mas",
+        "mas-dev"
       ],
       "icon": "resources/mac.icns",
-      "minimumSystemVersion": "10.15"
+      "minimumSystemVersion": "10.15",
+      "hardenedRuntime": true,
+      "entitlements": "entitlements.mas.plist",
+      "entitlementsInherit": "entitlements.mas.inherit.plist",
+      "provisioningProfile": "embedded.provisionprofile",
+      "gatekeeperAssess": false
     },
     "win": {
       "target": [

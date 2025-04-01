@@ -60,6 +60,7 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
     },
   });
 
+
   // Scroll to bottom function
   const scrollToBottom = useCallback(() => {
     if (chatContainerRef.current) {
@@ -107,6 +108,12 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
     setUploadedImage(null);
     setImagePreview(null);
   };
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault(); // Prevent new line on Enter key
+        handleSendMessage();
+      }
+    };
 
   return (
     <div className="flex flex-col h-[90%]">
@@ -206,6 +213,7 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
           type="text"
           placeholder="Type a message"
           value={inputValue}
+          onKeyDown={(e) => handleKeyDown(e)}
           onChange={(e) => setInputValue(e.target.value)}
           className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring focus:ring-green-300"
         />

@@ -22,6 +22,9 @@ interface Customer {
   updatedAt: string;
   inappNotification?: InappNotification[]
   status: string
+  KycStateTwo?: {
+    state: string
+  }
 }
 
 interface CustomerTableProps {
@@ -54,8 +57,8 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const paginatedData = data.slice(
+  const totalPages = Math.ceil(data?.length / itemsPerPage);
+  const paginatedData = data?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -147,12 +150,12 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
               <td className="py-3 px-4">{customer.gender}</td>
               <td className="py-3 px-4">
                 <span
-                  className={`px-2 py-1 text-xs rounded-lg ${customer.isVerified
+                  className={`px-2 py-1 text-xs rounded-lg ${customer?.KycStateTwo?.state === 'verified'
                     ? "bg-green-100 text-green-700"
                     : "bg-red-100 text-red-700"
                     }`}
                 >
-                  {customer.isVerified ? "Verified" : "Not Verified"}
+                  {customer?.KycStateTwo?.state === 'verified' ? "Verified" : customer?.KycStateTwo?.state === 'pending' ? "pending" : customer?.KycStateTwo?.state === 'failed' ? "failed" : "Not Verified"}
                 </span>
               </td>
               <td className="py-3 px-4 text-right">

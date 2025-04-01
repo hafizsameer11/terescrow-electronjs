@@ -405,55 +405,97 @@ export const createNoteForCustomer = async (
 ): Promise<ApiResponse> =>
   await apiCall(API_ENDPOINT.OPERATIONS.CreateNoteForCustomer, 'POST', data, token)
 
-
-
-export const createSMTP = async (
-  data: SMTPRequestData,
-  token: string
-): Promise<ApiResponse> => await apiCall(API_ENDPOINT.OPERATIONS.UpdateSmtp, 'POST', data, token)
+export const createSMTP = async (data: SMTPRequestData, token: string): Promise<ApiResponse> =>
+  await apiCall(API_ENDPOINT.OPERATIONS.UpdateSmtp, 'POST', data, token)
 
 export const getSMTP = async (token: string): Promise<GETSMTPFINALRESPONSE> => {
   return await apiCall(` ${API_ENDPOINT.OPERATIONS.GetSMTP}`, 'GET', undefined, token)
 }
-
-
-
 
 export const deleteNoteForCustomer = async (noteId: number, token: string): Promise<ApiResponse> =>
   await apiCall(`${API_ENDPOINT.OPERATIONS.DeleteNote}/${noteId}`, 'GET', undefined, token)
 
 export const getNotificationForUser = async (token: string, id: string): Promise<ApiResponse> =>
   await apiCall(`${API_ENDPOINT.OPERATIONS.GetNotificationForUser}/${id}`, 'GET', undefined, token)
+
+export const getAllKycRequests = async ({
+  token
+}: {
+  token: string
+}): Promise<AllCustomerRespone> => {
+  return await apiCall(API_ENDPOINT.CUSTOMER.GetKycRequests, 'GET', undefined, token)
+}
+
+export const getWaysOfHearing = async (): Promise<WaysOfHearingResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetAllWaysOfHearing}`, 'GET', undefined)
+}
+
+export const createWayOfHearing = async (data: WayofHearingRequestT): Promise<ApiResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateWaysOfHearing}`, 'POST', data)
+}
+export const updateWayOfHearing = async (
+  data: WayofHearingRequestT,
+  id: number
+): Promise<ApiResponse> => {
+  return await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateWaysOfHearing}/${id}`, 'POST', data)
+}
+export interface WayofHearingRequestT {
+  means: string
+}
+// Interface for a single way of hearing (list item)
+interface WayOfHearing {
+  id: number
+  means: string
+  createdAt: string // ISO date format
+}
+
+// Interface for grouped way of hearing with user count
+interface GroupedWayOfHearing {
+  name: string
+  count: number
+}
+
+// Interface for the overall response structure
+export interface WaysOfHearingResponse {
+  status: 'success' | 'error'
+  message: string
+  data: {
+    list: WayOfHearing[]
+    grouped: GroupedWayOfHearing[]
+  }
+}
+
 export interface CreateNoteForCustomerReq {
   userId: number
   note: string
   title?: string
 }
 export interface KYCStatusReq {
-  kycSatus: string
+  kycStatus: string
+  reason?: string
 }
 
 export interface SMTPRequestData {
-  host: string // SMTP host
-  from: string // Sender's email address
-  email: string // Email address used for authentication
-  port: number // SMTP port
-  password: string // SMTP password
-  encryption: string // Encryption type (e.g., SSL, TLS)
+  host: string
+  from: string
+  email: string
+  port: number
+  password: string
+  encryption: string
 }
 
-export interface GETSMTPFINALRESPONSE{
+export interface GETSMTPFINALRESPONSE {
   status: string
   message: string
   data: GetSMTPResponse
 }
 export interface GetSMTPResponse {
-  id: number // Unique identifier for the SMTP configuration
-  host: string // SMTP host
-  from: string // Sender's email address
-  email: string // Email address used for authentication
-  port: number // SMTP port
-  password: string // SMTP password
+  id: number
+  host: string
+  from: string
+  email: string
+  port: number
+  password: string
   encryption: string // Encryption type (e.g., SSL, TLS)
   createdAt: string // Timestamp when the configuration was created
 }

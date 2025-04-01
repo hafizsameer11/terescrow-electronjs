@@ -4,7 +4,8 @@ const API_ENDPOINT = {
   CUSTOMER: {
     AllCustomers: API_DOMAIN + '/admin/operations/get-all-customers',
     CustomerDetails: API_DOMAIN + '/admin/operations/get-customer-details',
-    CustomerTransactions: API_DOMAIN + '/admin/operations/get-customer-transactions'
+    CustomerTransactions: API_DOMAIN + '/admin/operations/get-customer-transactions',
+    GetKycRequests: API_DOMAIN + '/admin/operations/kyc-users',
   },
   OPERATIONS: {
     //kyc states
@@ -50,6 +51,8 @@ const API_ENDPOINT = {
     DeleteNotification: API_DOMAIN + '/admin/operations/delete-notification',
     GetNotification: API_DOMAIN + '/admin/operations/get-all-notifications',
 
+
+
     UserAccountActivity: API_DOMAIN + '/admin/operations/get-user-activity',
     //chat routes
     GetAllAgentToCusomterChats: API_DOMAIN + '/admin/operations/get-all-agent-to-customer-chats',
@@ -83,7 +86,11 @@ const API_ENDPOINT = {
     GetRolesList: API_DOMAIN + '/admin/operations/get-roles-list',
     ChangeStatus: API_DOMAIN + '/admin/operations/change-status',
     UpdateSmtp: API_DOMAIN + '/admin/operations/create-smtp',
-    GetSMTP: API_DOMAIN + '/admin/operations/get-smtp'
+    GetSMTP: API_DOMAIN + '/admin/operations/get-smtp',
+    GetAllWaysOfHearing: API_DOMAIN + '/admin/operations/get-all-ways-of-hearing',
+    CreateWaysOfHearing: API_DOMAIN + '/admin/operations/create-ways-of-hearing',
+    UpdateWaysOfHearing: API_DOMAIN + '/admin/operations/update-ways-of-hearing',
+
   },
   COMMON: {
     login: API_DOMAIN + '/agent/auth/login',
@@ -92,7 +99,7 @@ const API_ENDPOINT = {
     MarkAllAsRead: API_DOMAIN + '/public/read-all-messages',
     GetActionSubacategories: API_DOMAIN + '/public/subcategories',
     GetUnreadMessageCount: API_DOMAIN + '/public/get-unread-count',
-    MarkAllMessageRead: API_DOMAIN + '/public/mark-all-messages-read',
+    MarkAllMessageRead: API_DOMAIN + '/public/mark-all-messages-read'
     // GetTeamChatDetails: API_DOMAIN + 'get-team-chat-details',
   },
   AGENT: {
@@ -104,8 +111,7 @@ const API_ENDPOINT = {
     CreateQuickReplies: API_DOMAIN + '/agent/utilities/create-quick-reply',
     GetQuickReplies: API_DOMAIN + '/agent/utilities/get-all-quick-replies',
     DeleteQuickReply: API_DOMAIN + '/agent/utilities/delete-quick-reply',
-    UpdateQuickReploy: API_DOMAIN + '/agent/utilities/update-quick-reply',
-
+    UpdateQuickReploy: API_DOMAIN + '/agent/utilities/update-quick-reply'
   }
 }
 const token =

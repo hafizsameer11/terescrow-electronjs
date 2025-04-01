@@ -32,6 +32,7 @@ import { SocketProvider } from './context/socketContext';
 import SmtpPage from './pages/SmtpPage';
 import Kyc from './pages/Kyc';
 import QuickReplies from './pages/QuickReplies';
+import WaysOfHearing from './pages/WaysOfHearing';
 
 function App(): JSX.Element {
   const location = useLocation();
@@ -48,6 +49,7 @@ function App(): JSX.Element {
       <Route path="/pending-chats" element={<PendingChats />} />
       <Route path="/quick-replies" element={<QuickReplies />} />
       <Route path="/rates" element={<RatesHistory />} />
+      <Route path="/WaysOfHearing" element={<WaysOfHearing />} />
       <Route path="/log" element={<LogPage />} />
       <Route path="/departments" element={<Departments />} />
       <Route path="/notifications" element={<Notifications />} />
