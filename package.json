@@ -1,6 +1,6 @@
 {
-  "name": "Tercescrow Admin", ,
-  "version": "1.6.0",
+  "name": "tercescrowadmin",
+  "version": "1.7.0",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -13,7 +13,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
-    "build": "electron-vite build",
+    "build": "electron-vite build && electron-builder --mac --x64",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "electron-vite build && electron-builder --win",
@@ -64,19 +64,21 @@
   },
   "build": {
     "appId": "com.tercescrow.admin",
-    "productName": "Tercescrow Admin",
+    "productName": "TercescrowAdmin",
     "mac": {
       "target": [
-        "mas",
-        "mas-dev"
+        "dmg"
       ],
       "icon": "resources/mac.icns",
       "minimumSystemVersion": "10.15",
       "hardenedRuntime": true,
-      "entitlements": "entitlements.mas.plist",
-      "entitlementsInherit": "entitlements.mas.inherit.plist",
-      "provisioningProfile": "embedded.provisionprofile",
-      "gatekeeperAssess": false
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.inherit.plist",
+      "gatekeeperAssess": false,
+     "files": [
+      "**/*",  
+      "!**/Contents/Frameworks/TercescrowAdmin Helper (Plugin).app"  
+    ]
     },
     "win": {
       "target": [
