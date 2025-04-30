@@ -4,7 +4,7 @@ import UserProfile from './UserProfile';
 import OnlineAgentsModal from '../OnlineAgentsModal';
 import { useAuth } from '@renderer/context/authContext';
 import { useQuery } from '@tanstack/react-query';
-import { getunreadMessageCount } from '@renderer/api/queries/commonqueries';
+import { getCustomerNotifications, getTeamNotifications, getunreadMessageCount } from '@renderer/api/queries/commonqueries';
 import { IoIosNotificationsOutline } from 'react-icons/io';
 import { useNavigate } from 'react-router-dom';
 import { Images } from '@renderer/constant/Image';
@@ -18,16 +18,37 @@ const TopBar: React.FC = () => {
   const handleToggleModal = () => {
     setModalVisibility(!modalVisibility);
   };
-    const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { token, userData } = useAuth();
   const previousCount = useRef<number>(0); // To store the previous count
+  const previousCustomerNotifications = useRef<any[]>([]);
+  const previousTeamNotifications = useRef<any[]>([]);
+  const seenCustomerNotificationIds = useRef<Set<string | number>>(new Set());
+  const seenTeamNotificationIds = useRef<Set<string | number>>(new Set());
 
   const { data: count } = useQuery({
     queryKey: ['notificationCount'],
     queryFn: () => getunreadMessageCount(token),
     refetchInterval: 5000,
   });
-
+  const {
+    data: customerNotifications,
+    isLoading: customerNotificationsLoading,
+  } = useQuery({
+    queryKey: ['customernotifications'],
+    refetchInterval: 2000,
+    queryFn: () => getCustomerNotifications(token),
+    // refetchInterval: 5000,
+  });
+  const {
+    data: teamNotifications,
+    isLoading: teamNotificationsLoading,
+  } = useQuery({
+    queryKey: ['teamnotifications'],
+    refetchInterval: 2000,
+    queryFn: () => getTeamNotifications(token),
+  });
+  console.log('teamNotifications', teamNotifications);
   useEffect(() => {
     if (count?.data !== undefined) {
       const newCount = count.data;
@@ -37,7 +58,7 @@ const TopBar: React.FC = () => {
         if (window.Notification) {
           new Notification('New Messages', {
             body: `You have ${newCount} unread messages.`,
-            icon: Images.logo, // Add your notification icon path here
+            icon: Images.logo
           });
         }
       }
@@ -46,7 +67,42 @@ const TopBar: React.FC = () => {
       previousCount.current = newCount;
     }
   }, [count]);
+  useEffect(() => {
+    if (teamNotifications?.data) {
+      const newItem = teamNotifications.data.find(
+        (item) => !seenTeamNotificationIds.current.has(item.id)
+      );
 
+      if (newItem && window.Notification) {
+        new Notification('Team Notification', {
+          body: newItem.description,
+          icon: Images.logo,
+        });
+        seenTeamNotificationIds.current.add(newItem.id);
+      }
+    }
+  }, [teamNotifications]);
+
+
+  useEffect(() => {
+    if (customerNotifications?.data) {
+      const newItem = customerNotifications.data.find(
+        (item) => !seenCustomerNotificationIds.current.has(item.id)
+      );
+
+      if (newItem && window.Notification) {
+        new Notification('Customer Notification', {
+          body: newItem.description,
+          icon: Images.logo,
+        });
+        seenCustomerNotificationIds.current.add(newItem.id);
+      }
+    }
+  }, [customerNotifications]);
+
+
+
+  console.log('customerNotifications', customerNotifications);
   const handleNotificationClick = () => {
     navigate('/notifications');
   };

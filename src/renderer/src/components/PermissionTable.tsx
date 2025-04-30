@@ -41,7 +41,7 @@ const PermissionTable = () => {
     onError: () => alert('Failed to update permissions.'),
   });
 
-  const initialPermissions: string[] = ['Customer', 'Chats', 'Transactions', 'Rates', 'Log', 'Department'];
+  const initialPermissions: string[] = ['Customer', 'Chats', 'Transactions', 'Rates', 'Log', 'Department', 'banners', 'kyc', 'WaysOfHearing'];
 
   const roles = rolesData?.data.map((role: Role) => role.name) || [];
 
@@ -119,9 +119,8 @@ const PermissionTable = () => {
                   <td key={`${role}-${moduleName}-see`} className="p-2 text-center">
                     <input
                       type="checkbox"
-                      checked={
-                        permissionsState[role]?.[moduleName]?.canSee || false
-                      }
+                      checked={permissionsState?.[role]?.[moduleName]?.canSee ?? false}
+
                       onChange={() =>
                         handleCheckboxChange(role, moduleName, 'canSee')
                       }
@@ -147,9 +146,8 @@ const PermissionTable = () => {
                       <td key={`${role}-${moduleName}-create`} className="p-2 text-center">
                         <input
                           type="checkbox"
-                          checked={
-                            permissionsState[role]?.[moduleName]?.canCreate || false
-                          }
+                          checked={permissionsState?.[role]?.[moduleName]?.canCreate ?? false}
+
                           onChange={() =>
                             handleCheckboxChange(role, moduleName, 'canCreate')
                           }
@@ -163,9 +161,8 @@ const PermissionTable = () => {
                       <td key={`${role}-${moduleName}-update`} className="p-2 text-center">
                         <input
                           type="checkbox"
-                          checked={
-                            permissionsState[role]?.[moduleName]?.canUpdate || false
-                          }
+                          checked={permissionsState?.[role]?.[moduleName]?.canUpdate ?? false}
+
                           onChange={() =>
                             handleCheckboxChange(role, moduleName, 'canUpdate')
                           }
@@ -179,9 +176,8 @@ const PermissionTable = () => {
                       <td key={`${role}-${moduleName}-delete`} className="p-2 text-center">
                         <input
                           type="checkbox"
-                          checked={
-                            permissionsState[role]?.[moduleName]?.canDelete || false
-                          }
+                          checked={permissionsState?.[role]?.[moduleName]?.canDelete ?? false}
+
                           onChange={() =>
                             handleCheckboxChange(role, moduleName, 'canDelete')
                           }

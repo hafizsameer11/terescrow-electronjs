@@ -115,11 +115,12 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
       }
       else if (chatsData?.data.chatDetails.status == 'unsucessful') {
         setNotification({
-          message: `Abandoned Trade.`,
-          backgroundColor: 'bg-black',
-          textColor: 'text-white',
-          borderColor: 'border-gray-300',
+          message: 'Abandoned Trade.',
+          backgroundColor: 'bg-gray-100',
+          textColor: 'text-gray-500',
+          borderColor: 'border-gray-500',
         });
+
         setCurrentStatus('Failed');
         setIsInputVisible(false)
       }
@@ -178,8 +179,10 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
     },
   });
   const handleStatusChange = (status: string, reason?: string) => {
-    setIsInputVisible(false)
+    setIsInputVisible(false);
+
     if (status === 'Successful') {
+      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.successful }, token);
       setNotification({
         message: 'This trade was completed by you.',
         backgroundColor: 'bg-green-100',
@@ -188,25 +191,36 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
       });
       setCurrentStatus('Successful');
     } else if (status === 'Failed' && reason) {
-      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.declined }, token)
+      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.declined }, token);
       setNotification({
-        message: `This Trade was declined. Reason : Invalid,unactivated or code has already been redeemed.`,
+        message: `This Trade was declined. Reason : ${reason}`,
         backgroundColor: 'bg-red-100',
         textColor: 'text-red-800',
         borderColor: 'border-red-300',
       });
       setCurrentStatus('Failed');
     } else if (status === 'unsucessful') {
-      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.unsuccessful }, token)
+      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.unsuccessful }, token);
       setNotification({
-        message: `Abandoned Trade.`,
-        backgroundColor: 'bg-black',
-        textColor: 'text-white',
-        borderColor: 'border-gray-300',
+        message: 'Abandoned Trade.',
+        backgroundColor: 'bg-gray-100',
+        textColor: 'text-gray-500',
+        borderColor: 'border-gray-500',
       });
+
       setCurrentStatus('unsucessful');
+    } else if (status === 'Pending') {
+      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.pending }, token);
+      setNotification({
+        message: 'This trade is now marked as pending. Reopen the chat.',
+        backgroundColor: 'bg-yellow-100',
+        textColor: 'text-yellow-800',
+        borderColor: 'border-yellow-300',
+      });
+      setCurrentStatus('Pending');
     }
   };
+
   useEffect(() => {
     if (previewImage) {
       console.log("Preview Image", previewImage)
@@ -227,13 +241,51 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
       sendMessage();
     }
   };
+  const currentImageUrlRef = useRef<string>('');
+
+
+  const handleImageContextMenu = (e: React.MouseEvent, imageUrl: string) => {
+    e.preventDefault();
+    currentImageUrlRef.current = imageUrl;
+
+    window.electron.ipcRenderer.send('show-image-context-menu');
+  };
+  useEffect(() => {
+    const handleContextMenuAction = async (_event: any, action: string) => {
+      const currentImageUrl = currentImageUrlRef.current;
+      console.log("currentImageUrl", currentImageUrl);
+
+      try {
+        const res = await fetch(currentImageUrl);
+        const arrayBuffer = await res.arrayBuffer();
+
+        if (action === 'copy') {
+          window.electron.clipboard.writeImageFromArrayBuffer(arrayBuffer);
+        }
+
+        if (action === 'download') {
+          const fileName = `image-${Date.now()}.jpg`;
+          const downloadPath = `${window.electron.app.getDownloadsPath()}/${fileName}`;
+          window.electron.fs.writeFileFromArrayBuffer(downloadPath, arrayBuffer);
+          window.electron.shell.showItemInFolder(downloadPath);
+        }
+      } catch (err) {
+        console.error('Context menu action failed:', err);
+      }
+    };
+
+    window.electron.ipcRenderer.on('context-menu-action', handleContextMenuAction);
+    return () => {
+      window.electron.ipcRenderer.removeListener('context-menu-action', handleContextMenuAction);
+    };
+  }, []);
 
   return (
     <div className='bg-black bg-opacity-30 w-full h-full  inset-0 flex items-center justify-center '>
       <div className="fixed inset-y-0 right-0 w-full m-4 md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col ">
         <ChatHeader
           avatar={getImageUrl(data?.customer?.profilePicture) || 'https://via.placeholder.com/40'}
-          name={data?.customer?.firstname}
+          name={`${data?.customer?.firstname} - ${data?.customer?.country}`}
           username={data?.customer?.username}
           onClose={onClose}
           onStatusChange={handleStatusChange}
@@ -259,7 +311,8 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
                   <img
                     src={getImageUrl(message.image)}
                     alt="Uploaded"
-                    className="mb-2 rounded-lg w-full max-w-[150px]"
+                    className="mb-2 rounded-lg w-full max-w-[150px] cursor-pointer"
+                    onContextMenu={(e) => handleImageContextMenu(e, getImageUrl(message.image))}
                   />
                 )}
                 {message.message}

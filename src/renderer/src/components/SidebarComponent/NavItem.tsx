@@ -7,9 +7,11 @@ interface NavItemProps {
   href: string
   isActive?: boolean
   onClick?: () => void
+  badge?: number | null; // 👈 NEW
 }
 
-const NavItem: React.FC<NavItemProps> = ({ label, icon, href, isActive, onClick }) => {
+const NavItem: React.FC<NavItemProps> = ({ label, icon, href, isActive, onClick, badge }) => {
+  console.log("badge", badge)
   return (
     <li>
       <Link
@@ -17,14 +19,20 @@ const NavItem: React.FC<NavItemProps> = ({ label, icon, href, isActive, onClick 
         to={href} // Use 'to' instead of 'href'
         onClick={onClick}
         className={`flex w-fit lg:w-full items-center px-[18px] py-[16px] rounded-md transition-colors ${isActive
-            ? 'bg-[#147341] text-white'
-            : href === '/logout'
-              ? 'text-red-600 hover:bg-red-100'
-              : 'text-gray-800 hover:bg-gray-100'
+          ? 'bg-[#147341] text-white'
+          : href === '/logout'
+            ? 'text-red-600 hover:bg-red-100'
+            : 'text-gray-800 hover:bg-gray-100'
           }`}
       >
         <div className="lg:mr-3">{icon}</div>
-        <div className="hidden lg:block">{label}</div>
+        <div className="hidden lg:block">{label}
+          {badge ? (
+            <span className="ml-2 bg-red-500 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+              {badge}
+            </span>
+          ) : null}
+        </div>
       </Link>
     </li>
   )
