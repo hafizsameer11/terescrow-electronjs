@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Notification } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Notification, MenuItem, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 const iconPath = {
@@ -62,7 +62,31 @@ app.whenReady().then(() => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
+ipcMain.on('show-image-context-menu', (event) => {
+  const menu = new Menu();
 
+  menu.append(
+    new MenuItem({
+      label: 'Copy Image',
+      click: () => {
+        event.sender.send('context-menu-action', 'copy');
+      },
+    })
+  );
+
+  // menu.append(
+  //   new MenuItem({
+  //     label: 'Download Image',
+  //     click: () => {
+  //       event.sender.send('context-menu-action', 'download');
+  //     },
+  //   })
+  // );
+
+  menu.popup({
+    window: BrowserWindow.getFocusedWindow()!,
+  });
+});
 // Quit when all windows are closed, except on macOS. There, it's common for applications
 // and their menu bar to stay active until the user quits explicitly with Cmd + Q.
 app.on('window-all-closed', () => {

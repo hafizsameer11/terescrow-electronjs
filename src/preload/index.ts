@@ -1,22 +1,35 @@
-import { contextBridge } from 'electron'
-import { electronAPI } from '@electron-toolkit/preload'
+import { contextBridge, ipcRenderer, clipboard, nativeImage, shell, app } from 'electron'
+import fs from 'fs'
+import path from 'path'
+import os from 'os'
 
-// Custom APIs for renderer
-const api = {}
-
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
-  } catch (error) {
-    console.error(error)
+contextBridge.exposeInMainWorld('electron', {
+  ipcRenderer: {
+    send: (channel: string, ...args: any[]) => ipcRenderer.send(channel, ...args),
+    on: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: any[]) => void) =>
+      ipcRenderer.on(channel, listener),
+    once: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: any[]) => void) =>
+      ipcRenderer.once(channel, listener),
+    removeListener: (channel: string, listener: (...args: any[]) => void) =>
+      ipcRenderer.removeListener(channel, listener)
+  },
+  clipboard: {
+    writeImageFromArrayBuffer: (data: ArrayBuffer) => {
+      const buffer = Buffer.from(data) // ✅ Buffer allowed in preload
+      const image = nativeImage.createFromBuffer(buffer)
+      clipboard.writeImage(image)
+    }
+  },
+  shell: {
+    showItemInFolder: (filePath: string) => shell.showItemInFolder(filePath)
+  },
+  app: {
+    getDownloadsPath: () => os.homedir() + '/Downloads' // ✅ Manual fallback instead of app.getPath
+  },
+  fs: {
+    writeFileFromArrayBuffer: (filePath: string, data: ArrayBuffer) => {
+      const buffer = Buffer.from(data)
+      fs.writeFileSync(filePath, buffer)
+    }
   }
-} else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
-}
+})

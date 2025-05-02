@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NavItem from './NavItem';
 import { FaBell, FaCog } from 'react-icons/fa';
@@ -10,6 +10,10 @@ import { IoLogOutOutline } from "react-icons/io5";
 import { MdOutlinePermIdentity } from "react-icons/md";
 import { PiSlideshowThin } from "react-icons/pi";
 import { FaReplyAll } from "react-icons/fa";
+import { getAllDefaultChats } from '@renderer/api/queries/agent.queries';
+import { useQuery } from '@tanstack/react-query';
+import { getunreadMessageCount } from '@renderer/api/queries/commonqueries';
+// import { useQuery } from 'react-query';
 
 
 export const Sidebar = () => {
@@ -20,6 +24,7 @@ export const Sidebar = () => {
   const [activeItem, setActiveItem] = useState(initialActiveItem);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { dispatch } = useAuth();
+  const previousCount = useRef<number>(0); // To store the previous count
 
   // const navigate = useNavigate();
   const handlogout = () => {
@@ -33,7 +38,25 @@ export const Sidebar = () => {
     }
   }, [token]);
 
+  // const {token}=useAuth();
+  const { data: chatsData, isLoading: chatLoading, isError: chatIsError, error: chatError } = useQuery({
+    queryKey: ['pendingChats'],
+    queryFn: () => getAllDefaultChats(token),
+    enabled: !!token,
+    refetchInterval: 3000
+  });
 
+    const { data: count } = useQuery({
+      queryKey: ['notificationCount'],
+      queryFn: () => getunreadMessageCount(token),
+      refetchInterval: 5000,
+    });
+    // const un
+    const countData = count?.data;
+    // const newCount = countData;
+    // const ne
+  const pendingChatsCount=chatsData?.data.length;
+  console.log('chatscount', pendingChatsCount)
   // Define menus for admin and agent roles
   const adminMenuItems = [
     { label: 'Dashboard', icon: Images.dashboard, href: '/dashboard', id: 'dashboard' },
@@ -52,12 +75,19 @@ export const Sidebar = () => {
     { label: 'Ways Of Hearing', icon: <PiSlideshowThin />, href: '/WaysOfHearing', id: 'WaysOfHearing' },
   ];
 
-  const agentMenuItems = [
-    { label: 'Chats', icon: Images.chats, href: '/chats', id: 'chats' },
-    { label: 'Pending Chats', icon: Images.chats, href: '/pending-chats', id: 'pending-chats' },
+  const agentMenuItems = useMemo(() => [
+    { label: 'Chats', icon: Images.chats, href: '/chats', id: 'chats' ,badge:  countData > 0 ? countData : null},
+    {
+      label: 'Pending Chats',
+      icon: Images.chats,
+      href: '/pending-chats',
+      id: 'pending-chats',
+      badge: typeof pendingChatsCount === 'number' && pendingChatsCount > 0 ? pendingChatsCount : null,
+    },
     { label: 'Quick Replies', icon: <FaReplyAll />, href: '/quick-replies', id: 'quick-replies' },
     { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
-  ];
+  ], [pendingChatsCount]);
+
 
   const bottomMenuItems = [
     { label: 'Notifications', icon: <FaBell />, href: '/notifications/', id: 'notifications' },
@@ -121,7 +151,9 @@ export const Sidebar = () => {
                   setActiveItem(item.id);
                 }
               }}
+              badge={item.badge} // Pass the badge prop
             />
+
           ))}
         </ul>
       </nav>

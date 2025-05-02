@@ -335,6 +335,7 @@ export interface AgentToCustomerChatData {
     lastname: string
     role: string
     profilePicture: string
+    country: string
   }
   recentMessage: {
     id: number

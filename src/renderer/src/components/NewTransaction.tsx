@@ -186,6 +186,7 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
                     <option value="">Select Card Type</option>
                     <option value="E-code">E-code</option>
                     <option value="Physical Card">Physical Card</option>
+                    <option value="Paper Code">Paper Code</option>
                   </select>
 
                   <label className="block text-gray-700">Card Number</label>

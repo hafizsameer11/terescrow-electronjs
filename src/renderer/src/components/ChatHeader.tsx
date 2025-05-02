@@ -145,8 +145,8 @@ const ChatHeader: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Section */}
-        {
-          status === 'pending' && (
+        {/* {
+          status === 'pending' && ( */}
             <div className="flex items-center space-x-2">
 
               {isCustomRateModalOpen && (
@@ -237,8 +237,8 @@ const ChatHeader: React.FC<HeaderProps> = ({
               </div>
             </div>
 
-          )
-        }
+        {/* //   )
+        // } */}
       </div>
 
       {/* Modals */}
