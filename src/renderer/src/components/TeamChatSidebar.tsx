@@ -21,7 +21,7 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
   const [filteredUsers, setFilteredUsers] = useState<ChatUser[]>([]);
   const { token, userData } = useAuth();
   // Fetch chats using React Query
-  const{onlineAgents} = useSocket()
+  const { onlineAgents } = useSocket()
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['all-chats-with-team'],
     queryFn: () => getAllTeamChats(token),
@@ -30,7 +30,7 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
 
   const chats = data?.data || [];
 
-  // Transform chats to `ChatUser` format (useMemo ensures the transformation doesn't run on every render)
+
   const users: ChatUser[] = useMemo(() => {
 
     return chats.map((chat) => {
@@ -52,6 +52,8 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
         status: 'Online', // Replace with actual logic if available
         isGroup,
         groupMembers: isGroup ? chat.chatGroup?.groupName?.split(',') || [] : [],
+        isPendingMessage: (chat?._count?.messages ?? 0) > 0,
+
         messages: chat.messages.map((msg) => ({
           id: msg.id,
           text: msg.message,
@@ -152,13 +154,13 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
               </div>
             </div>
             <span
-              className={`w-3 h-3 rounded-full ${onlineAgents.some((onlineAgent) => onlineAgent.userId == user?.id) ? 'bg-green-500' : 'bg-red-500'
-                }`}
-            ></span>
+  className={`w-3 h-3 rounded-full ${user?.isPendingMessage ? 'bg-red-500' : 'bg-green-500'}`}
+/>
+
           </div>
         ))}
-      </div>
     </div>
+    </div >
   );
 };
 

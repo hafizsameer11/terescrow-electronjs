@@ -53,6 +53,7 @@ export const Sidebar = () => {
     });
     // const un
     const countData = count?.data;
+    console.log('countData', countData)
     // const newCount = countData;
     // const ne
   const pendingChatsCount=chatsData?.data.length;
@@ -86,7 +87,7 @@ export const Sidebar = () => {
     },
     { label: 'Quick Replies', icon: <FaReplyAll />, href: '/quick-replies', id: 'quick-replies' },
     { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
-  ], [pendingChatsCount]);
+  ], [pendingChatsCount,countData]);
 
 
   const bottomMenuItems = [

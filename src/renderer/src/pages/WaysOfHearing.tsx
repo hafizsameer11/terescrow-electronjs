@@ -58,15 +58,15 @@ const WaysOfHearing = () => {
               <tr>
                 <th className="px-4 py-2 text-left">ID</th>
                 <th className="px-4 py-2 text-left">Means</th>
-                <th className="px-4 py-2 text-left">Created At</th>
+                {/* <th className="px-4 py-2 text-left">Created At</th> */}
               </tr>
             </thead>
             <tbody>
               {data?.data.list.map((item) => (
                 <tr key={item.id} className="border-b">
                   <td className="px-4 py-2">{item.id}</td>
-                  <td className="px-4 py-2">{item.means}</td>
-                  <td className="px-4 py-2">{new Date(item.createdAt).toLocaleString()}</td>
+                  <td className="px-4 py-2">{item.title}</td>
+                  {/* <td className="px-4 py-2">{new Date(item.createdAt).toLocaleString()}</td> */}
                 </tr>
               ))}
             </tbody>

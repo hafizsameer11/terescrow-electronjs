@@ -114,6 +114,12 @@ const CustomersPage: React.FC = () => {
           change={`${customerStats?.data?.totalCustomerChats?.percentage || 0}%`}
           isPositive={customerStats?.data?.totalCustomerChats?.change === 'positive'}
         />
+         <StatsCard
+          title="Today's Customer"
+          value={customerStats?.data?.todayCustomers?.count || "0"}
+          change={`${customerStats?.data?.todayCustomers?.percentage || 0}%`}
+          isPositive={customerStats?.data?.todayCustomers?.change === 'positive'}
+        />
       </div>
 
 

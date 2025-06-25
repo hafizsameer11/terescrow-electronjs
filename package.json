@@ -1,6 +1,6 @@
 {
   "name": "tercescrowadmin",
-  "version": "1.8.2",
+  "version": "1.8.9",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -13,7 +13,8 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
-    "build": "electron-vite build && electron-builder --mac --x64",
+    "build": "electron-vite build && electron-builder --mac --arm64",
+    "build:intel":"electron-vite build && electron-builder --mac --x64",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "electron-vite build && electron-builder --win",
@@ -67,7 +68,7 @@
     "productName": "TercescrowAdmin",
     "mac": {
       "target": [
-        "dmg"
+       "dmg"
       ],
       "icon": "resources/tercescrow-logo.icns",
       "minimumSystemVersion": "10.15",
@@ -76,8 +77,8 @@
       "entitlementsInherit": "entitlements.mac.inherit.plist",
       "gatekeeperAssess": false,
      "files": [
-      "**/*",  
-      "!**/Contents/Frameworks/TercescrowAdmin Helper (Plugin).app"  
+      "**/*",
+      "!**/Contents/Frameworks/TercescrowAdmin Helper (Plugin).app"
     ]
     },
     "win": {

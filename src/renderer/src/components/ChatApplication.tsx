@@ -124,8 +124,14 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         setCurrentStatus('Failed');
         setIsInputVisible(false)
       }
+      else if (chatsData?.data.chatDetails.status === 'pending') {
+        // ✅ CLEAR old notification when chat is pending
+        setNotification(null);
+        setCurrentStatus('Pending');
+        setIsInputVisible(true);
+      }
     }
-  }, [chatsData]);
+  }, [chatsData,id]);
 
   // Handle image upload and preview
 
@@ -134,7 +140,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
   const sendMessage = () => {
     console.log("Uploaded Image", uploadedImage)
     if (!inputValue.trim() && !uploadedImage) return;
-
+    console.log("Input Value", inputValue)
     const formData = new FormData();
     formData.append('chatId', id.toString());
 
@@ -254,11 +260,11 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
     const handleContextMenuAction = async (_event: any, action: string) => {
       const currentImageUrl = currentImageUrlRef.current;
       console.log("download clicked", currentImageUrl);
-  
+
       try {
         const res = await fetch(currentImageUrl);
         const arrayBuffer = await res.arrayBuffer();
-  
+
         if (action === 'copy') {
           window.electron.clipboard.writeImageFromArrayBuffer(arrayBuffer);
         } else if (action === 'download') {
@@ -271,16 +277,16 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         console.error('Context menu action failed:', error);
       }
     };
-  
+
     const channel = 'context-menu-action';
     window.electron.ipcRenderer.removeListener(channel, handleContextMenuAction); // 🧹 CLEAN before add
     window.electron.ipcRenderer.on(channel, handleContextMenuAction);
-  
+
     return () => {
       window.electron.ipcRenderer.removeListener(channel, handleContextMenuAction); // ✅ cleanup
     };
   }, []);
-  
+
 
   return (
     <div className='bg-black bg-opacity-30 w-full h-full  inset-0 flex items-center justify-center '>
@@ -317,7 +323,9 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
                    onContextMenu={(e) => handleImageContextMenu(e, getImageUrl(message.image))}
                  />
                )}
-               {message.message}
+                {message.message.split('\n').map((line, index) => (
+    <p key={index} className="whitespace-pre-wrap break-words">{line}</p>
+  ))}
              </div>
              <span className="text-xs text-gray-500">
                {new Date(message.createdAt).toLocaleTimeString([], {
@@ -328,7 +336,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
              </span>
            </div>
          </div>
-         
+
           ))}
           <div ref={chatEndRef} />
 
@@ -376,14 +384,15 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
               </button>
 
               {/* Input Field */}
-              <input
-                type="text"
-                placeholder="Type a message"
-                value={inputValue}
-                onKeyDown={(e) => handleKeyDown(e)}
-                onChange={(e) => setInputValue(e.target.value)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring focus:ring-gray-200"
-              />
+              <textarea
+  placeholder="Type a message"
+  value={inputValue}
+  onKeyDown={(e) => handleKeyDown(e)}
+  onChange={(e) => setInputValue(e.target.value)}
+  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring focus:ring-gray-200"
+  rows={1}
+/>
+
 
               {/* Send Button */}
 

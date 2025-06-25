@@ -32,3 +32,6 @@ $ yarn build:mac
 # For Linux
 $ yarn build:linux
 ```
+commands for build
+xcrun notarytool submit dist/TercescrowAdmin-1.8.9-arm64.dmg --keychain-profile hmstech --wait
+xcrun stapler staple dist/TercescrowAdmin-1.8.9-arm64.dmg

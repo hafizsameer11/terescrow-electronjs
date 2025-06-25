@@ -113,7 +113,16 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                 <td className="py-3 px-4">
                   <div>
                     <span className="font-semibold">{item.customer.username}</span>
-                    <p className="text-sm text-gray-500 m-0">{item.recentMessage?.message}</p>
+                    <p className="text-sm text-gray-500 m-0">
+                      {typeof item.recentMessage?.message === "string" && item.recentMessage.message.trim()
+                        ? item.recentMessage.message.trim()
+                        : "Sent an image"}
+                    </p>
+
+
+
+
+
                   </div>
                 </td>
                 {/* <td className='py-3 px-4'>{item.id}</td> */}
@@ -189,52 +198,62 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                   </div>
 
                   {/* ChatApplication Component */}
-                  {isTeamCommunition &&
-                    isChatOpen && (
-                      <div className='bg-gray-900 bg-opacity-50 w-full h-full inset-0 flex  justify-center items-center z-50'>
-                        <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-                          <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative overflow-visible">
-                            {/* Close Button */}
-                            <button
-                              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
-                              onClick={() => setIsChatOpen(false)}
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="1.5"
-                                stroke="currentColor"
-                                className="w-6 h-6"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M6 18L18 6M6 6l12 12"
-                                />
-                              </svg>
-                            </button>
+                  {/* {isTeamCommunition &&
+                    isChatOpen && ( */}
+                  <div
+                    className={` ${isTeamCommunition && isChatOpen ? '' : 'hidden'}`}>
+                    <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
+                      <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative overflow-visible">
+                        {/* Close Button */}
+                        <button
+                          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
+                          onClick={() => setIsChatOpen(false)}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="1.5"
+                            stroke="currentColor"
+                            className="w-6 h-6"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </button>
 
-                            {/* Check User Role and Render Appropriate Component */}
-                            {userData?.role !== 'agent' ? (
-                              <AdminChatApplication
-                                data={currentItem}
-                                id={activeChatId || 0}
-                                onClose={() => setIsChatOpen(false)}
-                                isAdmin={true}
-                              />
-                            ) : (
-                              <ChatApplication
-                                data={currentItem}
-                                id={activeChatId || 0}
-                                onClose={() => setIsChatOpen(false)}
-                              />
-                            )}
-                          </div>
-                        </div>
+                        {/* Check User Role and Render Appropriate Component */}
+                        {userData?.role !== 'agent' ? (
+                          currentItem ? (
+                            <AdminChatApplication
+                              data={currentItem}
+                              id={activeChatId || 0}
+                              onClose={() => setIsChatOpen(false)}
+                              isAdmin={true}
+                            />
+                          ) : (
+                            <div className="p-6 text-center">Loading chat data...</div>
+                          )
+                        ) : (
+                          currentItem ? (
+                            <ChatApplication
+                              data={currentItem}
+                              id={activeChatId || 0}
+                              onClose={() => setIsChatOpen(false)}
+                            />
+                          ) : (
+                            <div className="p-6 text-center">Loading chat data...</div>
+                          )
+                        )}
+
                       </div>
+                    </div>
+                  </div>
 
-                    )}
+                  {/* )} */}
                   {/*
                   {activeMenu === item.id && (
                     <div
