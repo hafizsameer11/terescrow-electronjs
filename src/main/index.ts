@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Notification, MenuItem, Menu } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Notification, MenuItem, Menu,Tray } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 const iconPath = {
@@ -6,44 +6,75 @@ const iconPath = {
   win: join(__dirname, '../../resources/win.ico'), // Windows icon
   linux: join(__dirname, '../../resources/icon.png') // Linux icon (optional, you can use PNG)
 }
+function setupTray(mainWindow: BrowserWindow) {
+  const trayIcon = process.platform === 'darwin' ? iconPath.mac : iconPath.win;
 
+   const tray = new Tray(trayIcon);
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show App',
+      click: () => {
+        mainWindow.show();
+      }
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit();
+      }
+    }
+  ]);
+  tray.setToolTip('Your App is running');
+  tray.setContextMenu(contextMenu);
+
+  tray.on('click', () => {
+    mainWindow.show();
+  });
+}
 function createWindow(): void {
-  // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1000,
     height: 770,
     show: false,
     minHeight: 770,
     minWidth: 1000,
-
     autoHideMenuBar: true,
     icon:
       process.platform === 'darwin'
         ? iconPath.mac
         : process.platform === 'win32'
-          ? iconPath.win
-          : iconPath.linux, // Use appropriate icon based on the platform
+        ? iconPath.win
+        : iconPath.linux,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false, // Disable sandbox for advanced IPC
+      sandbox: false,
       webSecurity: false,
       contextIsolation: true
     }
-  })
+  });
+
+  // ✅ Prevent window from closing (hide instead)
+  // mainWindow.on('close', (e) => {
+  //   e.preventDefault();
+  //   mainWindow.hide(); // keep the app running in tray
+  // });
 
   mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+    mainWindow.show();
+  });
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+    shell.openExternal(details.url);
+    return { action: 'deny' };
+  });
+
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
   }
 }
+
 
 app.whenReady().then(() => {
   // Set app user model id for Windows

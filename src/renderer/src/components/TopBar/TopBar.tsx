@@ -25,6 +25,15 @@ const TopBar: React.FC = () => {
   const previousTeamNotifications = useRef<any[]>([]);
   const seenCustomerNotificationIds = useRef<Set<string | number>>(new Set());
   const seenTeamNotificationIds = useRef<Set<string | number>>(new Set());
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission().then((permission) => {
+        if (permission !== 'granted') {
+          console.warn('Notification permission denied');
+        }
+      });
+    }
+  }, []);
 
   const { data: count } = useQuery({
     queryKey: ['notificationCount'],

@@ -221,7 +221,7 @@
   resolved "https://registry.npmjs.org/@electron-toolkit/utils/-/utils-3.0.0.tgz"
   integrity sha512-GaXHDhiT7KCvMJjXdp/QqpYinq69T/Pdl49Z1XLf8mKGf63dnsODMWyrmIjEQ0z/vG7dO8qF3fvmI6Eb2lUNZA==
 
-"@electron/asar@^3.2.7", "@electron/asar@^3.3.1":
+"@electron/asar@^3.2.7":
   version "3.4.1"
   resolved "https://registry.npmjs.org/@electron/asar/-/asar-3.4.1.tgz"
   integrity sha512-i4/rNPRS84t0vSRa2HorerGRXWyF4vThfHesw0dmcWHp+cspK743UanA0suA5Q5y8kzY2y6YKrvbIUn69BCAiA==
@@ -285,19 +285,6 @@
     semver "^7.3.5"
     tar "^6.0.5"
     yargs "^17.0.1"
-
-"@electron/universal@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.npmjs.org/@electron/universal/-/universal-2.0.3.tgz"
-  integrity sha512-Wn9sPYIVFRFl5HmwMJkARCCf7rqK/EurkfQ/rJZ14mHP3iYTjZSIOSVonEAnhWeAXwtw7zOekGRlc6yTtZ0t+g==
-  dependencies:
-    "@electron/asar" "^3.3.1"
-    "@malept/cross-spawn-promise" "^2.0.0"
-    debug "^4.3.1"
-    dir-compare "^4.2.0"
-    fs-extra "^11.1.1"
-    minimatch "^9.0.3"
-    plist "^3.1.0"
 
 "@electron/universal@2.0.1":
   version "2.0.1"
@@ -3740,7 +3727,14 @@ minimatch@^5.1.0:
   dependencies:
     brace-expansion "^2.0.1"
 
-minimatch@^9.0.3, minimatch@^9.0.4:
+minimatch@^9.0.3:
+  version "9.0.5"
+  resolved "https://registry.npmjs.org/minimatch/-/minimatch-9.0.5.tgz"
+  integrity sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==
+  dependencies:
+    brace-expansion "^2.0.1"
+
+minimatch@^9.0.4:
   version "9.0.5"
   resolved "https://registry.npmjs.org/minimatch/-/minimatch-9.0.5.tgz"
   integrity sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==

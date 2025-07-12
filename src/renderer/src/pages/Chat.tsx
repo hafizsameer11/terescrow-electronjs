@@ -64,7 +64,7 @@ const Chat = () => {
     queryKey: ['chats'],
     queryFn: () => getAllAgentToCusomterChats({ token }),
     enabled: !!token,
-    refetchInterval: 3000
+    refetchInterval: 1000
   });
   useEffect(() => {
     console.log('chatsData', chatsData)
