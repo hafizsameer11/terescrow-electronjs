@@ -46,6 +46,7 @@ const AddAgentProfileModal: React.FC<AgentEditProfileModalProps> = ({
       onClose()
     },
     onError: (error) => {
+      alert('Error creating agent: ' + error.message)
       console.error('Error creating agent:', error)
     },
   })

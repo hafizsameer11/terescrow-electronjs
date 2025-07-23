@@ -113,11 +113,19 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                 <td className="py-3 px-4">
                   <div>
                     <span className="font-semibold">{item.customer.username}</span>
-                    <p className="text-sm text-gray-500 m-0">
-                      {typeof item.recentMessage?.message === "string" && item.recentMessage.message.trim()
-                        ? item.recentMessage.message.trim()
-                        : "Sent an image"}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-500 m-0">
+                        {typeof item.recentMessage?.message === "string" && item.recentMessage.message.trim()
+                          ? item.recentMessage.message.trim()
+                          : "Sent an image"}
+                      </p>
+
+                      {item?.unreadCount > 0 && (
+                        <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                          {item?.unreadCount}
+                        </span>
+                      )}
+                    </div>
 
 
 

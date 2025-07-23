@@ -131,7 +131,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         setIsInputVisible(true);
       }
     }
-  }, [chatsData,id]);
+  }, [chatsData, id]);
 
   // Handle image upload and preview
 
@@ -266,7 +266,9 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         const arrayBuffer = await res.arrayBuffer();
 
         if (action === 'copy') {
-          window.electron.clipboard.writeImageFromArrayBuffer(arrayBuffer);
+          // window.electron.clipboard.writeImageFromArrayBuffer(arrayBuffer);
+          window.electron.ipcRenderer.send('copy-image-from-buffer', Buffer.from(arrayBuffer));
+
         } else if (action === 'download') {
           const fileName = `image-${Date.now()}.jpg`;
           const downloadPath = `${window.electron.app.getDownloadsPath()}/${fileName}`;
@@ -304,38 +306,38 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         {/* Chat Messages */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message) => (
-           <div
-           key={message.id}
-           className={`flex ${message.senderId === userData?.id ? 'justify-end' : 'justify-start'} mb-2`}
-         >
-           <div className="flex flex-col items-end space-y-1">
-             <div
-               className={`max-w-xs px-4 py-2 rounded-lg ${message.senderId === userData?.id
-                 ? 'bg-green-100 text-gray-800'
-                 : 'bg-gray-100 text-gray-800'
-                 }`}
-             >
-               {message.image && (
-                 <img
-                   src={getImageUrl(message.image)}
-                   alt="Uploaded"
-                   className="mb-2 rounded-lg w-full max-w-[150px] cursor-pointer"
-                   onContextMenu={(e) => handleImageContextMenu(e, getImageUrl(message.image))}
-                 />
-               )}
-                {message.message.split('\n').map((line, index) => (
-    <p key={index} className="whitespace-pre-wrap break-words">{line}</p>
-  ))}
-             </div>
-             <span className="text-xs text-gray-500">
-               {new Date(message.createdAt).toLocaleTimeString([], {
-                 hour: '2-digit',
-                 minute: '2-digit',
-                 hour12: true, // or false if you want 24-hour format
-               })}
-             </span>
-           </div>
-         </div>
+            <div
+              key={message.id}
+              className={`flex ${message.senderId === userData?.id ? 'justify-end' : 'justify-start'} mb-2`}
+            >
+              <div className="flex flex-col items-end space-y-1">
+                <div
+                  className={`max-w-xs px-4 py-2 rounded-lg ${message.senderId === userData?.id
+                    ? 'bg-green-100 text-gray-800'
+                    : 'bg-gray-100 text-gray-800'
+                    }`}
+                >
+                  {message.image && (
+                    <img
+                      src={getImageUrl(message.image)}
+                      alt="Uploaded"
+                      className="mb-2 rounded-lg w-full max-w-[150px] cursor-pointer"
+                      onContextMenu={(e) => handleImageContextMenu(e, getImageUrl(message.image))}
+                    />
+                  )}
+                  {message.message.split('\n').map((line, index) => (
+                    <p key={index} className="whitespace-pre-wrap break-words">{line}</p>
+                  ))}
+                </div>
+                <span className="text-xs text-gray-500">
+                  {new Date(message.createdAt).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true, // or false if you want 24-hour format
+                  })}
+                </span>
+              </div>
+            </div>
 
           ))}
           <div ref={chatEndRef} />
@@ -385,13 +387,13 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
 
               {/* Input Field */}
               <textarea
-  placeholder="Type a message"
-  value={inputValue}
-  onKeyDown={(e) => handleKeyDown(e)}
-  onChange={(e) => setInputValue(e.target.value)}
-  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring focus:ring-gray-200"
-  rows={1}
-/>
+                placeholder="Type a message"
+                value={inputValue}
+                onKeyDown={(e) => handleKeyDown(e)}
+                onChange={(e) => setInputValue(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring focus:ring-gray-200"
+                rows={1}
+              />
 
 
               {/* Send Button */}

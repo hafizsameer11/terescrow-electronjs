@@ -32,8 +32,8 @@ const ChatHeader: React.FC<HeaderProps> = ({
   onLogChat,
   onStatusChange, status, id
 }) => {
-  console.log("THis is the ChatHeader");
-  console.log(name, username);
+  // console.log("THis is the ChatHeader");
+  // console.log(name, username);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   const [selectedOption, setSelectedOption] = useState<string>('Pending')
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false)

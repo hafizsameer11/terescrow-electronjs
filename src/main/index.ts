@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, Notification, MenuItem, Menu,Tray } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, Notification, MenuItem, Menu,Tray, nativeImage, clipboard } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 const iconPath = {
@@ -105,21 +105,21 @@ ipcMain.on('show-image-context-menu', (event) => {
     })
   );
 
-  // menu.append(
-  //   new MenuItem({
-  //     label: 'Download Image',
-  //     click: () => {
-  //       event.sender.send('context-menu-action', 'download');
-  //     },
-  //   })
-  // );
-
   menu.popup({
     window: BrowserWindow.getFocusedWindow()!,
   });
 });
-// Quit when all windows are closed, except on macOS. There, it's common for applications
-// and their menu bar to stay active until the user quits explicitly with Cmd + Q.
+ipcMain.on('copy-image-from-buffer', (_event, buffer: Buffer) => {
+  const image = nativeImage.createFromBuffer(buffer);
+
+  if (image.isEmpty()) {
+    console.warn('⚠️ Image buffer is empty or corrupted.');
+  } else {
+    clipboard.clear(); // Clear old clipboard data (important!)
+    clipboard.writeImage(image);
+    console.log('✅ Image copied to clipboard');
+  }
+});
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
