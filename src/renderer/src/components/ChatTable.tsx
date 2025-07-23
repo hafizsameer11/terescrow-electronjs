@@ -125,6 +125,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                           {item?.unreadCount}
                         </span>
                       )}
+
                     </div>
 
 
