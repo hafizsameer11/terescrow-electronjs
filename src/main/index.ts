@@ -109,13 +109,14 @@ ipcMain.on('show-image-context-menu', (event) => {
     window: BrowserWindow.getFocusedWindow()!,
   });
 });
-ipcMain.on('copy-image-from-buffer', (_event, buffer: Buffer) => {
+ipcMain.on('copy-image-from-buffer', (_event, byteArray: Uint8Array) => {
+  const buffer = Buffer.from(byteArray); // Convert Uint8Array to Buffer
   const image = nativeImage.createFromBuffer(buffer);
 
   if (image.isEmpty()) {
     console.warn('⚠️ Image buffer is empty or corrupted.');
   } else {
-    clipboard.clear(); // Clear old clipboard data (important!)
+    clipboard.clear();
     clipboard.writeImage(image);
     console.log('✅ Image copied to clipboard');
   }

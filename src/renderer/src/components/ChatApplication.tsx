@@ -32,7 +32,9 @@ interface ChatApplicationProps {
   isAdmin?: boolean;
 }
 
+
 const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, isAdmin }) => {
+
   const { token, userData } = useAuth();
   const [messages, setMessages] = useState<IResMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -267,7 +269,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
 
         if (action === 'copy') {
           // window.electron.clipboard.writeImageFromArrayBuffer(arrayBuffer);
-          window.electron.ipcRenderer.send('copy-image-from-buffer', Buffer.from(arrayBuffer));
+window.electron.ipcRenderer.send('copy-image-from-buffer', new Uint8Array(arrayBuffer));
 
         } else if (action === 'download') {
           const fileName = `image-${Date.now()}.jpg`;
