@@ -14,19 +14,108 @@ import {
   TeamStatsResponse
 } from './statDataInterface'
 
+// export const getAllAgentToCusomterChats = async ({
+//   token,
+//   page = 1,
+//   limit = 50,
+//   filters = {},
+// }: {
+//   token: string;
+//   page?: number;
+//   limit?: number;
+//   filters?: {
+//     status?: string;
+//     type?: string;
+//     category?: string;
+//     q?: string;
+//     start?: string; // YYYY-MM-DD
+//     end?: string;   // YYYY-MM-DD
+//   };
+// }) => {
+//   const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+//   Object.entries(filters).forEach(([k, v]) => { if (v) params.set(k, String(v)); });
+//   return apiCall(`${API_ENDPOINT.OPERATIONS.GetAllAgentToCusomterChats}?${params}`, 'GET', undefined, token);
+// };
+
+
+export type ChatRow = {
+  id: string;
+  updatedAt?: string;
+  createdAt?: string | null;
+  chatStatus?: string | null;
+  department?: { id: string; title: string; Type?: string; niche?: string } | null;
+  category?: { id: string; title: string } | null;
+  customer?: {
+    id: string;
+    username?: string;
+    firstname?: string;
+    lastname?: string;
+    role?: string;
+    profilePicture?: string | null;
+    country?: string | null;
+  } | null;
+  agent?: {
+    id: string;
+    username?: string;
+    firstname?: string;
+    lastname?: string;
+    role?: string;
+    profilePicture?: string | null;
+    country?: string | null;
+  } | null;
+  recentMessage?: { id: string; message?: string; createdAt?: string } | null;
+  unreadCount?: number;
+  transactionsCount?: number; // backend should return count (not full array)
+};
+
+export type PaginatedChatsResponse = {
+  success: boolean;
+  message: string;
+  data: ChatRow[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export const getChatStats = async ({ token }: { token: string }) => {
+  return apiCall(`${API_ENDPOINT.OPERATIONS.GetChatStats}`, 'GET', undefined, token);
+};
+
+type Filters = {
+  status?: string;
+  type?: string;
+  category?: string;
+  q?: string;
+  start?: string; // YYYY-MM-DD
+  end?: string;   // YYYY-MM-DD
+};
+
 export const getAllAgentToCusomterChats = async ({
-  token
+  token,
+  page = 1,
+  limit = 50,
+  filters = {},
 }: {
-  token: string
-}): Promise<AgentToCustomerChatResponse> => {
-  return await apiCall(
-    `${API_ENDPOINT.OPERATIONS.GetAllAgentToCusomterChats}`,
+  token: string;
+  page?: number;
+  limit?: number;
+  filters?: Filters;
+}): Promise<PaginatedChatsResponse> => {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+  Object.entries(filters).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && String(v).trim() !== '') {
+      params.set(k, String(v));
+    }
+  });
+
+  return apiCall(
+    `${API_ENDPOINT.OPERATIONS.GetAllAgentToCusomterChats}?${params.toString()}`,
     'GET',
     undefined,
     token
-  )
-}
-
+  );
+};
 export const getSingleAgentToCusomterChat = async ({
   token,
   agentId
@@ -86,9 +175,9 @@ export const getAgentToAgentChatDetails = async ({
   )
 }
 
-export const getChatStats = async ({ token }: { token: string }): Promise<ChatStats> => {
-  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetChatStats}`, 'GET', undefined, token)
-}
+// export const getChatStats = async ({ token }: { token: string }): Promise<ChatStats> => {
+//   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetChatStats}`, 'GET', undefined, token)
+// }
 
 export const getCustomerStats = async ({
   token
