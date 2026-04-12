@@ -8,16 +8,27 @@ export const getImageUrl = (imageName: any): string => {
 
 export function addThousandSeparator(value: any): string {
   if (value == null || value === '') {
-    // Return '0' or an empty string for null or undefined values
     return '0'
   }
-
-  if (isNaN(value)) {
-    // Ensure the input is a number or numeric string
+  const n = typeof value === 'number' ? value : parseFloat(String(value).replace(/,/g, '').trim())
+  if (Number.isNaN(n)) {
     console.warn('Invalid input:', value)
-    return 'Invalid' // Optionally return a fallback value
+    return 'Invalid'
   }
+  return n.toLocaleString('en-US')
+}
 
-  // Convert the value to a float and format with thousand separators
-  return parseFloat(value).toLocaleString('en-US')
+/**
+ * Formats values shown as Naira/NGN (with ₦ or N prefix applied by the caller).
+ * Strips commas, ₦, spaces, and leading N; handles numeric strings from APIs.
+ */
+export function formatNairaAmount(value: string | number | null | undefined): string {
+  if (value == null || value === '') return '0'
+  const s0 = String(value).trim()
+  if (s0 === '—' || s0 === '-') return '—'
+  const cleaned = s0.replace(/,/g, '').replace(/[₦\s]/g, '').replace(/^N/i, '')
+  if (cleaned === '') return '0'
+  const n = parseFloat(cleaned)
+  if (Number.isNaN(n)) return s0
+  return n.toLocaleString('en-US')
 }

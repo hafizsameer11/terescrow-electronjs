@@ -25,7 +25,7 @@ const TeamChatSidebar: React.FC<TeamChatSidebarProps> = ({
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['all-chats-with-team'],
     queryFn: () => getAllTeamChats(token),
-    refetchInterval: 5000,
+    // refetchInterval: 5000,
   });
 
   const chats = data?.data || [];

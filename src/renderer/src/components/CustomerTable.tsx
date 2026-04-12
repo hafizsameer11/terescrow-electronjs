@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NewNotificationModal from "./modal/NewNotificationModal";
 import NotificationHistoryModal from "./modal/NotificationHistoryModal";
+import FreezeFeatureModal from "./modal/FreezeFeatureModal";
 import { InappNotification } from "@renderer/api/queries/datainterfaces";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { chnageUserStatus } from "@renderer/api/queries/adminqueries";
+import { freezeCustomerFeature, banCustomer } from "@renderer/api/admin/customers";
 import { useAuth } from "@renderer/context/authContext";
 
 interface Customer {
@@ -41,6 +43,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
   const [isNewNotificationModalOpen, setIsNewNotificationModalOpen] =
     useState<boolean>(false);
   const [notifications, setNotifications] = useState<InappNotification[]>([]);
+  const [freezeModalCustomerId, setFreezeModalCustomerId] = useState<number | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -91,9 +94,39 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
     setIsNotificationModalOpen(true);
   }
   const hanldeStatusChange = (id: number, status: string) => {
-    console.log('status', status)
     mutation({ id, status })
-  }
+  };
+
+  const freezeMutation = useMutation({
+    mutationFn: (feature: string) =>
+      freezeCustomerFeature(token!, freezeModalCustomerId!, { feature }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customersData'] });
+      setFreezeModalCustomerId(null);
+    },
+    onError: () => alert('Failed to freeze feature.'),
+  });
+
+  const banMutation = useMutation({
+    mutationFn: ({ customerId, reason, permanent }: { customerId: number; reason?: string; permanent?: boolean }) =>
+      banCustomer(token!, customerId, { reason, permanent }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customersData'] });
+    },
+    onError: () => alert('Failed to ban account.'),
+  });
+
+  const handleFreezeFeatureProceed = (feature: string) => {
+    setActiveMenu(null);
+    if (freezeModalCustomerId != null) freezeMutation.mutate(feature);
+  };
+
+  const handleBanAccount = (customer: Customer) => {
+    setActiveMenu(null);
+    const permanent = window.confirm('Permanently ban this account? Cancel for temporary ban.');
+    const reason = window.prompt('Reason for ban (optional):') ?? undefined;
+    banMutation.mutate({ customerId: customer.id, reason, permanent });
+  };
   // const handleNewNotificationSubmit = (formData: {
   //   title: string;
   //   message: string;
@@ -192,6 +225,21 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
                       Notification
                     </button>
                     <button
+                      onClick={() => {
+                        setFreezeModalCustomerId(customer.id);
+                        setActiveMenu(null);
+                      }}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      Freeze feature
+                    </button>
+                    <button
+                      onClick={() => handleBanAccount(customer)}
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    >
+                      Ban Account
+                    </button>
+                    <button
                       onClick={() =>
                         hanldeStatusChange(customer.id, customer.status === 'active' ? 'block' : 'active')
                       }
@@ -248,7 +296,14 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
           actionType="add"
           isOpen={isNewNotificationModalOpen}
           onClose={() => setIsNewNotificationModalOpen(false)}
-        // onSubmit={handleNewNotificationSubmit}
+        />
+      )}
+      {freezeModalCustomerId !== null && (
+        <FreezeFeatureModal
+          isOpen={true}
+          onClose={() => setFreezeModalCustomerId(null)}
+          customerId={freezeModalCustomerId}
+          onProceed={handleFreezeFeatureProceed}
         />
       )}
     </div>

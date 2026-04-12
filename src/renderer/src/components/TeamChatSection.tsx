@@ -25,7 +25,7 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
   const { data: chatDetailsData, refetch: refetchChatDetails, isError } = useQuery<ITeamChatDetailsResponse>({
     queryKey: ['team-chat-details', chatId],
     queryFn: () => getTeamChatDetails(token, chatId),
-    refetchInterval: 1000, // Refetch every second
+    // refetchInterval: 1000, // Refetch every second
   });
   const { data: response } = useQuery({
     queryKey: ['markingAllRead', chatId],

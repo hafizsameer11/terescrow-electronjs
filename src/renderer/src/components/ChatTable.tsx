@@ -1,14 +1,53 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 // import ChatApplication from '../ChatApplication';
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai'
+import { FiMoreVertical } from 'react-icons/fi'
 import TeamChat from './TeamChat'
 import ChatApplication from './ChatApplication'
 import { AgentToAgentChatData, AgentToCustomerChatData } from '@renderer/api/queries/datainterfaces'
-import { getImageUrl } from '@renderer/api/helper'
+import { getImageUrl, formatNairaAmount } from '@renderer/api/helper'
 import AdminChatApplication from './AdminChatApplication'
 import AdminChatApplicationTeam from './AdminChatApplicationTeam'
 import { useAuth } from '@renderer/context/authContext'
 // import TeamChat from '../TeamChat';
+
+function countryEmoji(country?: string): string {
+  if (!country) return ''
+  const u = country.trim().toUpperCase()
+  if (u === 'NG' || u.includes('NIGERIA')) return '🇳🇬'
+  if (u === 'US' || u === 'USA') return '🇺🇸'
+  if (u === 'GB' || u === 'UK') return '🇬🇧'
+  if (u.length === 2) {
+    try {
+      const A = 0x1f1e6
+      const pts = [...u].map((c) => A + (c.charCodeAt(0) - 65))
+      return String.fromCodePoint(...pts)
+    } catch {
+      return ''
+    }
+  }
+  return ''
+}
+
+function statusLabel(status: string): string {
+  const s = (status || '').toLowerCase()
+  if (s === 'successful') return 'Successful'
+  if (s === 'declined') return 'Declined'
+  if (s === 'pending') return 'Pending'
+  if (s === 'unsucessful' || s === 'unsuccessful') return 'Unanswered'
+  return status || '—'
+}
+
+function formatListDate(iso?: string | null): string {
+  if (!iso) return '—'
+  try {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return iso.split('T')[0] ?? '—'
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  } catch {
+    return '—'
+  }
+}
 
 interface Transaction {
   id: number
@@ -30,9 +69,12 @@ interface TransactionsTableProps {
   isTeam?: boolean
   onEditHanlder?: (agentId: number) => void
   userViewState?: boolean
-  onUserViewed: (selectedId: number) => void
+  onUserViewed?: (selectedId: number) => void
   isTeamCommunition?: boolean
   activeFilterInTeam?: string
+  /** Chats hub: checkboxes, status copy, flags, no per-table pagination (use parent pager). */
+  hubLayout?: boolean
+  disableInternalPagination?: boolean
   // teamData: AgentToCustomerChatData[]
 }
 
@@ -44,7 +86,9 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
   onEditHanlder,
   isTeamCommunition = true,
   onUserViewed,
-  activeFilterInTeam = 'Customer'
+  activeFilterInTeam = 'Customer',
+  hubLayout = false,
+  disableInternalPagination = false,
 }) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null)
   const [activeChatId, setActiveChatId] = useState<number | null>(null); // Track the active chat ID
@@ -73,150 +117,245 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
   }
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const totalPages = Math.ceil(data?.length ?? 0 / itemsPerPage);
-  const paginatedData = data?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const len = data?.length ?? 0;
+  const totalPages = Math.max(1, Math.ceil(len / itemsPerPage));
+  const paginatedData = useMemo(() => {
+    if (disableInternalPagination || hubLayout) return data ?? [];
+    return data?.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage) ?? [];
+  }, [data, currentPage, disableInternalPagination, hubLayout]);
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setCurrentPage(newPage);
     }
   };
 
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const toggleSelect = (id: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const allOnPageSelected =
+    hubLayout &&
+    paginatedData.length > 0 &&
+    paginatedData.every((row) => selectedIds.has(row.id));
+  const toggleSelectAllOnPage = () => {
+    if (!hubLayout) return;
+    if (allOnPageSelected) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        paginatedData.forEach((row) => next.delete(row.id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        paginatedData.forEach((row) => next.add(row.id));
+        return next;
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (activeMenu == null) return;
+    const onDoc = () => setActiveMenu(null);
+    document.addEventListener('click', onDoc);
+    return () => document.removeEventListener('click', onDoc);
+  }, [activeMenu]);
+
   if (activeFilterInTeam === 'Customer') {
+    const chatModal =
+      isTeamCommunition && isChatOpen ? (
+        <div className="fixed inset-0 bg-gray-900/50 flex justify-center items-center z-[100] p-4">
+          <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-xl shadow-xl relative overflow-y-auto">
+            <button
+              type="button"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10"
+              onClick={() => setIsChatOpen(false)}
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            {userData?.role !== 'agent' ? (
+              currentItem ? (
+                <AdminChatApplication data={currentItem} id={activeChatId || 0} onClose={() => setIsChatOpen(false)} isAdmin={true} />
+              ) : (
+                <div className="p-6 text-center">Loading chat data...</div>
+              )
+            ) : currentItem ? (
+              <ChatApplication data={currentItem} id={activeChatId || 0} onClose={() => setIsChatOpen(false)} />
+            ) : (
+              <div className="p-6 text-center">Loading chat data...</div>
+            )}
+          </div>
+        </div>
+      ) : null;
+
     return (
-      <div className="mt-6 bg-white rounded-lg shadow-md">
-        <table className="min-w-full table-fixed text-left text-sm text-gray-700">
-          <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
-            <tr>
-              <th className="py-3 w-[5%]"></th> {/* First column with 5% width */}
-              <th className="py-3 px-4 w-[20%]">Name, Chat</th>
-              {/* {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[15%]">Id</th>} */}
-              {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[15%]">Amount</th>}
-              {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[15%]">Agent</th>}
-              <th className="py-3 px-4 w-[20%]">Date</th>
-              {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[15%]">Status</th>}
-              <th className="py-3 px-4 text-center w-[10%]">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {paginatedData?.map((item) => (
-              // {console.log(item)}
-              <tr key={item.id} className="border-t hover:bg-gray-50 relative">
-                <td className="py-3 ps-5">
-                  <div className="bg-gray- text-4xl rounded-full inline-flex mx-auto">
-                    <img src={getImageUrl(item.customer.profilePicture)} alt="" />
-                  </div>
-                </td>
-                <td className="py-3 px-4">
-                  <div>
-                    <span className="font-semibold">{item.customer.username}</span>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-500 m-0">
-                        {typeof item.recentMessage?.message === "string" && item.recentMessage.message.trim()
-                          ? item.recentMessage.message.trim()
-                          : "Sent an image"}
-                      </p>
-
-                      {item?.unreadCount > 0 && (
-                        <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                          {item?.unreadCount}
-                        </span>
-                      )}
-
-                    </div>
-
-
-
-
-
-                  </div>
-                </td>
-                {/* <td className='py-3 px-4'>{item.id}</td> */}
-                {activeFilterInTeam === 'Customer' && (
-                  <td className="py-3 px-4">
-                    <div>
-                      <span className="block font-semibold">
-                        {item?.transactions?.[0]?.amount ?? 0}
-                      </span>
-                      <span className="text-sm text-gray-500">₦   {item?.transactions?.[0]?.amountNaira ?? 0}</span>
-                    </div>
-                  </td>
+      <>
+        <div
+          className={`mt-6 bg-white ${hubLayout ? 'rounded-xl border border-gray-200 shadow-sm overflow-hidden' : 'rounded-lg shadow-md'}`}
+        >
+          <table className="min-w-full table-fixed text-left text-sm text-gray-700">
+            <thead
+              className={
+                hubLayout
+                  ? 'bg-white text-gray-500 text-xs font-medium border-b border-gray-200'
+                  : 'bg-gray-100 text-gray-600 uppercase text-xs'
+              }
+            >
+              <tr>
+                {hubLayout ? (
+                  <th className="py-3 pl-4 w-10">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-400"
+                      checked={allOnPageSelected}
+                      onChange={toggleSelectAllOnPage}
+                      aria-label="Select all on page"
+                    />
+                  </th>
+                ) : (
+                  <th className="py-3 w-[5%]" />
                 )}
-                {activeFilterInTeam === 'Customer' && <td className="py-3 px-4">{item.agent.firstname} {item.agent.lastname}</td>}
-                <td className="py-3 px-4">{item.recentMessage?.createdAt.split('T')[0]}</td>
-                {activeFilterInTeam === 'Customer' && (
-                  <td className="py-3 px-4">
-                    <span
-                      className={`flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-lg border
-    ${item.chatStatus === 'successful'
-                          ? 'bg-green-100 text-green-700 border-green-500'
-                          : item.chatStatus === 'declined'
-                            ? 'bg-red-100 text-red-700 border-red-500'
-                            : item.chatStatus === 'pending'
-                              ? 'bg-yellow-100 text-yellow-700 border-yellow-500'
-                              : item.chatStatus === 'unsucessful'
-                                ? 'bg-gray-100 text-gray-500 border-gray-500'
-                                : 'bg-pink-100 text-pink-700 border-pink-500'
-                        }`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full
-      ${item.chatStatus === 'successful'
-                            ? 'bg-green-700'
-                            : item.chatStatus === 'declined'
-                              ? 'bg-red-700'
-                              : item.chatStatus === 'pending'
-                                ? 'bg-yellow-700'
-                                : item.chatStatus === 'unsucessful'
-                                  ? 'bg-gray-700'
-                                  : 'bg-pink-700'
-                          }`}
-                      ></span>
-                      {item.chatStatus}
-                    </span>
-                  </td>
-                )}
-                <td className="py-3 px-4 relative">
-                  <div className="flex justify-center items-center space-x-5">
-                    {/* Button to Open Chat */}
-                    <button
-                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                      onClick={() => handleeyeclick(item.id, item)} // Pass the transaction ID here
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="1.5"
-                        stroke="currentColor"
-                        className="w-5 h-5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M12 3C7.5 3 3.75 7.03 2.25 12c1.5 4.97 5.25 9 9.75 9s8.25-4.03 9.75-9C20.25 7.03 16.5 3 12 3zM12 15a3 3 0 100-6 3 3 0 000 6z"
+                <th className="py-3 px-4 w-[26%]">Name, Chat</th>
+                {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[14%]">Amount</th>}
+                {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[14%]">Agent</th>}
+                <th className="py-3 px-4 w-[16%]">Date</th>
+                {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[14%]">Status</th>}
+                <th className="py-3 px-4 text-center w-[12%]">Action</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {paginatedData?.map((item) => {
+                const msg =
+                  typeof item.recentMessage?.message === 'string' && item.recentMessage.message.trim()
+                    ? item.recentMessage.message.trim()
+                    : 'Sent an image';
+                const amt = item?.transactions?.[0]?.amount;
+                const ngn = item?.transactions?.[0]?.amountNaira;
+                const amtUsd =
+                  amt != null && amt !== ''
+                    ? typeof amt === 'number'
+                      ? `$${amt}`
+                      : String(amt).startsWith('$')
+                        ? String(amt)
+                        : `$${amt}`
+                    : '—';
+                const initial =
+                  (item.customer.country && item.customer.country.length >= 2
+                    ? item.customer.country.slice(0, 1)
+                    : item.customer.firstname?.[0]) || '?';
+                const emoji = countryEmoji(item.customer.country);
+
+                return (
+                  <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50/80 relative">
+                    {hubLayout ? (
+                      <td className="py-3 pl-4 align-middle">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-400"
+                          checked={selectedIds.has(item.id)}
+                          onChange={() => toggleSelect(item.id)}
+                          aria-label="Select row"
                         />
-                      </svg>
-                    </button>
-
-
-                    {/* Drop down */}
-                  </div>
-
-                  {/* ChatApplication Component */}
-                  {/* {isTeamCommunition &&
-                    isChatOpen && ( */}
-                  <div
-                    className={` ${isTeamCommunition && isChatOpen ? '' : 'hidden'}`}>
-                    <div className="absolute inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50">
-                      <div className="bg-white w-full max-w-3xl rounded-lg shadow-lg relative overflow-visible">
-                        {/* Close Button */}
+                      </td>
+                    ) : (
+                      <td className="py-3 ps-5">
+                        <div className="rounded-full inline-flex overflow-hidden w-10 h-10">
+                          <img src={getImageUrl(item.customer.profilePicture)} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      </td>
+                    )}
+                    <td className="py-3 px-4">
+                      <div className={`flex gap-3 ${hubLayout ? 'items-start' : ''}`}>
+                        {hubLayout && (
+                          <div className="rounded-full overflow-hidden w-10 h-10 shrink-0">
+                            <img src={getImageUrl(item.customer.profilePicture)} alt="" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-semibold text-gray-900">
+                              {item.customer.firstname} {item.customer.lastname}
+                            </span>
+                            {!hubLayout && <span className="font-medium text-gray-800">{item.customer.username}</span>}
+                            {hubLayout && emoji ? <span className="text-base leading-none">{emoji}</span> : null}
+                            {hubLayout ? (
+                              <span className="w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                                {initial.toUpperCase()}
+                              </span>
+                            ) : null}
+                            {(item as { unreadCount?: number }).unreadCount != null &&
+                            (item as { unreadCount?: number }).unreadCount! > 0 ? (
+                              <span className="inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-xs font-bold text-white bg-red-600 rounded-full">
+                                {(item as { unreadCount?: number }).unreadCount}
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="text-sm text-gray-500 m-0 mt-0.5 truncate">{msg}</p>
+                        </div>
+                      </div>
+                    </td>
+                    {activeFilterInTeam === 'Customer' && (
+                      <td className="py-3 px-4 align-top">
+                        <span className="block font-semibold text-gray-900">{amtUsd}</span>
+                        <span className="text-sm text-gray-400">NGN {formatNairaAmount(ngn ?? 0)}</span>
+                      </td>
+                    )}
+                    {activeFilterInTeam === 'Customer' && (
+                      <td className="py-3 px-4 text-gray-800">
+                        {item.agent.firstname} {item.agent.lastname}
+                      </td>
+                    )}
+                    <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
+                      {formatListDate(item.recentMessage?.createdAt ?? null)}
+                    </td>
+                    {activeFilterInTeam === 'Customer' && (
+                      <td className="py-3 px-4">
+                        <span
+                          className={`inline-flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-full border-0 ${
+                            item.chatStatus === 'successful'
+                              ? 'bg-green-100 text-green-800'
+                              : item.chatStatus === 'declined'
+                                ? 'bg-red-100 text-red-800'
+                                : item.chatStatus === 'pending'
+                                  ? 'bg-amber-100 text-amber-900'
+                                  : item.chatStatus === 'unsucessful'
+                                    ? 'bg-gray-100 text-gray-600'
+                                    : 'bg-pink-100 text-pink-800'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                              item.chatStatus === 'successful'
+                                ? 'bg-green-600'
+                                : item.chatStatus === 'declined'
+                                  ? 'bg-red-600'
+                                  : item.chatStatus === 'pending'
+                                    ? 'bg-amber-500'
+                                    : item.chatStatus === 'unsucessful'
+                                      ? 'bg-gray-500'
+                                      : 'bg-pink-600'
+                            }`}
+                          />
+                          {statusLabel(item.chatStatus)}
+                        </span>
+                      </td>
+                    )}
+                    <td className="py-3 px-4 relative">
+                      <div className="flex justify-center items-center gap-4">
                         <button
-                          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 focus:outline-none"
-                          onClick={() => setIsChatOpen(false)}
+                          type="button"
+                          className="text-gray-500 hover:text-[#147341] focus:outline-none p-1"
+                          onClick={() => handleeyeclick(item.id, item)}
+                          aria-label="View chat"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -224,99 +363,87 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                             viewBox="0 0 24 24"
                             strokeWidth="1.5"
                             stroke="currentColor"
-                            className="w-6 h-6"
+                            className="w-5 h-5"
                           >
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              d="M6 18L18 6M6 6l12 12"
+                              d="M12 3C7.5 3 3.75 7.03 2.25 12c1.5 4.97 5.25 9 9.75 9s8.25-4.03 9.75-9C20.25 7.03 16.5 3 12 3zM12 15a3 3 0 100-6 3 3 0 000 6z"
                             />
                           </svg>
                         </button>
-
-                        {/* Check User Role and Render Appropriate Component */}
-                        {userData?.role !== 'agent' ? (
-                          currentItem ? (
-                            <AdminChatApplication
-                              data={currentItem}
-                              id={activeChatId || 0}
-                              onClose={() => setIsChatOpen(false)}
-                              isAdmin={true}
-                            />
-                          ) : (
-                            <div className="p-6 text-center">Loading chat data...</div>
-                          )
-                        ) : (
-                          currentItem ? (
-                            <ChatApplication
-                              data={currentItem}
-                              id={activeChatId || 0}
-                              onClose={() => setIsChatOpen(false)}
-                            />
-                          ) : (
-                            <div className="p-6 text-center">Loading chat data...</div>
-                          )
-                        )}
-
+                        <div className="relative">
+                          <button
+                            type="button"
+                            className="text-gray-500 hover:text-gray-800 p-1"
+                            aria-label="More"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleMenu(item.id);
+                            }}
+                          >
+                            <FiMoreVertical className="w-5 h-5" />
+                          </button>
+                          {activeMenu === item.id ? (
+                            <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1">
+                              <button
+                                type="button"
+                                className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                onClick={() => {
+                                  handleeyeclick(item.id, item);
+                                  setActiveMenu(null);
+                                }}
+                              >
+                                Open chat
+                              </button>
+                              <button
+                                type="button"
+                                className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                                onClick={() => setActiveMenu(null)}
+                              >
+                                Dismiss
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  </div>
-
-                  {/* )} */}
-                  {/*
-                  {activeMenu === item.id && (
-                    <div
-                      className="absolute right-10 mt-2 top-10 bg-[#F6F7FF] rounded-md w-48 z-50"
-                      style={{
-                        boxShadow: '0px 4px 6px #00000040' // Custom drop shadow
-                      }}
-                    >
-                      <button
-                        onClick={() => console.log('View Chat Details')}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                      >
-                        Delete Chat
-                      </button>
-                      <button
-                        onClick={() => console.log('View Chat Details')}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                      >
-                        Role Chat
-                      </button>
-                    </div>
-                  )} */}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <div className="flex justify-between items-center p-4">
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            className={`px-4 py-2 rounded-lg text-sm ${currentPage === 1
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-              }`}
-          >
-            Previous
-          </button>
-          <span className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className={`px-4 py-2 rounded-lg text-sm ${currentPage === totalPages
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : "bg-white text-gray-700 hover:bg-gray-100"
-              }`}
-          >
-            Next
-          </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {!disableInternalPagination && !hubLayout ? (
+            <div className="flex justify-between items-center p-4 border-t border-gray-100">
+              <button
+                type="button"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-lg text-sm ${
+                  currentPage === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-lg text-sm ${
+                  currentPage === totalPages ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
         </div>
-      </div>
-    )
+        {chatModal}
+      </>
+    );
   }
 
   if (activeFilterInTeam === 'Team') {

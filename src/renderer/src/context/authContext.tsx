@@ -4,6 +4,7 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react'
 export enum UserRoles {
   admin = 'admin',
   agent = 'agent',
+  auditor = 'auditor',
   customer = 'customer'
 }
 

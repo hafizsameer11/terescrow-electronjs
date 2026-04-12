@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import NavItem from './NavItem';
-import { FaBell, FaCog } from 'react-icons/fa';
+import { FaBell, FaCog, FaCreditCard, FaBitcoin, FaWallet, FaFileAlt, FaHeadset, FaUserFriends, FaClipboardList, FaExchangeAlt } from 'react-icons/fa';
 import { RiTeamFill } from 'react-icons/ri';
+import { MdReceipt, MdAttachMoney } from 'react-icons/md';
 import { Images } from '@renderer/constant/Image';
 import { useAuth, UserRoles } from '@renderer/context/authContext';
 import TeamChat from '../TeamChat';
@@ -16,12 +17,50 @@ import { getunreadMessageCount } from '@renderer/api/queries/commonqueries';
 // import { useQuery } from 'react-query';
 
 
+const pathToIdMap: Record<string, string> = {
+  '/dashboard': 'dashboard',
+  '/customers': 'customers',
+  '/chats': 'chats',
+  '/transactions/gift-card-buy': 'gift-card-buy-txns',
+  '/transactions/crypto': 'crypto-txns',
+  '/transactions/bill-payments': 'bill-payments',
+  '/transactions/naira': 'naira-txns',
+  '/transactions': 'transactions',
+  '/user-balances': 'user-balances',
+  '/rates': 'rates',
+  '/log': 'log',
+  '/departments': 'department',
+  '/services': 'services',
+  '/teams': 'teams',
+  '/usersall': 'users',
+  '/smtp': 'smtp',
+  '/kyc': 'kyc',
+  '/notifications/in-app/banners': 'banner',
+  '/pending-chats': 'pending-chats',
+  '/WaysOfHearing': 'WaysOfHearing',
+  '/transaction-tracking': 'transaction-tracking',
+  '/master-wallet': 'master-wallet',
+  '/changenow-swaps': 'changenow-swaps',
+  '/notifications': 'notifications',
+  '/daily-report': 'daily-report',
+  '/settings': 'settings',
+  '/settings/vendors': 'vendors',
+  '/support': 'support',
+  '/referrals': 'referrals',
+};
+
 export const Sidebar = () => {
   const { userData, token } = useAuth();
-
+  const location = useLocation();
   const navigate = useNavigate();
   const initialActiveItem = userData?.role === UserRoles.admin ? 'dashboard' : 'chats';
   const [activeItem, setActiveItem] = useState(initialActiveItem);
+
+  useEffect(() => {
+    const path = location.pathname;
+    const id = pathToIdMap[path] || (path.startsWith('/customers') ? 'customers' : path.startsWith('/transaction-details') ? 'transactions' : null);
+    if (id) setActiveItem(id);
+  }, [location.pathname]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { dispatch } = useAuth();
   const previousCount = useRef<number>(0); // To store the previous count
@@ -43,13 +82,13 @@ export const Sidebar = () => {
     queryKey: ['pendingChats'],
     queryFn: () => getAllDefaultChats(token),
     enabled: !!token,
-    refetchInterval: 3000
+    // refetchInterval: 3000
   });
 
     const { data: count } = useQuery({
       queryKey: ['notificationCount'],
       queryFn: () => getunreadMessageCount(token),
-      refetchInterval: 5000,
+      // refetchInterval: 5000,
     });
     // const un
     const countData = count?.data;
@@ -63,7 +102,13 @@ export const Sidebar = () => {
     { label: 'Dashboard', icon: Images.dashboard, href: '/dashboard', id: 'dashboard' },
     { label: 'Customers', icon: Images.customer, href: '/customers', id: 'customers' },
     { label: 'Chats', icon: Images.chats, href: '/chats', id: 'chats' },
+    { label: 'Gift Card Chats', icon: Images.chats, href: '/chats', id: 'gift-card-chats' },
+    { label: 'Gift Card Buy Txns', icon: <FaCreditCard />, href: '/transactions/gift-card-buy', id: 'gift-card-buy-txns' },
+    { label: 'Crypto Txns', icon: <FaBitcoin />, href: '/transactions/crypto', id: 'crypto-txns' },
+    { label: 'Bill Payments', icon: <MdReceipt />, href: '/transactions/bill-payments', id: 'bill-payments' },
+    { label: 'Naira Txns', icon: <MdAttachMoney />, href: '/transactions/naira', id: 'naira-txns' },
     { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
+    { label: 'User Balances', icon: <FaWallet />, href: '/user-balances', id: 'user-balances' },
     { label: 'Rates', icon: Images.rates, href: '/rates', id: 'rates' },
     { label: 'Log', icon: Images.log, href: '/log', id: 'log' },
     { label: 'Department', icon: Images.department, href: '/departments', id: 'department' },
@@ -74,6 +119,9 @@ export const Sidebar = () => {
     { label: 'KYC', icon: <MdOutlinePermIdentity />, href: '/kyc', id: 'kyc' },
     { label: 'Banners', icon: <PiSlideshowThin />, href: '/notifications/in-app/banners', id: 'banner' },
     { label: 'Ways Of Hearing', icon: <PiSlideshowThin />, href: '/WaysOfHearing', id: 'WaysOfHearing' },
+    { label: 'Transaction Tracking', icon: <FaClipboardList />, href: '/transaction-tracking', id: 'transaction-tracking' },
+    { label: 'Master Wallet', icon: <FaWallet />, href: '/master-wallet', id: 'master-wallet' },
+    { label: 'ChangeNOW Swaps', icon: <FaExchangeAlt />, href: '/changenow-swaps', id: 'changenow-swaps' },
   ];
 
   const agentMenuItems = useMemo(() => [
@@ -87,15 +135,19 @@ export const Sidebar = () => {
     },
     { label: 'Quick Replies', icon: <FaReplyAll />, href: '/quick-replies', id: 'quick-replies' },
     { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
+    { label: 'Banners', icon: <PiSlideshowThin />, href: '/notifications/in-app/banners', id: 'banner' },
   ], [pendingChatsCount,countData]);
 
 
   const bottomMenuItems = [
     { label: 'Notifications', icon: <FaBell />, href: '/notifications/', id: 'notifications' },
-
+    { label: 'Daily Report', icon: <FaFileAlt />, href: '/daily-report', id: 'daily-report', isGreenButton: true },
     { label: 'Settings', icon: <FaCog />, href: '/settings', id: 'settings' },
+    { label: 'Vendors', icon: <FaWallet />, href: '/settings/vendors', id: 'vendors' },
     { label: 'Team Chat', icon: <RiTeamFill />, href: '#', id: 'team-communication' },
-    { label: 'Log Out', icon: <IoLogOutOutline />, href: '/logout', id: 'logout' }
+    { label: 'Support', icon: <FaHeadset />, href: '/support', id: 'support' },
+    { label: 'Referrals', icon: <FaUserFriends />, href: '/referrals', id: 'referrals' },
+    { label: 'Log Out', icon: <IoLogOutOutline />, href: '#', id: 'logout', isLogout: true }
   ];
 
   // Define menu for 'other' role based on permissions
@@ -168,18 +220,19 @@ export const Sidebar = () => {
               isActive={activeItem === item.id}
               icon={
                 <span
-                  className={`text-2xl transition-colors ${activeItem === item.id ? 'image-tint text-white' : 'text-black'
-                    }`}
+                  className={`text-2xl transition-colors ${(item as any).isGreenButton ? 'text-white' : activeItem === item.id ? 'image-tint text-white' : 'text-black'}`}
                 >
                   {item.icon}
                 </span>
               }
-              href={item.id === 'team-communication' || item.id === 'logout' ? undefined : item.href}
+              href={item.id === 'team-communication' || item.id === 'logout' ? '#' : item.href}
+              isGreenButton={(item as any).isGreenButton}
+              isLogout={(item as any).isLogout}
               onClick={() => {
                 if (item.id === 'team-communication') {
                   setIsModalOpen(true);
                 } else if (item.id === 'logout') {
-                  handlogout(); // Call the logout handler
+                  handlogout();
                 } else {
                   setActiveItem(item.id);
                 }

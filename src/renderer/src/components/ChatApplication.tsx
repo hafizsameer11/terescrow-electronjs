@@ -56,7 +56,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
     queryKey: ['chatDetails', id],
     queryFn: () => getAgentToCustomerChatDetails({ token, chatId: id.toString() }),
     enabled: !!token,
-    refetchInterval: 1000,
+    // refetchInterval: 1000,
   });
 
   const { data: quickReplies } = useQuery({

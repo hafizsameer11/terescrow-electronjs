@@ -27,7 +27,7 @@ const PendingChats = () => {
     queryKey: ['pendingChats'],
     queryFn: () => getAllDefaultChats(token),
     enabled: !!token,
-    refetchInterval: 3000
+    // refetchInterval: 3000
   });
   useEffect(() => {
     console.log('chatsData', chatsData)

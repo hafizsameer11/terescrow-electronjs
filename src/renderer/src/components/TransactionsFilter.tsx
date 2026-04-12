@@ -11,6 +11,7 @@ interface TransactionsFilterProps {
   };
   title?: string;
   subTitle?: string;
+  showTypeFilter?: boolean;
   onChange: (updatedFilters: Partial<TransactionsFilterProps['filters']>) => void;
 }
 
@@ -19,6 +20,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
   onChange,
   title,
   subTitle,
+  showTypeFilter = true,
 }) => {
   const statusOptions = ['All', 'successful', 'pending'];
   const typeOption = ['All', 'buy', 'sell'];
@@ -75,24 +77,25 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
           ))}
         </div>
 
-        {/* Type Filter */}
-        <div className="flex items-center">
-          {typeOption.map((serviceType, index) => (
-            <button
-              key={serviceType}
-              className={`px-4 py-2 text-sm font-medium transition ${
-                filters.type === serviceType
-                  ? 'bg-[#147341] text-white'
-                  : 'bg- text-gray-600 hover:bg-gray-100 border-gray-300'
-              } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${
-                index === typeOption.length - 1 ? 'rounded-r-lg' : ''
-              } ${filters.type === serviceType ? '' : 'border'}`}
-              onClick={() => onChange({ type: serviceType })}
-            >
-              {serviceType}
-            </button>
-          ))}
-        </div>
+        {showTypeFilter && (
+          <div className="flex items-center">
+            {typeOption.map((serviceType, index) => (
+              <button
+                key={serviceType}
+                className={`px-4 py-2 text-sm font-medium transition ${
+                  filters.type === serviceType
+                    ? 'bg-[#147341] text-white'
+                    : 'bg- text-gray-600 hover:bg-gray-100 border-gray-300'
+                } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${
+                  index === typeOption.length - 1 ? 'rounded-r-lg' : ''
+                } ${filters.type === serviceType ? '' : 'border'}`}
+                onClick={() => onChange({ type: serviceType })}
+              >
+                {serviceType}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Date Range Dropdown */}
         <select

@@ -36,6 +36,9 @@ export const apiCall = async (url: string, method: string, data?: any, token?: s
       case 'PUT':
         response = await axios.put(url, data, { headers })
         break
+      case 'PATCH':
+        response = await axios.patch(url, data, { headers })
+        break
       case 'DELETE':
         response = await axios.delete(url, { headers })
         break

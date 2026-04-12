@@ -33,6 +33,14 @@ import SmtpPage from './pages/SmtpPage';
 import Kyc from './pages/Kyc';
 import QuickReplies from './pages/QuickReplies';
 import WaysOfHearing from './pages/WaysOfHearing';
+import PlaceholderPage from './pages/PlaceholderPage';
+import UserBalancesPage from './pages/UserBalancesPage';
+import MasterWalletPage from './pages/MasterWalletPage';
+import DailyReportPage from './pages/DailyReportPage';
+import TransactionTrackingPage from './pages/TransactionTrackingPage';
+import ReferralsPage from './pages/ReferralsPage';
+import SupportPage from './pages/SupportPage';
+import ChangeNowSwapsPage from './pages/ChangeNowSwapsPage';
 
 function App(): JSX.Element {
   const location = useLocation();
@@ -69,7 +77,19 @@ function App(): JSX.Element {
       <Route path="/services" element={<Services />} />
       <Route path="/teams" element={<Teams />} />
       <Route path="/settings" element={<Settings />} />
+      <Route path="/settings/vendors" element={<Settings />} />
       <Route path="/transactions" element={<Transaction />} />
+      <Route path="/transactions/gift-card-buy" element={<Transaction defaultTransactionType="giftCards" />} />
+      <Route path="/transactions/crypto" element={<Transaction defaultTransactionType="crypto" />} />
+      <Route path="/transactions/bill-payments" element={<Transaction defaultTransactionType="billPayments" />} />
+      <Route path="/transactions/naira" element={<Transaction defaultTransactionType="naira" />} />
+      <Route path="/user-balances" element={<UserBalancesPage />} />
+      <Route path="/transaction-tracking" element={<TransactionTrackingPage />} />
+      <Route path="/master-wallet" element={<MasterWalletPage />} />
+      <Route path="/changenow-swaps" element={<ChangeNowSwapsPage />} />
+      <Route path="/daily-report" element={<DailyReportPage />} />
+      <Route path="/support" element={<SupportPage />} />
+      <Route path="/referrals" element={<ReferralsPage />} />
       <Route path="/kyc" element={<Kyc />} />
     </>
   );

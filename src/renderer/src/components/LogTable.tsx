@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 // import TransactionDetailsModal from '../modal/TransactionDetailsModal';
 import { Agent, Customer } from '@renderer/api/queries/datainterfaces';
 import TransactionDetailsModal from './modal/TransactionDetailsModal';
+import { formatNairaAmount } from '@renderer/api/helper';
 export interface Country {
   id: number;
   title?: string;
@@ -135,7 +136,7 @@ const LogTabe: React.FC<TransactionsTableProps> = ({
               <td className="font-semibold py-3 px-4">{transaction.category.title}</td>
               <td className="font-semibold py-3 px-4">{transaction.department.Type}</td>
               <td className="font-semibold py-3 px-4">{transaction.department.niche}</td>
-              <td className="font-semibold py-3 px-4">${transaction.amount}/₦{transaction.amountNaira}</td>
+              <td className="font-semibold py-3 px-4">${transaction.amount}/₦{formatNairaAmount(transaction.amountNaira)}</td>
               <td className="font-semibold py-3 px-4">
                 {new Date(transaction.createdAt).toLocaleDateString()}
               </td>
@@ -181,7 +182,7 @@ const LogTabe: React.FC<TransactionsTableProps> = ({
           onClose={handleCloseModal}
           transactionData={{
             dollarAmount: selectedTransaction.amount.toString(),
-            nairaAmount: selectedTransaction.amountNaira.toString(),
+            nairaAmount: formatNairaAmount(selectedTransaction.amountNaira),
             serviceType: selectedTransaction?.department?.title || '',
             category: selectedTransaction?.category?.title || '',
             transactionId: `Teres-${selectedTransaction.id.toString()}`,

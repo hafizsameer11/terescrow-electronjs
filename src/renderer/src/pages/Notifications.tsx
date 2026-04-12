@@ -27,6 +27,7 @@ const Notifications = () => {
 
   const queryClient = useQueryClient();
   const { token, userData } = useAuth();
+  const canAccessInAppNotifications = userData?.role === 'admin' || userData?.role === 'agent';
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -49,7 +50,7 @@ const Notifications = () => {
     isLoading: teamNotificationsLoading,
   } = useQuery({
     queryKey: ['teamnotifications'],
-    refetchInterval: 3000,
+    // refetchInterval: 3000,
     queryFn: () => getTeamNotifications(token),
   });
 
@@ -58,7 +59,7 @@ const Notifications = () => {
     isLoading: customerNotificationsLoading,
   } = useQuery({
     queryKey: ['customernotifications'],
-    refetchInterval: 3000,
+    // refetchInterval: 3000,
     queryFn: () => getCustomerNotifications(token),
   });
 
@@ -129,7 +130,7 @@ const Notifications = () => {
               >
                 Notifications
               </button>
-              {userData?.role === 'admin' && (
+              {canAccessInAppNotifications && (
 
 
                 <button
@@ -146,7 +147,7 @@ const Notifications = () => {
           )}
         </div>
         <div>
-          {activeOption === 'In-App Notification' && (
+          {activeOption === 'In-App Notification' && canAccessInAppNotifications && (
             <div className="flex gap-5">
               <button
                 className="px-4 py-2 rounded-lg font-medium text-green-700 bg-transparent border border-green-700"

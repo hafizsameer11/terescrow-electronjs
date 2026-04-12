@@ -3,15 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import TransactionDetailsModal from '../modal/TransactionDetailsModal';
 import { Agent, Customer } from '@renderer/api/queries/datainterfaces';
 import { useAuth } from '@renderer/context/authContext';
+import { formatNairaAmount } from '@renderer/api/helper';
 export interface Country {
   id: number;
   title?: string;
 }
 export interface Transaction {
-  id: number;
+  id: number | string;
   transactionId: string;
   status: string;
-  cardType: string;
+  cardType: string | null;
   amount: number;
   amountNaira: number;
   createdAt: string;
@@ -20,17 +21,20 @@ export interface Transaction {
   cardNumber?: string | null;
   toAddress: string | null;
 
-  // References
-  department: Department;
-  category: Category;
-  agent?: Customer;
-  subCategory: {
-    id: number;
-    title: string;
-  }
-  customer?: Customer
-  profit: number
-  // agent?:Customer
+  department: Department | null;
+  category: Category | null;
+  agent?: Customer | null;
+  subCategory: { id: number; title: string } | null;
+  customer?: Customer;
+  profit: number;
+  giftCardSubType?: string | null;
+
+  billType?: string | null;
+  billReference?: string | null;
+  billProvider?: string | null;
+  nairaType?: string | null;
+  nairaChannel?: string | null;
+  nairaReference?: string | null;
 }
 export interface Department {
   id: number;
@@ -116,18 +120,6 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
     setSelectedTransaction(transaction);
     setIsModalOpen(true);
   };
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-  const paginatedData = data.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
   return (
     <div className="my-6 bg-white rounded-lg shadow-md">
       <table className="min-w-full text-left text-sm text-gray-700">
@@ -144,7 +136,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           </tr>
         </thead>
         <tbody>
-          {paginatedData.map((transaction) => (
+          {data.map((transaction) => (
             <tr
               key={transaction.id}
               className="border-t hover:bg-gray-50 cursor-pointer relative"
@@ -165,9 +157,15 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                   {transaction.status}
                 </span>
               </td>
-              <td className="font-semibold py-3 px-4">{transaction.department.title}</td>
-              <td className="font-semibold py-3 px-4">{transaction.category.title}</td>
-              <td className="font-semibold py-3 px-4">${transaction.amount}/₦{transaction.amountNaira}</td>
+              <td className="font-semibold py-3 px-4">{transaction.department?.title ?? ''}</td>
+              <td className="font-semibold py-3 px-4">{transaction.category?.title ?? ''}</td>
+              <td className="font-semibold py-3 px-4">
+                {(() => {
+                  const n = (transaction.department?.niche ?? '').toLowerCase();
+                  if (n === 'billpayment' || n === 'naira') return `₦${formatNairaAmount(transaction.amountNaira)}`;
+                  return `$${transaction.amount}/₦${formatNairaAmount(transaction.amountNaira)}`;
+                })()}
+              </td>
               <td className="font-semibold py-3 px-4">
                 {new Date(transaction.createdAt).toLocaleDateString()}
               </td>
@@ -213,53 +211,36 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           ))}
         </tbody>
       </table>
-      <div className="flex justify-between items-center p-4">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className={`px-4 py-2 rounded-lg text-sm ${currentPage === 1
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-            : "bg-white text-gray-700 hover:bg-gray-100"
-            }`}
-        >
-          Previous
-        </button>
-        <span className="text-sm text-gray-600">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className={`px-4 py-2 rounded-lg text-sm ${currentPage === totalPages
-            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-            : "bg-white text-gray-700 hover:bg-gray-100"
-            }`}
-        >
-          Next
-        </button>
-      </div>
 
       {showTranModal && isModalOpen && selectedTransaction && (
         <TransactionDetailsModal
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           transactionData={{
-            dollarAmount: selectedTransaction.amount.toString(),
-            nairaAmount: selectedTransaction.amountNaira.toString(),
+            dollarAmount: selectedTransaction.amount?.toString() ?? '0',
+            nairaAmount: formatNairaAmount(selectedTransaction.amountNaira ?? 0),
             serviceType: selectedTransaction?.department?.title || '',
             category: selectedTransaction?.category?.title || '',
-            transactionId: `Teres-${selectedTransaction.id.toString()}`,
+            transactionId: selectedTransaction.transactionId || `Teres-${selectedTransaction.id}`,
             assignedAgent: selectedTransaction.agent?.username || '',
             status: selectedTransaction.status,
-            niche: selectedTransaction.department.niche,
-            type: selectedTransaction.department.Type,
-            toAddress: selectedTransaction.toAddress,
-            subCategory: selectedTransaction.subCategory.title,
-            fromAddress: selectedTransaction.fromAddress,
+            niche: selectedTransaction.department?.niche ?? '',
+            type: selectedTransaction.department?.Type ?? '',
+            toAddress: selectedTransaction.toAddress ?? '',
+            subCategory: selectedTransaction.subCategory?.title ?? '',
+            fromAddress: selectedTransaction.fromAddress ?? '',
 
-            giftCardSubType: selectedTransaction.cardType,
-            giftCardNumber: selectedTransaction.cardNumber,
-            profit: selectedTransaction.profit
+            giftCardSubType: selectedTransaction.giftCardSubType ?? selectedTransaction.cardType ?? '',
+            giftCardNumber: selectedTransaction.cardNumber ?? '',
+            profit: selectedTransaction.profit ?? 0,
+
+            billType: selectedTransaction.billType ?? '',
+            billReference: selectedTransaction.billReference ?? '',
+            billProvider: selectedTransaction.billProvider ?? '',
+            nairaType: selectedTransaction.nairaType ?? '',
+            nairaChannel: selectedTransaction.nairaChannel ?? '',
+            nairaReference: selectedTransaction.nairaReference ?? '',
+            customerName: [selectedTransaction.customer?.firstname, selectedTransaction.customer?.lastname].filter(Boolean).join(' ') || selectedTransaction.customer?.username || '',
           }}
         />
       )}

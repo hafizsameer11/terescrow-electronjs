@@ -14,7 +14,8 @@ import { FaTicketAlt } from "react-icons/fa";
 import { AccountActivity, Customer, KycStateTwo } from "@renderer/api/queries/datainterfaces";
 import { useAuth } from "@renderer/context/authContext";
 import ChatNewNote from "@renderer/components/ChatNewNote";
-// import { useQueryClient } from "react-query";
+import WalletModal from "@renderer/components/modal/WalletModal";
+import { formatNairaAmount } from "@renderer/api/helper";
 
 
 const CustomerDetails: React.FC = () => {
@@ -22,6 +23,8 @@ const CustomerDetails: React.FC = () => {
   const [isNotesModalOpen, setIsNotesModalOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [walletWidgetTab, setWalletWidgetTab] = useState<'naira' | 'crypto'>('naira');
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<"details" | "transactions">("details");
   const [kycData, setKYCData] = useState<KycStateTwo>({} as KycStateTwo);
@@ -65,6 +68,11 @@ const CustomerDetails: React.FC = () => {
     enabled: !!id,
   });
   const customer: Customer | undefined = data?.data;
+  const customerIp = (customer as any)?.ipAddress ?? '123.123.345.99';
+  const customerTier = (customer as any)?.tier ?? 'Tier 2';
+  const nairaBalanceRaw = (customer as any)?.nairaBalance ?? 'N200,000';
+  const nairaBalance = `N${formatNairaAmount(nairaBalanceRaw)}`;
+  const cryptoBalance = (customer as any)?.cryptoBalance ?? '$25';
   const {
     data: notDetailsData,
     isLoading: isNotesLoading,
@@ -133,6 +141,23 @@ const CustomerDetails: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full">
+      {/* Header: title left, IP + Wallet right */}
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-semibold text-gray-800">Customer details</h1>
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-[#147341] text-white">
+            Ip Address: {customerIp}
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsWalletModalOpen(true)}
+            className="px-4 py-2 bg-[#147341] text-white font-medium rounded-lg hover:bg-[#0d5a2e]"
+          >
+            Wallet
+          </button>
+        </div>
+      </div>
+
       {/* Tabs */}
       <div className="flex items-center mb-6">
         <button
@@ -142,7 +167,7 @@ const CustomerDetails: React.FC = () => {
             : "text-gray-700 border border-gray-200"
             }`}
         >
-          Customer Details and Activities
+          Customer details and activities
         </button>
         <button
           onClick={() => handleTabChange("transactions")}
@@ -151,52 +176,75 @@ const CustomerDetails: React.FC = () => {
             : "text-gray-700 border border-gray-200"
             }`}
         >
-          Transaction Activities and Balance
+          Transaction activites and balance
         </button>
       </div>
 
-      {/* Profile Section */}
-      <div className="bg-[#147341] text-white rounded-lg p-4 flex items-end justify-between mb-6">
-        <div className="flex gap-4">
-          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-lg font-bold">
+      {/* Profile Section with wallet widget */}
+      <div className="bg-[#147341] text-white rounded-lg p-4 flex items-stretch justify-between mb-6 gap-4">
+        <div className="flex gap-4 flex-1">
+          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-lg font-bold shrink-0">
             {customer?.firstname?.charAt(0)}
           </div>
           <div>
-            <h1 className="text-lg font-bold mb-4">
+            <h1 className="text-lg font-bold mb-1">
               {customer?.firstname} {customer?.lastname}
             </h1>
-            <p className="text-[16px] text-white">
-              @{customer?.username} - {customer?.role}
+            <p className="text-[16px] text-white mb-2">
+              @{customer?.username} - {customerTier}
             </p>
-            <div className="mt-2 flex items-center gap-2 bg-white text-[#147341] px-4 py-2 rounded-md">
+            <div className="inline-flex items-center gap-2 bg-white text-[#147341] px-4 py-2 rounded-md">
               <span className="text-xs font-medium">
-                KYC Status: {kycData?.state || "Not Verified"}
+                KYC status: {kycData?.state || "Not Verified"}
               </span>
             </div>
           </div>
         </div>
-        <div className="flex gap-3">
-          {kycData.bvn &&
+        <div className="bg-white rounded-lg p-4 min-w-[200px] flex flex-col">
+          <div className="flex rounded border border-gray-200 overflow-hidden mb-3">
             <button
-              onClick={() => setIsKYCModalOpen(true)}
-              className="bg-white text-[#00000080] rounded-lg p-2 shadow-md"
+              type="button"
+              onClick={() => setWalletWidgetTab('naira')}
+              className={`flex-1 py-1.5 text-xs font-medium ${walletWidgetTab === 'naira' ? 'bg-[#147341] text-white' : 'text-gray-600'}`}
             >
-              <MdOutlineDescription className="text-xl" />
+              Naira Wallet
             </button>
-
-          }
-          <button
-            onClick={() => setIsNotesModalOpen(true)}
-            className="bg-white text-[#00000080] rounded-lg p-2 shadow-md"
-          >
-            <MdChatBubbleOutline className="text-xl" />
-          </button>
-          <button
-            onClick={() => setIsEditModalOpen(true)}
-            className="bg-white text-[#00000080] rounded-lg p-2 shadow-md"
-          >
-            <MdEdit className="text-xl" />
-          </button>
+            <button
+              type="button"
+              onClick={() => setWalletWidgetTab('crypto')}
+              className={`flex-1 py-1.5 text-xs font-medium ${walletWidgetTab === 'crypto' ? 'bg-[#147341] text-white' : 'text-gray-600'}`}
+            >
+              Crypto Wallet
+            </button>
+          </div>
+          <p className="text-lg font-bold text-gray-800 mb-3">
+            {walletWidgetTab === 'naira' ? nairaBalance : cryptoBalance}
+          </p>
+          <div className="flex gap-2 mt-auto">
+            {kycData.bvn && (
+              <button
+                onClick={() => setIsKYCModalOpen(true)}
+                className="bg-gray-100 text-gray-700 rounded-lg p-2 hover:bg-gray-200"
+                title="KYC document"
+              >
+                <MdOutlineDescription className="text-xl" />
+              </button>
+            )}
+            <button
+              onClick={() => setIsNotesModalOpen(true)}
+              className="bg-gray-100 text-gray-700 rounded-lg p-2 hover:bg-gray-200"
+              title="Notes"
+            >
+              <MdChatBubbleOutline className="text-xl" />
+            </button>
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="bg-gray-100 text-gray-700 rounded-lg p-2 hover:bg-gray-200"
+              title="Edit"
+            >
+              <MdEdit className="text-xl" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -259,6 +307,12 @@ const CustomerDetails: React.FC = () => {
           onAddNote={handleAddNote}
         />
       )}
+      <WalletModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+        nairaBalance={nairaBalance}
+        cryptoBalance={cryptoBalance}
+      />
     </div>
   );
 };

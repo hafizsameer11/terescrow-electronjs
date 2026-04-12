@@ -38,14 +38,14 @@ const TopBar: React.FC = () => {
   const { data: count } = useQuery({
     queryKey: ['notificationCount'],
     queryFn: () => getunreadMessageCount(token),
-    refetchInterval: 5000,
+    // refetchInterval: 5000,
   });
   const {
     data: customerNotifications,
     isLoading: customerNotificationsLoading,
   } = useQuery({
     queryKey: ['customernotifications'],
-    refetchInterval: 2000,
+    // refetchInterval: 2000,
     queryFn: () => getCustomerNotifications(token),
     // refetchInterval: 5000,
   });
@@ -54,7 +54,7 @@ const TopBar: React.FC = () => {
     isLoading: teamNotificationsLoading,
   } = useQuery({
     queryKey: ['teamnotifications'],
-    refetchInterval: 2000,
+    // refetchInterval: 2000,
     queryFn: () => getTeamNotifications(token),
   });
   console.log('teamNotifications', teamNotifications);

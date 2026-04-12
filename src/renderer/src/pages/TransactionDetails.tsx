@@ -1,16 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { getCustomerDetails, getCustomerTransactions } from '@renderer/api/queries/adminqueries';
+import {
+  getAdminTransactionsByCustomer,
+  type TransactionNiche,
+} from '@renderer/api/admin/transactions';
 import StatsCard from '@renderer/components/StatsCard';
 import TransactionsFilter from '@renderer/components/TransactionsFilter';
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable';
 import { useAuth } from '@renderer/context/authContext';
 
+export type TransactionTypeTab = 'all' | 'giftCards' | 'crypto' | 'billPayments' | 'naira';
+
+function tabToNiche(tab: TransactionTypeTab): TransactionNiche | undefined {
+  if (tab === 'giftCards') return 'giftcard';
+  if (tab === 'crypto') return 'crypto';
+  if (tab === 'billPayments') return 'billpayment';
+  if (tab === 'naira') return 'naira';
+  return undefined;
+}
+
+const TRANSACTION_TYPE_TABS: { id: TransactionTypeTab; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'giftCards', label: 'Gift Cards' },
+  { id: 'crypto', label: 'Crypto' },
+  { id: 'billPayments', label: 'Bill Payments' },
+  { id: 'naira', label: 'Naira' },
+];
+
 const TransactionDetails: React.FC = () => {
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
+  const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<'details' | 'transactions'>('transactions');
+  const [transactionTypeTab, setTransactionTypeTab] = useState<TransactionTypeTab>('all');
+  const [page, setPage] = useState(1);
 
   const [filters, setFilters] = useState({
     status: 'All',
@@ -18,33 +42,28 @@ const TransactionDetails: React.FC = () => {
     dateRange: 'Last 30 days',
     search: '',
   });
-  const {token}=useAuth();
-  // Fetch transactions using React Query
-  const { data: customerTransactions, isLoading, isError, error } = useQuery({
-    queryKey: ["customerDetails", customerId],
-    queryFn: () => getCustomerTransactions({ token, id: customerId! }),
-    enabled: !!customerId,
+
+  const niche = useMemo(() => tabToNiche(transactionTypeTab), [transactionTypeTab]);
+
+  const { data: txData, isLoading, isError } = useQuery({
+    queryKey: ['admin-transactions-by-customer', token, customerId, niche, filters.status, filters.search, page],
+    queryFn: () =>
+      getAdminTransactionsByCustomer(token!, customerId!, {
+        niche,
+        status: filters.status !== 'All' ? (filters.status.toLowerCase() as any) : undefined,
+        search: filters.search || undefined,
+        page,
+        limit: 20,
+      }),
+    enabled: !!token && !!customerId,
   });
 
-  // Filter transactions based on filters
-  const filteredData = Array.isArray(customerTransactions?.data)
-  ? customerTransactions?.data.filter((transaction) => {
-      const matchesStatus =
-        filters.status === 'All' || transaction.status === filters.status;
+  const transactions = txData?.transactions ?? [];
+  const total = txData?.total ?? 0;
+  const totalPages = txData?.totalPages ?? 0;
 
-      const matchesType =
-        filters.type === 'All' || transaction.department?.title === filters.type;
-
-      const matchesSearch =
-        filters.search === '' ||
-        transaction.category?.title
-          ?.toLowerCase()
-          .includes(filters.search.toLowerCase());
-
-      return matchesStatus && matchesType && matchesSearch;
-    })
-  : [];
-
+  const pendingCount = transactions.filter((t: any) => t.status === 'pending').length;
+  const successfulCount = transactions.filter((t: any) => t.status === 'successful').length;
 
   const handleTabChange = (tab: 'details' | 'transactions') => {
     setActiveTab(tab);
@@ -84,41 +103,76 @@ const TransactionDetails: React.FC = () => {
         <p className="text-red-600">Failed to load transactions</p>
       ) : (
         <>
+          <div className="flex flex-wrap gap-2 p-2 bg-gray-100 rounded-lg mb-6">
+            {TRANSACTION_TYPE_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => { setTransactionTypeTab(tab.id); setPage(1); }}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition ${
+                  transactionTypeTab === tab.id ? 'bg-[#147341] text-white' : 'bg-white text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
             <StatsCard
               title="Total Transactions"
-              value={`${filteredData?.length || 0}`}
-              change="+5%"
+              value={`${total}`}
+              change=""
               isPositive={true}
             />
             <StatsCard
               title="Pending Transactions"
-              value={`${filteredData?.filter((txn) => txn.status === 'pending').length || 0
-                }`}
-              change="+2%"
+              value={`${pendingCount}`}
+              change=""
               isPositive={false}
             />
             <StatsCard
               title="Completed Transactions"
-              value={`${filteredData?.filter((txn) => txn.status === 'successful').length || 0
-                }`}
-              change="+10%"
+              value={`${successfulCount}`}
+              change=""
               isPositive={true}
             />
           </div>
 
           <div className="mt-10">
             <TransactionsFilter
-              title={`Transaction History (${filteredData?.length || 0})`}
+              title={`Transaction History (${total})`}
               subTitle="View the total transaction history for this user"
               filters={filters}
-              onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
+              onChange={(updatedFilters) => { setFilters({ ...filters, ...updatedFilters }); setPage(1); }}
             />
             <TransactionsTable
-              data={filteredData || []}
+              data={transactions}
               showCustomerDetailsButton={false}
               showTransactionDetailsModal={true}
             />
+            {totalPages > 1 && (
+              <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                <span>Page {page} of {totalPages} ({total} total)</span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}
