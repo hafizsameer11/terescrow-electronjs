@@ -1,5 +1,6 @@
 import React from "react";
 import { formatNairaAmount } from "@renderer/api/helper";
+import { formatNairaType } from "@renderer/utils/formatLabels";
 import { IoCopyOutline } from "react-icons/io5";
 import { MdCheckCircle, MdPending, MdError } from "react-icons/md";
 
@@ -31,6 +32,7 @@ interface TransactionDetailsModalProps {
     nairaChannel?: string;
     nairaReference?: string;
     customerName?: string;
+    exchangeRate?: number | string | null;
   };
 }
 
@@ -55,13 +57,18 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
   if (!isOpen) return null;
 
   const n = niche(transactionData.niche);
+  const txType = (transactionData.type ?? '').toLowerCase();
   const isCrypto = n === 'crypto';
   const isBillPayment = n === 'billpayment';
   const isGiftCard = n === 'giftcard';
   const isNaira = n === 'naira';
-  const showAgentProfit = !isCrypto && !isBillPayment;
+  const isCryptoSell = isCrypto && txType === 'sell';
+  const showAssignedAgent = !isGiftCard && !isNaira && !isCrypto;
+  const showProfit = !isCrypto && !isBillPayment;
 
   const sc = statusConfig(transactionData.status);
+
+  const nairaTypeLabel = formatNairaType(transactionData.nairaType ?? transactionData.type);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 overflow-y-scroll pt-32 pb-10">
@@ -85,6 +92,13 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
         <div className="border border-gray-200 rounded-lg">
 
           {isBillPayment ? (
+            <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+              <span className="text-gray-600">Amount</span>
+              <span className="text-[16px] font-normal text-right">
+                ₦{formatNairaAmount(transactionData.nairaAmount)}
+              </span>
+            </div>
+          ) : isNaira ? (
             <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
               <span className="text-gray-600">Amount</span>
               <span className="text-[16px] font-normal text-right">
@@ -142,11 +156,20 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             </div>
           )}
 
-          {!isBillPayment && (
+          {!isBillPayment && !isNaira && (
             <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
               <span className="text-gray-600">Type</span>
-              <span className="text-[16px] font-normal text-right" style={{ textTransform: 'capitalize' }}>
+              <span className="text-[16px] font-normal text-right capitalize">
                 {transactionData.type}
+              </span>
+            </div>
+          )}
+
+          {isCrypto && transactionData.exchangeRate != null && transactionData.exchangeRate !== '' && (
+            <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+              <span className="text-gray-600">Exchange Rate</span>
+              <span className="text-[16px] font-normal text-right">
+                {transactionData.exchangeRate}
               </span>
             </div>
           )}
@@ -168,21 +191,22 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             </>
           )}
 
+          {isCrypto && !isCryptoSell && (
+            <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+              <span className="text-gray-600">To Address</span>
+              <span className="text-[16px] font-normal text-right break-all">
+                {transactionData.toAddress || '-'}
+              </span>
+            </div>
+          )}
+
           {isCrypto && (
-            <>
-              <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-                <span className="text-gray-600">To Address</span>
-                <span className="text-[16px] font-normal text-right break-all">
-                  {transactionData.toAddress || '-'}
-                </span>
-              </div>
-              <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-                <span className="text-gray-600">From Address</span>
-                <span className="text-[16px] font-normal text-right break-all">
-                  {transactionData.fromAddress || '-'}
-                </span>
-              </div>
-            </>
+            <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+              <span className="text-gray-600">From Address</span>
+              <span className="text-[16px] font-normal text-right break-all">
+                {transactionData.fromAddress || '-'}
+              </span>
+            </div>
           )}
 
           {isBillPayment && (
@@ -199,21 +223,15 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
                   {transactionData.billReference || '-'}
                 </span>
               </div>
-              <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-                <span className="text-gray-600">Provider</span>
-                <span className="text-[16px] font-normal text-right" style={{ textTransform: 'capitalize' }}>
-                  {transactionData.billProvider || '-'}
-                </span>
-              </div>
             </>
           )}
 
           {isNaira && (
             <>
               <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-                <span className="text-gray-600">Type</span>
-                <span className="text-[16px] font-normal text-right" style={{ textTransform: 'capitalize' }}>
-                  {transactionData.nairaType ?? transactionData.type ?? '-'}
+                <span className="text-gray-600">Transaction Type</span>
+                <span className="text-[16px] font-normal text-right">
+                  {nairaTypeLabel}
                 </span>
               </div>
               <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
@@ -244,21 +262,22 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             </div>
           </div>
 
-          {showAgentProfit && (
-            <>
-              <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-                <span className="text-gray-600">Profit</span>
-                <span className="text-[16px] font-normal text-right">
-                  {transactionData.profit}
-                </span>
-              </div>
-              <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
-                <span className="text-gray-600">Assigned Agent</span>
-                <span className="text-[16px] font-normal text-right">
-                  {transactionData.assignedAgent || '-'}
-                </span>
-              </div>
-            </>
+          {showProfit && (
+            <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+              <span className="text-gray-600">Profit</span>
+              <span className="text-[16px] font-normal text-right">
+                {transactionData.profit}
+              </span>
+            </div>
+          )}
+
+          {showAssignedAgent && (
+            <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">
+              <span className="text-gray-600">Assigned Agent</span>
+              <span className="text-[16px] font-normal text-right">
+                {transactionData.assignedAgent || '-'}
+              </span>
+            </div>
           )}
 
           <div className="flex justify-between items-center border-b border-gray-200 py-3 px-4">

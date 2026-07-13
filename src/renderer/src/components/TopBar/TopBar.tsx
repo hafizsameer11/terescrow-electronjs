@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Images } from '@renderer/constant/Image';
 import { AiOutlineTeam } from "react-icons/ai";
 import TeamChat from '../TeamChat';
+import CheckInTimer from './CheckInTimer';
 
 
 const TopBar: React.FC = () => {
@@ -117,7 +118,8 @@ const TopBar: React.FC = () => {
   };
 
   return (
-    <header className="flex justify-end items-center w-full bg-white px-8 py-2 border-b border-gray-200">
+    <header className="flex justify-end items-center w-full bg-white px-8 py-2 border-b border-gray-200 gap-4">
+      <CheckInTimer />
       {/* Online Agents */}
       <button onClick={handleToggleModal} className="flex items-center mr-[4rem]">
         {userData?.role === 'admin' && <OnlineAgents />}

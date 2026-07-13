@@ -30,5 +30,5 @@ export function formatNairaAmount(value: string | number | null | undefined): st
   if (cleaned === '') return '0'
   const n = parseFloat(cleaned)
   if (Number.isNaN(n)) return s0
-  return n.toLocaleString('en-US')
+  return Math.round(n).toLocaleString('en-US')
 }

@@ -3,7 +3,17 @@
  * Used in Settings > Vendors and in Master Wallet Send modal. Replace with API later.
  */
 
-export const VENDOR_NETWORKS = ['Ethereum', 'Avax', 'Base', 'Polygon', 'Arbitrum', 'Bitcoin', 'Solana', 'Tron'] as const;
+export const VENDOR_NETWORKS = [
+  'Ethereum',
+  'Tron',
+  'BSC',
+  'Polygon',
+  'Avax',
+  'Base',
+  'Arbitrum',
+  'Bitcoin',
+  'Solana',
+] as const;
 export type VendorNetwork = (typeof VENDOR_NETWORKS)[number];
 
 export const VENDOR_CURRENCIES = ['BTC', 'ETH', 'USDT', 'USDC', 'SOL', 'TRX', 'AVAX', 'MATIC', 'Other'] as const;

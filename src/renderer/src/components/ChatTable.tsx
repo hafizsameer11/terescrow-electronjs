@@ -32,10 +32,21 @@ function countryEmoji(country?: string): string {
 function statusLabel(status: string): string {
   const s = (status || '').toLowerCase()
   if (s === 'successful') return 'Successful'
+  if (s === 'processing') return 'Processing'
   if (s === 'declined') return 'Declined'
   if (s === 'pending') return 'Pending'
   if (s === 'unsucessful' || s === 'unsuccessful') return 'Unanswered'
   return status || '—'
+}
+
+function statusBadgeClass(status: string): { wrap: string; dot: string } {
+  const s = (status || '').toLowerCase()
+  if (s === 'successful') return { wrap: 'bg-green-100 text-green-800', dot: 'bg-green-600' }
+  if (s === 'declined') return { wrap: 'bg-red-100 text-red-800', dot: 'bg-red-600' }
+  if (s === 'pending') return { wrap: 'bg-amber-100 text-amber-900', dot: 'bg-amber-500' }
+  if (s === 'processing') return { wrap: 'bg-blue-100 text-blue-800', dot: 'bg-blue-600' }
+  if (s === 'unsucessful' || s === 'unsuccessful') return { wrap: 'bg-gray-100 text-gray-600', dot: 'bg-gray-500' }
+  return { wrap: 'bg-pink-100 text-pink-800', dot: 'bg-pink-600' }
 }
 
 function formatListDate(iso?: string | null): string {
@@ -47,6 +58,14 @@ function formatListDate(iso?: string | null): string {
   } catch {
     return '—'
   }
+}
+
+const CHAT_PREVIEW_MAX_CHARS = 72
+
+function truncateChatPreview(text: string, max = CHAT_PREVIEW_MAX_CHARS): string {
+  const trimmed = text.trim()
+  if (trimmed.length <= max) return trimmed
+  return `${trimmed.slice(0, max).trimEnd()}…`
 }
 
 interface Transaction {
@@ -201,7 +220,8 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
         <div
           className={`mt-6 bg-white ${hubLayout ? 'rounded-xl border border-gray-200 shadow-sm overflow-hidden' : 'rounded-lg shadow-md'}`}
         >
-          <table className="min-w-full table-fixed text-left text-sm text-gray-700">
+          <div className="overflow-x-auto">
+          <table className="w-full table-fixed text-left text-sm text-gray-700">
             <thead
               className={
                 hubLayout
@@ -223,7 +243,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                 ) : (
                   <th className="py-3 w-[5%]" />
                 )}
-                <th className="py-3 px-4 w-[26%]">Name, Chat</th>
+                <th className="py-3 px-4 w-[26%] max-w-0">Name, Chat</th>
                 {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[14%]">Amount</th>}
                 {activeFilterInTeam === 'Customer' && <th className="py-3 px-4 w-[14%]">Agent</th>}
                 <th className="py-3 px-4 w-[16%]">Date</th>
@@ -273,8 +293,8 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                         </div>
                       </td>
                     )}
-                    <td className="py-3 px-4">
-                      <div className={`flex gap-3 ${hubLayout ? 'items-start' : ''}`}>
+                    <td className="py-3 px-4 max-w-0 overflow-hidden">
+                      <div className={`flex gap-3 min-w-0 ${hubLayout ? 'items-start' : ''}`}>
                         {hubLayout && (
                           <div className="rounded-full overflow-hidden w-10 h-10 shrink-0">
                             <img src={getImageUrl(item.customer.profilePicture)} alt="" className="w-full h-full object-cover" />
@@ -299,7 +319,12 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                               </span>
                             ) : null}
                           </div>
-                          <p className="text-sm text-gray-500 m-0 mt-0.5 truncate">{msg}</p>
+                          <p
+                            className="text-sm text-gray-500 m-0 mt-0.5 truncate"
+                            title={msg}
+                          >
+                            {truncateChatPreview(msg)}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -320,30 +345,10 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                     {activeFilterInTeam === 'Customer' && (
                       <td className="py-3 px-4">
                         <span
-                          className={`inline-flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-full border-0 ${
-                            item.chatStatus === 'successful'
-                              ? 'bg-green-100 text-green-800'
-                              : item.chatStatus === 'declined'
-                                ? 'bg-red-100 text-red-800'
-                                : item.chatStatus === 'pending'
-                                  ? 'bg-amber-100 text-amber-900'
-                                  : item.chatStatus === 'unsucessful'
-                                    ? 'bg-gray-100 text-gray-600'
-                                    : 'bg-pink-100 text-pink-800'
-                          }`}
+                          className={`inline-flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-full border-0 ${statusBadgeClass(item.chatStatus).wrap}`}
                         >
                           <span
-                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              item.chatStatus === 'successful'
-                                ? 'bg-green-600'
-                                : item.chatStatus === 'declined'
-                                  ? 'bg-red-600'
-                                  : item.chatStatus === 'pending'
-                                    ? 'bg-amber-500'
-                                    : item.chatStatus === 'unsucessful'
-                                      ? 'bg-gray-500'
-                                      : 'bg-pink-600'
-                            }`}
+                            className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusBadgeClass(item.chatStatus).dot}`}
                           />
                           {statusLabel(item.chatStatus)}
                         </span>
@@ -413,6 +418,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
               })}
             </tbody>
           </table>
+          </div>
           {!disableInternalPagination && !hubLayout ? (
             <div className="flex justify-between items-center p-4 border-t border-gray-100">
               <button
@@ -477,7 +483,11 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                     ></span>
                   </div>
                 </td>
-                <td className="py-3 px-4">{member?.recentMessage.message}</td>
+                <td className="py-3 px-4 max-w-0 overflow-hidden">
+                  <span className="block truncate" title={member?.recentMessage.message}>
+                    {truncateChatPreview(member?.recentMessage.message ?? '—')}
+                  </span>
+                </td>
                 <td className="py-3 px-4">{member.recentMessageTimestamp.split('T')[0]}</td>
                 <td className="py-3 px-4 text-center">
                   <div className="flex justify-center space-x-2">

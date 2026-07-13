@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { sendFlowDisplayTicker, vendorMatchesAssetSymbol } from '@renderer/utils/masterWalletAssets';
 import type { SendModalVendor } from '@renderer/components/modal/SendCryptoModal';
 import {
   transactionTrackingSendToVendor,
   transactionTrackingSendToMasterWallet,
+  transactionTrackingEstimateFee,
 } from '@renderer/api/admin/transactionTracking';
 import { ApiError } from '@renderer/api/customApiCall';
+import { addThousandSeparator } from '@renderer/api/helper';
+import { formatCryptoAmountFromUnknown } from '@renderer/utils/cryptoAmountSync';
 
 export type DispositionModalTab = 'vendor' | 'master';
 
-/** Vendors whose currency matches the receive row (network validated server-side). */
 function vendorsForReceive(vendors: SendModalVendor[], receiveSymbolRaw: string): SendModalVendor[] {
   return vendors.filter((v) => vendorMatchesAssetSymbol(v.currency, receiveSymbolRaw));
 }
@@ -22,11 +24,16 @@ type Props = {
   symbol: string;
   blockchain: string;
   fullReceiveAmount: string;
+  receiveAmountUsd?: string;
+  soldAmount?: string;
+  soldAmountUsd?: string;
+  userRetentionUsd?: string;
+  /** Pre-loaded from tracking list/details (TronScan for USDT Tron). */
+  initialOnChainBalance?: string | null;
   vendors: SendModalVendor[];
   token: string;
   canSubmit: boolean;
   blockReason?: string;
-  /** Which tab to show when the modal opens (e.g. detail modal action). */
   defaultTab?: DispositionModalTab;
 };
 
@@ -37,6 +44,11 @@ const ReceivedAssetDispositionModal: React.FC<Props> = ({
   symbol,
   blockchain,
   fullReceiveAmount,
+  receiveAmountUsd,
+  soldAmount = '0',
+  soldAmountUsd = '0',
+  userRetentionUsd,
+  initialOnChainBalance,
   vendors,
   token,
   canSubmit,
@@ -45,19 +57,33 @@ const ReceivedAssetDispositionModal: React.FC<Props> = ({
 }) => {
   const queryClient = useQueryClient();
   const displayTicker = useMemo(() => sendFlowDisplayTicker(symbol) || symbol, [symbol]);
-
   const eligibleVendors = useMemo(() => vendorsForReceive(vendors, symbol), [vendors, symbol]);
 
   const [tab, setTab] = useState<DispositionModalTab>(defaultTab);
   const [selectedVendorId, setSelectedVendorId] = useState('');
+  const [previewAmount, setPreviewAmount] = useState('');
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
     if (!isOpen) return;
     setTab(defaultTab);
     setSelectedVendorId('');
+    setPreviewAmount('');
     setFormError('');
   }, [isOpen, defaultTab]);
+
+  const estimateTarget = tab === 'master' ? 'master' : 'vendor';
+  const vendorIdNum = selectedVendorId ? Number(selectedVendorId) : undefined;
+
+  const { data: feeEstimate, isFetching: estimateLoading, refetch: refetchEstimate } = useQuery({
+    queryKey: ['disburse-fee-estimate', transactionId, estimateTarget, selectedVendorId, tab],
+    queryFn: () =>
+      transactionTrackingEstimateFee(token, transactionId, {
+        target: estimateTarget,
+        vendorId: tab === 'vendor' && vendorIdNum ? vendorIdNum : undefined,
+      }),
+    enabled: isOpen && !!transactionId && (tab === 'master' || (tab === 'vendor' && !!vendorIdNum)),
+  });
 
   const invalidateTracking = () => {
     queryClient.invalidateQueries({ queryKey: ['admin-transaction-tracking'] });
@@ -91,11 +117,28 @@ const ReceivedAssetDispositionModal: React.FC<Props> = ({
     },
   });
 
+  const applyMaxSold = () => {
+    const amt = soldAmount && Number(soldAmount) > 0 ? soldAmount : soldAmountUsd;
+    setPreviewAmount(amt || '');
+  };
+
   if (!isOpen || !transactionId) return null;
 
   const busy = vendorMutation.isPending || masterMutation.isPending;
   const vendorDisabled = !canSubmit || eligibleVendors.length === 0;
   const masterDisabled = !canSubmit;
+  const soldUsdNum = Number(soldAmountUsd) || 0;
+  const recvUsdNum = Number(receiveAmountUsd) || 0;
+  const chainLower = blockchain.toLowerCase();
+  const isTronUsdt =
+    (chainLower === 'tron' || chainLower === 'trx') &&
+    (displayTicker.toUpperCase().includes('USDT') || symbol.toUpperCase().includes('USDT'));
+  const liveOnChain =
+    feeEstimate?.onChainDepositBalance != null && feeEstimate.onChainDepositBalance !== ''
+      ? feeEstimate.onChainDepositBalance
+      : initialOnChainBalance != null && initialOnChainBalance !== ''
+        ? initialOnChainBalance
+        : null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[60] overflow-y-auto p-6">
@@ -120,47 +163,111 @@ const ReceivedAssetDispositionModal: React.FC<Props> = ({
             onClick={() => { setTab('master'); setFormError(''); }}
             className={`flex-1 py-2.5 text-sm font-medium ${tab === 'master' ? 'bg-[#147341] text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
           >
-            To master wallet
+            Sweep to master
           </button>
         </div>
 
-        {tab === 'vendor' && (
-          <div className="px-4 pt-3 pb-2 bg-amber-50 border-b border-amber-100 text-xs text-amber-900 space-y-1">
-            <p className="font-medium">Deposit → vendor</p>
-            <p>
-              <span className="font-mono">POST …/transaction-tracking/:txId/send-to-vendor</span> — signs from the{' '}
-              <span className="font-medium">customer deposit</span> key. Body: <span className="font-mono">{'{ vendorId }'}</span>{' '}
-              (omit <span className="font-mono">amount</span> for full receive).
-            </p>
-            <p className="text-gray-700 capitalize">
-              Chain: {blockchain || '—'} · Asset: {displayTicker}
-            </p>
-          </div>
-        )}
-
-        {tab === 'master' && (
-          <div className="px-4 pt-3 pb-2 bg-slate-50 border-b border-slate-200 text-xs text-slate-800 space-y-1">
-            <p className="font-medium">Deposit → master wallet</p>
-            <p>
-              <span className="font-mono">POST …/transaction-tracking/:txId/send-to-master-wallet</span> — same signing path as vendor; sends to{' '}
-              <span className="font-medium">MasterWallet.address</span> for the normalized chain (e.g. ethereum, bsc, tron, polygon, bitcoin). Ledger:{' '}
-              <span className="font-mono">disbursementType: master_wallet</span>, <span className="font-mono">vendorId: null</span>.
-            </p>
-            <p className="text-slate-600">
-              Requires a <span className="font-medium">MasterWallet</span> row whose <span className="font-mono">blockchain</span> matches{' '}
-              <span className="font-mono">normalizeBlockchain</span> for this receive; otherwise the API returns a clear not-configured error.
-            </p>
-            <p className="text-gray-700 capitalize">
-              Chain: {blockchain || '—'} · Asset: {displayTicker}
-            </p>
-          </div>
-        )}
-
         <div className="p-4 space-y-3">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
-            <span className="text-gray-500">Receive amount</span>
-            <p className="font-mono font-medium text-gray-900">{fullReceiveAmount || '—'}</p>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              <span className="text-gray-500 text-xs">Received</span>
+              <p className="font-mono font-medium text-gray-900">{fullReceiveAmount || '—'}</p>
+              {receiveAmountUsd != null && (
+                <p className="text-xs text-gray-600">${addThousandSeparator(recvUsdNum)}</p>
+              )}
+            </div>
+            <div className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2">
+              <span className="text-gray-600 text-xs">Sold on platform</span>
+              <p className="font-mono font-medium text-gray-900">
+                {soldUsdNum > 0 ? `$${addThousandSeparator(soldUsdNum)}` : '—'}
+              </p>
+              {Number(soldAmount) > 0 && (
+                <p className="text-xs text-gray-600">{soldAmount} {displayTicker}</p>
+              )}
+            </div>
           </div>
+          {userRetentionUsd != null && (
+            <p className="text-xs text-gray-600">
+              User retention (receive − sold): ${addThousandSeparator(Number(userRetentionUsd) || 0)}
+            </p>
+          )}
+          {isTronUsdt && (
+            <div className="rounded-lg border border-[#147341]/30 bg-green-50 px-3 py-2 text-sm">
+              <span className="text-gray-600 text-xs block">On-chain at deposit (TronScan)</span>
+              <p className="font-mono font-semibold text-[#147341]">
+                {liveOnChain != null
+                  ? `${formatCryptoAmountFromUnknown(liveOnChain)} ${displayTicker}`
+                  : estimateLoading
+                    ? 'Loading…'
+                    : '—'}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">Live balance on the customer deposit address</p>
+            </div>
+          )}
+
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-600 mb-1">Preview amount (sold)</label>
+              <input
+                type="text"
+                value={previewAmount}
+                onChange={(e) => setPreviewAmount(e.target.value)}
+                placeholder="For dry-run display only"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={applyMaxSold}
+              disabled={soldUsdNum <= 0 && !(Number(soldAmount) > 0)}
+              className="px-3 py-2 text-sm font-medium border border-[#147341] text-[#147341] rounded-lg hover:bg-green-50 disabled:opacity-50"
+              title="Fill with amount sold on platform (preview only)"
+            >
+              Max sold
+            </button>
+          </div>
+
+          <button
+            type="button"
+            disabled={estimateLoading || (tab === 'vendor' && !vendorIdNum)}
+            onClick={() => refetchEstimate()}
+            className="w-full py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+          >
+            {estimateLoading ? 'Loading preview…' : 'Refresh dry-run preview'}
+          </button>
+
+          {feeEstimate && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm space-y-1">
+              <p className="font-medium text-gray-800">Dry-run — {tab === 'master' ? 'master wallet' : 'vendor'}</p>
+              <p className="text-xs text-gray-600 break-all">
+                Destination: <span className="font-mono">{feeEstimate.toAddress}</span>
+              </p>
+              {isTronUsdt && liveOnChain != null && (
+                <p className="text-xs font-medium text-[#147341]">
+                  On-chain at deposit (TronScan): {formatCryptoAmountFromUnknown(liveOnChain)}{' '}
+                  {feeEstimate.currency}
+                </p>
+              )}
+              <p className="text-xs text-gray-600">
+                Booked receive amount: {formatCryptoAmountFromUnknown(feeEstimate.amount)} {feeEstimate.currency}
+              </p>
+              {isTronUsdt &&
+                liveOnChain != null &&
+                formatCryptoAmountFromUnknown(liveOnChain) !==
+                  formatCryptoAmountFromUnknown(feeEstimate.amount) && (
+                  <p className="text-xs text-amber-800">
+                    On-chain balance differs from booked receive — sweep moves the booked amount only.
+                  </p>
+                )}
+              {feeEstimate.estimatedNetworkFee != null && (
+                <p className="text-xs">
+                  Est. network fee: {feeEstimate.estimatedNetworkFee}{' '}
+                  {feeEstimate.estimatedNetworkFeeCurrency || ''}
+                </p>
+              )}
+              {feeEstimate.note && <p className="text-xs text-amber-800">{feeEstimate.note}</p>}
+            </div>
+          )}
 
           {blockReason && (
             <div className="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">{blockReason}</div>
@@ -186,11 +293,6 @@ const ReceivedAssetDispositionModal: React.FC<Props> = ({
                     </option>
                   ))}
                 </select>
-                {eligibleVendors.length === 0 && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Add a vendor with matching currency under Settings → Vendors (network must fit the receive chain).
-                  </p>
-                )}
               </div>
 
               <button
@@ -217,7 +319,7 @@ const ReceivedAssetDispositionModal: React.FC<Props> = ({
               }}
               className="w-full py-3 bg-[#147341] text-white font-medium rounded-lg hover:bg-[#0d5a2e] disabled:opacity-50"
             >
-              {masterMutation.isPending ? 'Submitting…' : 'Send to master wallet'}
+              {masterMutation.isPending ? 'Submitting…' : 'Confirm sweep to master'}
             </button>
           )}
         </div>

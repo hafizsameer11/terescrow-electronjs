@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import NavItem from './NavItem';
-import { FaBell, FaCog, FaCreditCard, FaBitcoin, FaWallet, FaFileAlt, FaHeadset, FaUserFriends, FaClipboardList, FaExchangeAlt } from 'react-icons/fa';
+import { FaBell, FaCog, FaCreditCard, FaBitcoin, FaWallet, FaFileAlt, FaHeadset, FaUserFriends, FaClipboardList, FaExchangeAlt, FaChartLine } from 'react-icons/fa';
 import { RiTeamFill } from 'react-icons/ri';
 import { MdReceipt, MdAttachMoney } from 'react-icons/md';
 import { Images } from '@renderer/constant/Image';
 import { useAuth, UserRoles } from '@renderer/context/authContext';
 import TeamChat from '../TeamChat';
 import { IoLogOutOutline } from "react-icons/io5";
+import { setReadOnlyDemoSession } from '@renderer/utils/appleReviewUser';
 import { MdOutlinePermIdentity } from "react-icons/md";
 import { PiSlideshowThin } from "react-icons/pi";
 import { FaReplyAll } from "react-icons/fa";
@@ -39,6 +40,7 @@ const pathToIdMap: Record<string, string> = {
   '/pending-chats': 'pending-chats',
   '/WaysOfHearing': 'WaysOfHearing',
   '/transaction-tracking': 'transaction-tracking',
+  '/profit-tracker': 'profit-tracker',
   '/master-wallet': 'master-wallet',
   '/changenow-swaps': 'changenow-swaps',
   '/notifications': 'notifications',
@@ -47,6 +49,8 @@ const pathToIdMap: Record<string, string> = {
   '/settings/vendors': 'vendors',
   '/support': 'support',
   '/referrals': 'referrals',
+  '/crypto-jobs': 'crypto-jobs',
+  '/deposit-verify-logs': 'deposit-verify-logs',
 };
 
 export const Sidebar = () => {
@@ -68,6 +72,7 @@ export const Sidebar = () => {
   // const navigate = useNavigate();
   const handlogout = () => {
     console.log("Logout Called");
+    setReadOnlyDemoSession(false);
     dispatch({ type: 'LOGOUT' }); // Clear auth state
     navigate('/', { replace: true }); // Redirect to login
   };
@@ -108,7 +113,7 @@ export const Sidebar = () => {
     { label: 'Bill Payments', icon: <MdReceipt />, href: '/transactions/bill-payments', id: 'bill-payments' },
     { label: 'Naira Txns', icon: <MdAttachMoney />, href: '/transactions/naira', id: 'naira-txns' },
     { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
-    { label: 'User Balances', icon: <FaWallet />, href: '/user-balances', id: 'user-balances' },
+    { label: 'User Wallets', icon: <FaWallet />, href: '/user-balances', id: 'user-balances' },
     { label: 'Rates', icon: Images.rates, href: '/rates', id: 'rates' },
     { label: 'Log', icon: Images.log, href: '/log', id: 'log' },
     { label: 'Department', icon: Images.department, href: '/departments', id: 'department' },
@@ -119,7 +124,10 @@ export const Sidebar = () => {
     { label: 'KYC', icon: <MdOutlinePermIdentity />, href: '/kyc', id: 'kyc' },
     { label: 'Banners', icon: <PiSlideshowThin />, href: '/notifications/in-app/banners', id: 'banner' },
     { label: 'Ways Of Hearing', icon: <PiSlideshowThin />, href: '/WaysOfHearing', id: 'WaysOfHearing' },
-    { label: 'Transaction Tracking', icon: <FaClipboardList />, href: '/transaction-tracking', id: 'transaction-tracking' },
+    { label: 'Deposit Tracking', icon: <FaClipboardList />, href: '/transaction-tracking', id: 'transaction-tracking' },
+    { label: 'Deposit Verify Logs', icon: <FaClipboardList />, href: '/deposit-verify-logs', id: 'deposit-verify-logs' },
+    { label: 'Crypto Jobs', icon: <FaBitcoin />, href: '/crypto-jobs', id: 'crypto-jobs' },
+    { label: 'Profit Tracker', icon: <FaChartLine />, href: '/profit-tracker', id: 'profit-tracker' },
     { label: 'Master Wallet', icon: <FaWallet />, href: '/master-wallet', id: 'master-wallet' },
     { label: 'ChangeNOW Swaps', icon: <FaExchangeAlt />, href: '/changenow-swaps', id: 'changenow-swaps' },
   ];
@@ -135,6 +143,9 @@ export const Sidebar = () => {
     },
     { label: 'Quick Replies', icon: <FaReplyAll />, href: '/quick-replies', id: 'quick-replies' },
     { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
+    { label: 'Deposit Tracking', icon: <FaClipboardList />, href: '/transaction-tracking', id: 'transaction-tracking' },
+    { label: 'Master Wallet', icon: <FaWallet />, href: '/master-wallet', id: 'master-wallet' },
+    { label: 'Rates', icon: Images.rates, href: '/rates?tab=crypto', id: 'rates' },
     { label: 'Banners', icon: <PiSlideshowThin />, href: '/notifications/in-app/banners', id: 'banner' },
   ], [pendingChatsCount,countData]);
 

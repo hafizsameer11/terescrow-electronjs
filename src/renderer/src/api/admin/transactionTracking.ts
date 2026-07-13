@@ -7,6 +7,10 @@ export interface TransactionTrackingParams {
   search?: string;
   startDate?: string;
   endDate?: string;
+  ledgerType?: string;
+  balanceBucket?: string;
+  flagged?: boolean;
+  pendingVerification?: boolean;
   page?: number;
   limit?: number;
 }
@@ -18,11 +22,15 @@ export async function getTransactionTrackingList(params: TransactionTrackingPara
   limit: number;
   totalPages: number;
 }> {
-  const { token, startDate, endDate, search, page = 1, limit = 20 } = params;
+  const { token, startDate, endDate, search, ledgerType, balanceBucket, flagged, pendingVerification, page = 1, limit = 20 } = params;
   const sp = new URLSearchParams();
   if (startDate) sp.set('startDate', startDate);
   if (endDate) sp.set('endDate', endDate);
   if (search) sp.set('search', search);
+  if (ledgerType) sp.set('ledgerType', ledgerType);
+  if (balanceBucket) sp.set('balanceBucket', balanceBucket);
+  if (flagged) sp.set('flagged', 'true');
+  if (pendingVerification) sp.set('pendingVerification', 'true');
   sp.set('page', String(page));
   sp.set('limit', String(limit));
   const url = `${API_ENDPOINT.ADMIN.transactionTracking}?${sp.toString()}`;
@@ -116,6 +124,39 @@ export type BulkSendToVendorResponse = {
   }>;
   summary: { total: number; succeeded: number; failed: number };
 };
+
+export type DisbursementFeeEstimate = {
+  receiveTransactionId: string;
+  target: 'vendor' | 'master';
+  amount: string;
+  currency: string;
+  blockchain: string;
+  toAddress: string;
+  estimatedNetworkFee: string | null;
+  estimatedNetworkFeeCurrency: string | null;
+  note?: string;
+  soldAmount?: string;
+  soldAmountUsd?: string;
+  userRetentionUsd?: string;
+  onChainDepositBalance?: string | null;
+};
+
+export async function transactionTrackingEstimateFee(
+  token: string,
+  transactionId: string,
+  params: { target: 'vendor' | 'master'; vendorId?: number }
+): Promise<DisbursementFeeEstimate> {
+  const sp = new URLSearchParams();
+  sp.set('target', params.target);
+  if (params.vendorId != null) sp.set('vendorId', String(params.vendorId));
+  const res = await apiCall(
+    `${API_ENDPOINT.ADMIN.transactionTrackingEstimateFee(transactionId)}?${sp}`,
+    'GET',
+    undefined,
+    token
+  );
+  return (res as any)?.data;
+}
 
 export async function transactionTrackingBulkSendToVendor(
   token: string,

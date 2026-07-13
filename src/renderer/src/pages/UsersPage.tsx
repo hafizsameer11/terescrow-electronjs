@@ -1,10 +1,12 @@
 import UsersFilter from '@renderer/components/UserFilters';
 import UserTable from '@renderer/components/UserTable';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAllUsers } from '@renderer/api/queries/adminqueries.js';
 import UserStat from '@renderer/components/UserStat';
 import { useAuth } from '@renderer/context/authContext';
+import { apiDateParams, DATE_RANGE_PRESETS, matchesDateRange } from '@renderer/utils/dateRange';
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
 
 const UsersPage = () => {
   const [filters, setFilters] = useState({
@@ -23,37 +25,28 @@ const UsersPage = () => {
     enabled: !!token,
   });
 
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
+  const debouncedSearch = useDebouncedValue(filters.search.trim(), 400);
+
   const handleCategoryChange = (category) => {
     setFilters({ ...filters, category });
   };
 
-  // Helper function to calculate date ranges
-  const calculateDateRange = (range) => {
-    const today = new Date();
-    switch (range) {
-      case 'Last 30 days':
-        return [new Date(today.setDate(today.getDate() - 30)), new Date()];
-      case 'Last 15 days':
-        return [new Date(today.setDate(today.getDate() - 15)), new Date()];
-      case 'Last 7 days':
-        return [new Date(today.setDate(today.getDate() - 7)), new Date()];
-      default:
-        return [null, null]; // No filtering
-    }
-  };
+  const { startDate, endDate } = useMemo(
+    () => apiDateParams({ dateRange: filters.dateRange, dateRangePresetActive }),
+    [filters.dateRange, dateRangePresetActive]
+  );
 
   // Filter customers based on criteria
   const filteredCustomers = userData?.data.filter((customer) => {
     const matchesGender = filters.gender === 'All' || customer.gender === filters.gender;
     const matchesCategory = filters.category === 'All' || customer.role === filters.category;
     const matchesSearch =
-      filters.search === '' ||
-      customer.username.toLowerCase().includes(filters.search.toLowerCase()) ||
-      customer.firstname?.toLowerCase().includes(filters.search.toLowerCase());
+      debouncedSearch === '' ||
+      customer.username.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      customer.firstname?.toLowerCase().includes(debouncedSearch.toLowerCase());
 
-    const [startDate, endDate] = calculateDateRange(filters.dateRange);
-    const matchesDate =
-      !startDate || !endDate || (new Date(customer.createdAt) >= startDate && new Date(customer.createdAt) <= endDate);
+    const matchesDate = matchesDateRange(customer.createdAt, startDate, endDate);
 
     return matchesGender && matchesCategory && matchesSearch && matchesDate;
   });
@@ -65,12 +58,15 @@ const UsersPage = () => {
         <select
           className="ml-4 px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
           value={filters.dateRange}
-          onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
+          onChange={(e) => {
+            setDateRangePresetActive(true);
+            setFilters({ ...filters, dateRange: e.target.value });
+          }}
         >
           <option value="All">All</option>
-          <option value="Last 30 days">Last 30 days</option>
-          <option value="Last 15 days">Last 15 days</option>
-          <option value="Last 7 days">Last 7 days</option>
+          {DATE_RANGE_PRESETS.map((p) => (
+            <option key={p} value={p}>{p}</option>
+          ))}
         </select>
       </div>
 

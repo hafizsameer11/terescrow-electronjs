@@ -9,3 +9,4 @@ export * from './support';
 export * from './customers';
 export * from './changenow';
 export * from './cryptoRates';
+export * from './profitTracker';

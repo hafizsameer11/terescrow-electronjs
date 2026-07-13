@@ -11,7 +11,8 @@ interface EarnSettingsModalProps {
 const EarnSettingsModal: React.FC<EarnSettingsModalProps> = ({ isOpen, onClose }) => {
   const { token } = useAuth();
   const queryClient = useQueryClient();
-  const [firstTimeDepositBonusPct, setFirstTimeDepositBonusPct] = useState(100);
+  const [signupBonusNgn, setSignupBonusNgn] = useState(10000);
+  const [minFirstWithdrawalNgn, setMinFirstWithdrawalNgn] = useState(20000);
   const [commissionReferralTradesPct, setCommissionReferralTradesPct] = useState(5);
   const [commissionDownlineTradesPct, setCommissionDownlineTradesPct] = useState(2);
 
@@ -23,7 +24,8 @@ const EarnSettingsModal: React.FC<EarnSettingsModalProps> = ({ isOpen, onClose }
 
   useEffect(() => {
     if (settings) {
-      setFirstTimeDepositBonusPct(settings.firstTimeDepositBonusPct ?? 100);
+      setSignupBonusNgn(settings.signupBonusNgn ?? 10000);
+      setMinFirstWithdrawalNgn(settings.minFirstWithdrawalNgn ?? 20000);
       setCommissionReferralTradesPct(settings.commissionReferralTradesPct ?? 5);
       setCommissionDownlineTradesPct(settings.commissionDownlineTradesPct ?? 2);
     }
@@ -31,12 +33,14 @@ const EarnSettingsModal: React.FC<EarnSettingsModalProps> = ({ isOpen, onClose }
 
   const updateMutation = useMutation({
     mutationFn: (body: {
-      firstTimeDepositBonusPct: number;
+      signupBonusNgn: number;
+      minFirstWithdrawalNgn: number;
       commissionReferralTradesPct: number;
       commissionDownlineTradesPct: number;
     }) => updateReferralsEarnSettings(token!, body),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-referrals-earn-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-referrals-commission-settings'] });
       onClose();
     },
   });
@@ -45,7 +49,8 @@ const EarnSettingsModal: React.FC<EarnSettingsModalProps> = ({ isOpen, onClose }
 
   const handleUpdate = () => {
     updateMutation.mutate({
-      firstTimeDepositBonusPct,
+      signupBonusNgn,
+      minFirstWithdrawalNgn,
       commissionReferralTradesPct,
       commissionDownlineTradesPct,
     });
@@ -61,18 +66,35 @@ const EarnSettingsModal: React.FC<EarnSettingsModalProps> = ({ isOpen, onClose }
           </button>
         </div>
         <div className="p-6 space-y-4">
+          <p className="text-xs text-gray-500">
+            Signup bonus and first-withdrawal minimum match referral commission settings (NGN).
+          </p>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">First time deposit bonus</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Signup bonus</label>
             <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+              <span className="px-3 py-2 bg-gray-100 text-gray-600">₦</span>
               <input
                 type="number"
                 min={0}
-                max={100}
-                value={firstTimeDepositBonusPct}
-                onChange={(e) => setFirstTimeDepositBonusPct(Number(e.target.value) || 0)}
+                step={1}
+                value={signupBonusNgn}
+                onChange={(e) => setSignupBonusNgn(Number(e.target.value) || 0)}
                 className="flex-1 px-3 py-2 outline-none"
               />
-              <span className="px-3 py-2 bg-gray-100 text-gray-600">%</span>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Min balance for first withdrawal</label>
+            <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+              <span className="px-3 py-2 bg-gray-100 text-gray-600">₦</span>
+              <input
+                type="number"
+                min={0}
+                step={1}
+                value={minFirstWithdrawalNgn}
+                onChange={(e) => setMinFirstWithdrawalNgn(Number(e.target.value) || 0)}
+                className="flex-1 px-3 py-2 outline-none"
+              />
             </div>
           </div>
           <div>

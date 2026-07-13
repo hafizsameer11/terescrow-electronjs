@@ -26,6 +26,8 @@ import Settings from './pages/Settings';
 import Transaction from './pages/Transaction';
 import Services from './pages/Services';
 import { AuthProvider } from './context/authContext';
+import { DailyReportSessionProvider } from './context/dailyReportSessionContext';
+import AgentClockInGate from './components/AgentClockInGate';
 import TeamChat from './components/TeamChat';
 import PendingChats from './pages/PendingChats';
 import { SocketProvider } from './context/socketContext';
@@ -41,6 +43,9 @@ import TransactionTrackingPage from './pages/TransactionTrackingPage';
 import ReferralsPage from './pages/ReferralsPage';
 import SupportPage from './pages/SupportPage';
 import ChangeNowSwapsPage from './pages/ChangeNowSwapsPage';
+import ProfitTrackerPage from './pages/ProfitTrackerPage';
+import CryptoJobsPage from './pages/CryptoJobsPage';
+import DepositVerifyLogsPage from './pages/DepositVerifyLogsPage';
 
 function App(): JSX.Element {
   const location = useLocation();
@@ -85,17 +90,21 @@ function App(): JSX.Element {
       <Route path="/transactions/naira" element={<Transaction defaultTransactionType="naira" />} />
       <Route path="/user-balances" element={<UserBalancesPage />} />
       <Route path="/transaction-tracking" element={<TransactionTrackingPage />} />
+      <Route path="/profit-tracker" element={<ProfitTrackerPage />} />
       <Route path="/master-wallet" element={<MasterWalletPage />} />
       <Route path="/changenow-swaps" element={<ChangeNowSwapsPage />} />
       <Route path="/daily-report" element={<DailyReportPage />} />
       <Route path="/support" element={<SupportPage />} />
       <Route path="/referrals" element={<ReferralsPage />} />
+      <Route path="/crypto-jobs" element={<CryptoJobsPage />} />
+      <Route path="/deposit-verify-logs" element={<DepositVerifyLogsPage />} />
       <Route path="/kyc" element={<Kyc />} />
     </>
   );
 
   return (
     <AuthProvider>
+      <DailyReportSessionProvider>
       <SocketProvider>
         <RootLayout>
           {!isLogin && location.pathname !== '/' && <Sidebar />}
@@ -118,8 +127,10 @@ function App(): JSX.Element {
               </div>
             )}
           </Content>
+          <AgentClockInGate />
         </RootLayout>
       </SocketProvider>
+      </DailyReportSessionProvider>
     </AuthProvider>
   );
 }

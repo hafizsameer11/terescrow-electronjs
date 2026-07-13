@@ -1,6 +1,9 @@
 import React, { useState, useMemo } from 'react';
+import { apiDateParams } from '@renderer/utils/dateRange';
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
+import ListFetchingIndicator from '@renderer/components/ListFetchingIndicator';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   getAdminTransactionsByCustomer,
   type TransactionNiche,
@@ -36,27 +39,42 @@ const TransactionDetails: React.FC = () => {
   const [transactionTypeTab, setTransactionTypeTab] = useState<TransactionTypeTab>('all');
   const [page, setPage] = useState(1);
 
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
   const [filters, setFilters] = useState({
     status: 'All',
     type: 'All',
-    dateRange: 'Last 30 days',
+    dateRange: 'All',
     search: '',
+    startDate: '',
+    endDate: '',
   });
 
   const niche = useMemo(() => tabToNiche(transactionTypeTab), [transactionTypeTab]);
 
-  const { data: txData, isLoading, isError } = useQuery({
-    queryKey: ['admin-transactions-by-customer', token, customerId, niche, filters.status, filters.search, page],
+  const { startDate, endDate } = useMemo(
+    () => apiDateParams({ ...filters, dateRangePresetActive }),
+    [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]
+  );
+  const debouncedSearch = useDebouncedValue(filters.search.trim(), 400);
+
+  const { data: txData, isLoading, isError, isFetching } = useQuery({
+    queryKey: ['admin-transactions-by-customer', token, customerId, niche, filters.status, filters.type, debouncedSearch, startDate, endDate, page],
     queryFn: () =>
       getAdminTransactionsByCustomer(token!, customerId!, {
         niche,
+        type: filters.type !== 'All' ? (filters.type.toLowerCase() as 'buy' | 'sell') : undefined,
         status: filters.status !== 'All' ? (filters.status.toLowerCase() as any) : undefined,
-        search: filters.search || undefined,
+        search: debouncedSearch || undefined,
+        startDate,
+        endDate,
         page,
         limit: 20,
       }),
     enabled: !!token && !!customerId,
+    placeholderData: keepPreviousData,
   });
+
+  const initialTxLoad = isLoading && !txData;
 
   const transactions = txData?.transactions ?? [];
   const total = txData?.total ?? 0;
@@ -97,7 +115,7 @@ const TransactionDetails: React.FC = () => {
         </button>
       </div>
 
-      {isLoading ? (
+      {initialTxLoad ? (
         <p className="text-gray-600">Loading transactions...</p>
       ) : isError ? (
         <p className="text-red-600">Failed to load transactions</p>
@@ -143,8 +161,13 @@ const TransactionDetails: React.FC = () => {
               title={`Transaction History (${total})`}
               subTitle="View the total transaction history for this user"
               filters={filters}
-              onChange={(updatedFilters) => { setFilters({ ...filters, ...updatedFilters }); setPage(1); }}
+              onChange={(updatedFilters) => {
+                if (updatedFilters.dateRange !== undefined) setDateRangePresetActive(true);
+                setFilters((prev) => ({ ...prev, ...updatedFilters }));
+                setPage(1);
+              }}
             />
+            <ListFetchingIndicator show={isFetching && !initialTxLoad} />
             <TransactionsTable
               data={transactions}
               showCustomerDetailsButton={false}

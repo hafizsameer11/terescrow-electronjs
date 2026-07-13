@@ -1,28 +1,34 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FiCalendar } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import ChatsHubSummaryCards from '@renderer/components/chats/ChatsHubSummaryCards';
 import { useAuth } from '@renderer/context/authContext';
 import {
   getAllAgentToCusomterChats,
   getChatStats,
   getTeamStats,
-  getTransactionStats,
-  getDashBoardStats,
   PaginatedChatsResponse,
   ChatRow,
 } from '@renderer/api/queries/admin.chat.queries';
 import { getAllAgentss } from '@renderer/api/queries/adminqueries';
 import {
-  dailyReportCheckIn,
-  dailyReportCheckOut,
   getDailyReportShiftSettings,
   type ShiftType,
 } from '@renderer/api/admin/dailyReport';
+import { useDailyReportSession } from '@renderer/context/dailyReportSessionContext';
+import { getProfitTrackerStats } from '@renderer/api/admin/profitTracker';
+import { getMasterWalletBalancesSummary } from '@renderer/api/admin/masterWallet';
+import { getAdminUserBalancesSummary } from '@renderer/api/admin/userBalances';
+import { getReferralsSummary } from '@renderer/api/admin/referrals';
 import CheckInModal from '@renderer/components/modal/CheckInModal';
 import ChatFilters from '@renderer/components/ChatFilters';
 import ChatTable from '@renderer/components/ChatTable';
 import type { AgentToCustomerChatData } from '@renderer/api/queries/datainterfaces';
-import { getImageUrl, formatNairaAmount } from '@renderer/api/helper';
+import { getImageUrl, formatNairaAmount, addThousandSeparator } from '@renderer/api/helper';
+import { apiDateParams } from '@renderer/utils/dateRange';
+import { bucketChatProfitsFromLedger } from '@renderer/utils/chatFinancials';
+import { MASTER_WALLET_ID } from '@renderer/data/masterWalletData';
 
 const PAGE_SIZE = 50;
 
@@ -35,19 +41,6 @@ type UIFilters = {
   category: string;
   startDate: string;
   endDate: string;
-};
-
-const computeStartFromPreset = (label: UIFilters['dateRange']): string | undefined => {
-  if (label === 'All') return undefined;
-  const now = new Date();
-  const d = new Date(now);
-  if (label === 'Last 7 days') d.setDate(now.getDate() - 7);
-  else if (label === 'Last 15 days') d.setDate(now.getDate() - 15);
-  else if (label === 'Last 30 days') d.setDate(now.getDate() - 30);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
 };
 
 function numId(v: string | number | undefined): number {
@@ -101,17 +94,23 @@ function formatInputDate(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
+type BalanceView = 'crypto' | 'naira';
+
 const Chat = () => {
   const { token, userData } = useAuth();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { checkIn, checkOut, isCheckingIn, isCheckingOut, isClockedIn } = useDailyReportSession();
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const [balanceView, setBalanceView] = useState<BalanceView>('crypto');
+  const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
 
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
   const [filters, setFilters] = useState<UIFilters>({
     status: 'All',
-    type: 'buy',
-    dateRange: 'Last 30 days',
+    type: 'All',
+    dateRange: 'All',
     search: '',
-    transactionType: 'buy',
+    transactionType: 'All',
     category: 'All',
     startDate: '',
     endDate: '',
@@ -131,6 +130,7 @@ const Chat = () => {
     queryKey: ['chatStats', token],
     queryFn: () => getChatStats({ token: token! }),
     enabled: !!token,
+    refetchInterval: 3000,
   });
 
   const { data: teamStats } = useQuery({
@@ -145,15 +145,40 @@ const Chat = () => {
     enabled: !!token,
   });
 
-  const { data: txStats } = useQuery({
-    queryKey: ['transactionStats', token],
-    queryFn: () => getTransactionStats({ token: token! }),
+  const profitDateParams = useMemo(() => {
+    const { startDate, endDate } = apiDateParams({
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      dateRange: filters.dateRange,
+      dateRangePresetActive,
+    });
+    return {
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+    };
+  }, [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]);
+
+  const { data: profitStats } = useQuery({
+    queryKey: ['chat-profit-stats', token, profitDateParams],
+    queryFn: () => getProfitTrackerStats(token!, profitDateParams),
     enabled: !!token,
   });
 
-  const { data: dashStats } = useQuery({
-    queryKey: ['dashboardStats', token],
-    queryFn: () => getDashBoardStats({ token: token! }),
+  const { data: masterSummary } = useQuery({
+    queryKey: ['chat-master-wallet-summary', token],
+    queryFn: () => getMasterWalletBalancesSummary(token!),
+    enabled: !!token,
+  });
+
+  const { data: userDepositSummary } = useQuery({
+    queryKey: ['chat-user-deposit-summary', token],
+    queryFn: () => getAdminUserBalancesSummary(token!),
+    enabled: !!token,
+  });
+
+  const { data: referralSummary } = useQuery({
+    queryKey: ['chat-referral-summary', token, profitDateParams],
+    queryFn: () => getReferralsSummary(token!, profitDateParams),
     enabled: !!token,
   });
 
@@ -163,20 +188,13 @@ const Chat = () => {
     enabled: !!token && checkInOpen,
   });
 
-  const checkInMutation = useMutation({
-    mutationFn: (shift: ShiftType) => dailyReportCheckIn(token!, { shift }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-daily-report-logs'] });
-      setCheckInOpen(false);
-    },
-  });
+  const handleCheckIn = (shift: ShiftType) => {
+    checkIn(shift);
+  };
 
-  const checkOutMutation = useMutation({
-    mutationFn: () => dailyReportCheckOut(token!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-daily-report-logs'] });
-    },
-  });
+  useEffect(() => {
+    if (isClockedIn) setCheckInOpen(false);
+  }, [isClockedIn]);
 
   const backendFilters = useMemo(() => {
     const out: Record<string, string | undefined> = {};
@@ -184,16 +202,18 @@ const Chat = () => {
     if (filters.type !== 'All') out.type = filters.type;
     if (filters.category !== 'All') out.category = filters.category;
 
-    const presetStart = computeStartFromPreset(filters.dateRange);
-    const start = filters.startDate || presetStart || undefined;
-    const end = filters.endDate || undefined;
-
-    if (start) out.start = start;
-    if (end) out.end = end;
+    const { startDate, endDate } = apiDateParams({
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      dateRange: filters.dateRange,
+      dateRangePresetActive,
+    });
+    if (startDate) out.start = startDate;
+    if (endDate) out.end = endDate;
 
     if (filters.search.trim()) out.q = filters.search.trim();
     return out;
-  }, [filters]);
+  }, [filters, dateRangePresetActive]);
 
   const {
     data: chatsResp,
@@ -211,7 +231,8 @@ const Chat = () => {
         filters: backendFilters,
       }),
     enabled: !!token,
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
+    refetchInterval: 3000,
   });
 
   const rows: ChatRow[] = chatsResp?.data ?? [];
@@ -225,14 +246,34 @@ const Chat = () => {
 
   const stats = chatStatsData?.data;
 
-  const cryptoNgn = txStats?.data?.cryptoTransactions?._sum?.amountNaira ?? 0;
-  const giftNgn = txStats?.data?.giftCardTransactions?._sum?.amountNaira ?? 0;
-  const billNgn = Math.max(
-    0,
-    (txStats?.data?.totalTransactionAmountSum?._sum?.amountNaira ?? 0) - cryptoNgn - giftNgn
-  );
-  const earnRaw = dashStats?.data?.totalRevenue?.current ?? 0;
-  const earnNegative = dashStats?.data?.totalRevenue?.change === 'negative';
+  const profitBuckets = useMemo(() => {
+    const byType = (profitStats?.byTransactionType as Array<{ transactionType?: string; totalProfit?: string }>) ?? [];
+    return bucketChatProfitsFromLedger(byType);
+  }, [profitStats]);
+
+  const referralPaidOut = Number(referralSummary?.amountPaidOut ?? 0);
+  const earnNgn = profitBuckets.earn !== 0 ? profitBuckets.earn : -referralPaidOut;
+  const earnNegative = earnNgn < 0;
+
+  const masterRow = useMemo(() => {
+    const list = masterSummary?.summary ?? [];
+    return list.find((s) => String(s.walletId).toLowerCase() === MASTER_WALLET_ID) ?? list[0];
+  }, [masterSummary]);
+
+  const masterUsdDisplay = useMemo(() => {
+    const usd = masterRow?.totalUsd;
+    if (usd == null || usd === '—' || !Number.isFinite(Number(usd))) return String(usd ?? '—');
+    return `$${addThousandSeparator(Number(usd))}`;
+  }, [masterRow]);
+
+  const nairaDepositDisplay = useMemo(() => {
+    const ngn = userDepositSummary?.totalDepositNgn ?? 0;
+    return `N${formatNairaAmount(ngn)}`;
+  }, [userDepositSummary]);
+
+  const balanceLabel =
+    balanceView === 'crypto' ? 'Master Wallet balance' : 'User deposit balances';
+  const balanceValue = balanceView === 'crypto' ? masterUsdDisplay : nairaDepositDisplay;
 
   const agentAvatars = agentsList?.data?.slice(0, 4) ?? [];
   const onlineTotal = teamStats?.data?.totalOnlineAgents ?? agentAvatars.length;
@@ -259,9 +300,9 @@ const Chat = () => {
               <button
                 type="button"
                 onClick={() => {
-                  if (window.confirm('Clock out now?')) checkOutMutation.mutate();
+                  checkOut();
                 }}
-                disabled={checkOutMutation.isPending}
+                disabled={isCheckingOut}
                 className="px-6 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 shadow-sm disabled:opacity-50"
               >
                 Clock Out
@@ -333,73 +374,36 @@ const Chat = () => {
           </div>
         </div>
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="rounded-2xl bg-emerald-50/90 border border-emerald-100 p-6 relative overflow-hidden">
-            <div className="absolute top-4 right-4 bg-white rounded-lg px-3 py-2 shadow-sm border border-emerald-100/80">
-              <p className="text-[10px] uppercase tracking-wide text-gray-500">Total Transactions</p>
-              <p className="text-lg font-semibold text-[#147341]">
-                {stats?.successfulTransactions?.count ?? txStats?.data?.totalTransactions?.count ?? '—'}
-              </p>
-            </div>
-            <div className="flex items-start gap-3 mb-6">
-              <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center text-[#147341] text-xl border border-emerald-100">
-                💬
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Chat Summary</h2>
-                <p className="text-sm text-gray-600">View quick stats for your chats.</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-              {[
-                { label: 'Total Chats', value: stats?.totalChats?.count },
-                { label: 'Successful Chats', value: stats?.successfulTransactions?.count },
-                { label: 'Unsuccessful Chats', value: stats?.unsuccessfulChats?.count },
-                { label: 'Pending Chats', value: stats?.pendingChats?.count },
-                { label: 'Declined Chats', value: stats?.declinedChats?.count },
-              ].map((m) => (
-                <div key={m.label} className="text-center sm:text-left">
-                  <p className="text-xs text-gray-600 mb-1">{m.label}</p>
-                  <p className="text-lg font-semibold text-gray-900">{m.value ?? '—'}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl bg-white border border-gray-200 p-6 shadow-sm">
-            <div className="flex items-start gap-3 mb-5">
-              <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-600 text-xl border border-gray-200">
-                💬
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Financials</h2>
-                <p className="text-sm text-gray-600">View quick stats for your financials.</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Crypto Profit</p>
-                <p className="text-sm font-semibold text-gray-900">₦{formatNairaAmount(cryptoNgn)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Gift Card Profit</p>
-                <p className="text-sm font-semibold text-gray-900">₦{formatNairaAmount(giftNgn)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Bill Payment Profit</p>
-                <p className="text-sm font-semibold text-gray-900">₦{formatNairaAmount(billNgn)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Earn</p>
-                <p className={`text-sm font-semibold ${earnNegative ? 'text-red-600' : 'text-gray-900'}`}>
-                  {earnNegative ? '-' : ''}₦{formatNairaAmount(Math.abs(earnRaw))}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ChatsHubSummaryCards
+          chatStats={{
+            totalChats: stats?.totalChats?.count,
+            successful: stats?.successfulTransactions?.count,
+            unsuccessful: stats?.unsuccessfulChats?.count,
+            pending: stats?.pendingChats?.count,
+            declined: stats?.declinedChats?.count,
+            totalTransactions: stats?.totalChats?.count ?? stats?.successfulTransactions?.count,
+          }}
+          balanceView={balanceView}
+          balanceMenuOpen={balanceMenuOpen}
+          balanceLabel={balanceLabel}
+          balanceValue={balanceValue}
+          masterUsdDisplay={masterUsdDisplay}
+          nairaDepositDisplay={nairaDepositDisplay}
+          onBalanceMenuToggle={() => setBalanceMenuOpen((o) => !o)}
+          onBalanceMenuClose={() => setBalanceMenuOpen(false)}
+          onBalanceViewChange={(view) => {
+            setBalanceView(view);
+            setBalanceMenuOpen(false);
+          }}
+          profits={{
+            crypto: profitBuckets.crypto,
+            giftCard: profitBuckets.giftCard,
+            billPayment: profitBuckets.billPayment,
+            earn: earnNgn,
+            earnNegative,
+          }}
+          onQuickAction={(href) => navigate(href)}
+        />
 
         <ChatFilters
           layout="chatsHub"
@@ -409,11 +413,12 @@ const Chat = () => {
           subtitle="Manage total chat and transaction"
           onChange={(updated) => {
             if ('search' in updated) setSearchInput(String(updated.search ?? ''));
+            if ('dateRange' in updated) setDateRangePresetActive(true);
             setFilters((prev) => ({ ...prev, ...updated }));
           }}
         />
 
-        {!chatLoading && !chatIsError && !chatError && (
+        {!(chatLoading && !chatsResp) && !chatIsError && !chatError && (
           <>
             <ChatTable
               data={tableRows}
@@ -447,7 +452,8 @@ const Chat = () => {
           </>
         )}
 
-        {chatLoading && <div className="text-sm text-gray-500">Loading chats…</div>}
+        {chatLoading && !chatsResp && <div className="text-sm text-gray-500">Loading chats…</div>}
+        {isFetching && chatsResp && <div className="text-sm text-gray-500">Updating…</div>}
         {chatIsError && <div className="text-sm text-red-600">Failed to load chats: {String(chatError)}</div>}
       </div>
 
@@ -455,7 +461,8 @@ const Chat = () => {
         isOpen={checkInOpen}
         onClose={() => setCheckInOpen(false)}
         shiftSettings={shiftSettings ?? null}
-        onCheckIn={(shift) => checkInMutation.mutate(shift)}
+        onCheckIn={handleCheckIn}
+        isPending={isCheckingIn}
       />
     </>
   );

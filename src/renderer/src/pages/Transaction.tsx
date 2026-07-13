@@ -8,8 +8,11 @@ import StatsCard from '@renderer/components/StatsCard'
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable'
 import TransactionsFilter from '@renderer/components/TransactionsFilter'
 import { useAuth } from '@renderer/context/authContext'
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import React, { useState, useEffect, useMemo } from 'react'
+import { apiDateParams } from '@renderer/utils/dateRange'
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue'
+import ListFetchingIndicator from '@renderer/components/ListFetchingIndicator'
 import type { TransactionTypeTab } from './TransactionDetails'
 
 const TRANSACTION_TYPE_TABS: { id: TransactionTypeTab; label: string }[] = [
@@ -42,10 +45,11 @@ const Transactions: React.FC<TransactionsProps> = ({ defaultTransactionType = 'a
     setPage(1)
   }, [defaultTransactionType])
 
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false)
   const [filters, setFilters] = useState({
     status: 'All',
     type: 'All',
-    dateRange: 'Last 30 days',
+    dateRange: 'All',
     search: '',
     startDate: '',
     endDate: '',
@@ -53,33 +57,43 @@ const Transactions: React.FC<TransactionsProps> = ({ defaultTransactionType = 'a
 
   const niche = useMemo(() => tabToNiche(transactionTypeTab), [transactionTypeTab])
 
-  const { data: txData, isLoading } = useQuery({
-    queryKey: ['admin-transactions', token, niche, filters.status, filters.search, filters.startDate, filters.endDate, page],
+  const { startDate, endDate } = useMemo(
+    () => apiDateParams({ ...filters, dateRangePresetActive }),
+    [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]
+  )
+  const debouncedSearch = useDebouncedValue(filters.search.trim(), 400)
+
+  const { data: txData, isLoading, isFetching } = useQuery({
+    queryKey: ['admin-transactions', token, niche, filters.status, filters.type, debouncedSearch, startDate, endDate, page],
     queryFn: () =>
       getAdminTransactions({
         token: token!,
         niche,
+        type: filters.type !== 'All' ? (filters.type.toLowerCase() as 'buy' | 'sell') : undefined,
         status: filters.status !== 'All' ? (filters.status.toLowerCase() as any) : undefined,
-        search: filters.search || undefined,
-        startDate: filters.startDate || undefined,
-        endDate: filters.endDate || undefined,
+        search: debouncedSearch || undefined,
+        startDate,
+        endDate,
         page,
         limit: 20,
       }),
     enabled: !!token,
+    placeholderData: keepPreviousData,
   })
+
+  const initialTxLoad = isLoading && !txData
 
   const transactions = txData?.transactions ?? []
   const totalPages = txData?.totalPages ?? 0
   const total = txData?.total ?? 0
 
   const { data: statsData, isLoading: statsLoading } = useQuery({
-    queryKey: ['admin-transaction-stats', token, niche, filters.startDate, filters.endDate],
+    queryKey: ['admin-transaction-stats', token, niche, startDate, endDate],
     queryFn: () =>
       getAdminTransactionStats(token!, {
         niche,
-        startDate: filters.startDate || undefined,
-        endDate: filters.endDate || undefined,
+        startDate,
+        endDate,
       }),
     enabled: !!token,
   })
@@ -170,9 +184,14 @@ const Transactions: React.FC<TransactionsProps> = ({ defaultTransactionType = 'a
           subTitle="Manage customer transactions"
           filters={filters}
           showTypeFilter={transactionTypeTab !== 'billPayments'}
-          onChange={(updatedFilters) => { setFilters({ ...filters, ...updatedFilters }); setPage(1); }}
+          onChange={(updatedFilters) => {
+            if (updatedFilters.dateRange !== undefined) setDateRangePresetActive(true)
+            setFilters((prev) => ({ ...prev, ...updatedFilters }))
+            setPage(1)
+          }}
         />
-        {isLoading ? (
+        <ListFetchingIndicator show={isFetching && !initialTxLoad} />
+        {initialTxLoad ? (
           <div className="p-8 text-center text-gray-500">Loading transactions…</div>
         ) : (
           <TransactionsTable

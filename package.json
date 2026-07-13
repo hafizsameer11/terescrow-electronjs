@@ -1,6 +1,6 @@
 {
   "name": "tercescrowadmin",
-  "version": "1.8.9",
+  "version": "1.9.1",
   "description": "An Electron application with React and TypeScript",
   "main": "./out/main/index.js",
   "author": "example.com",
@@ -13,12 +13,15 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
-    "build": "electron-vite build && electron-builder --mac --arm64",
-    "build:intel":"electron-vite build && electron-builder --mac --x64",
+    "build": "electron-vite build && electron-builder --mac dmg --arm64",
+    "build:intel": "electron-vite build && electron-builder --mac dmg --x64",
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "electron-vite build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
+    "build:mac": "electron-vite build && electron-builder --mac dmg",
+    "build:mac:mas": "electron-vite build && electron-builder --mac mas --arm64",
+    "build:mac:mas:intel": "electron-vite build && electron-builder --mac mas --x64",
+    "build:mac:mas:universal": "electron-vite build && electron-builder --mac mas --universal",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
@@ -66,9 +69,12 @@
   "build": {
     "appId": "com.tercescrow.admin",
     "productName": "TercescrowAdmin",
+    "copyright": "Copyright © Tercescrow",
+    "generateUpdatesFilesForAllChannels": false,
+    "publish": null,
     "mac": {
       "target": [
-       "dmg"
+        "dmg"
       ],
       "icon": "resources/tercescrow-logo.icns",
       "minimumSystemVersion": "10.15",
@@ -76,10 +82,32 @@
       "entitlements": "entitlements.mac.plist",
       "entitlementsInherit": "entitlements.mac.inherit.plist",
       "gatekeeperAssess": false,
-     "files": [
-      "**/*",
-      "!**/Contents/Frameworks/TercescrowAdmin Helper (Plugin).app"
-    ]
+      "category": "public.app-category.business",
+      "extendInfo": {
+        "LSApplicationCategoryType": "public.app-category.business",
+        "NSHumanReadableCopyright": "Copyright © Tercescrow"
+      },
+      "files": [
+        "**/*",
+        "!**/Contents/Frameworks/TercescrowAdmin Helper (Plugin).app"
+      ]
+    },
+    "mas": {
+      "type": "distribution",
+      "category": "public.app-category.business",
+      "minimumSystemVersion": "12.0",
+      "extendInfo": {
+        "LSMinimumSystemVersion": "12.0"
+      },
+      "entitlements": "entitlements.mas.plist",
+      "entitlementsInherit": "entitlements.mas.inherit.plist",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "provisioningProfile": "build/macos/TercescrowAdmin.provisionprofile",
+      "files": [
+        "**/*",
+        "!**/Contents/Frameworks/TercescrowAdmin Helper (Plugin).app"
+      ]
     },
     "win": {
       "target": [

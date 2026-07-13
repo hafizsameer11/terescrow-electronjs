@@ -71,6 +71,16 @@ export async function getAdminTransactionsByCustomer(
   return (res as any)?.data ?? { transactions: [], total: 0, page: 1, limit: 20, totalPages: 0 };
 }
 
+export async function revokeCryptoTransaction(
+  token: string,
+  transactionId: string,
+  reason?: string
+): Promise<{ alreadyRevoked?: boolean; transactionId: string; status: string }> {
+  const url = API_ENDPOINT.ADMIN.revokeCryptoTransaction(transactionId);
+  const res = await apiCall(url, 'POST', reason ? { reason } : {}, token);
+  return (res as any)?.data ?? res;
+}
+
 export async function getAdminTransactionStats(
   token: string,
   params?: { niche?: TransactionNiche; startDate?: string; endDate?: string }

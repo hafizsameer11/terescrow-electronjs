@@ -14,14 +14,22 @@ const API_ENDPOINT = {
   ADMIN: {
     transactions: API_ADMIN_BASE + '/transactions',
     transactionsByCustomer: (customerId: string | number) => API_ADMIN_BASE + '/transactions/by-customer/' + encodeURIComponent(String(customerId)),
+    revokeCryptoTransaction: (transactionId: string) =>
+      API_ADMIN_BASE + '/transactions/crypto/' + encodeURIComponent(transactionId) + '/revoke',
     transactionStats: API_ADMIN_BASE + '/transactions/stats',
     userBalances: API_ADMIN_BASE + '/user-balances',
+    userBalancesSummary: API_ADMIN_BASE + '/user-balances/summary',
     masterWalletBalances: API_ADMIN_BASE + '/master-wallet/balances',
     masterWalletBalancesSummary: API_ADMIN_BASE + '/master-wallet/balances/summary',
+    masterWalletUserPendingBalances: API_ADMIN_BASE + '/master-wallet/user-pending-balances',
     masterWalletAssets: API_ADMIN_BASE + '/master-wallet/assets',
     masterWalletTransactions: API_ADMIN_BASE + '/master-wallet/transactions',
     masterWalletSend: API_ADMIN_BASE + '/master-wallet/send',
+    masterWalletSendEstimate: API_ADMIN_BASE + '/master-wallet/send/estimate',
+    masterWalletSendMaxDebit: API_ADMIN_BASE + '/master-wallet/send/max-debit',
     masterWalletSwap: API_ADMIN_BASE + '/master-wallet/swap',
+    masterWalletSweepPreview: API_ADMIN_BASE + '/master-wallet/sweep/preview',
+    masterWalletSweep: API_ADMIN_BASE + '/master-wallet/sweep',
     changenowCurrencies: API_ADMIN_BASE + '/changenow/currencies',
     changenowAvailablePairs: API_ADMIN_BASE + '/changenow/available-pairs',
     changenowMapInternal: API_ADMIN_BASE + '/changenow/map-internal',
@@ -39,6 +47,7 @@ const API_ENDPOINT = {
     changenowPartnerExchanges: API_ADMIN_BASE + '/changenow/partner-exchanges',
     vendors: API_ADMIN_BASE + '/vendors',
     dailyReportShiftSettings: API_ADMIN_BASE + '/daily-report/shift-settings',
+    platformOperationSettings: API_ADMIN_BASE + '/platform-settings/operation-controls',
     dailyReportLogs: API_ADMIN_BASE + '/daily-report/logs',
     dailyReportReport: (reportId: string) => API_ADMIN_BASE + '/daily-report/reports/' + reportId,
     dailyReportSummary: API_ADMIN_BASE + '/daily-report/summary',
@@ -56,6 +65,15 @@ const API_ENDPOINT = {
     transactionTrackingSendToMasterWallet: (txId: string) =>
       API_ADMIN_BASE + '/transaction-tracking/' + encodeURIComponent(txId) + '/send-to-master-wallet',
     transactionTrackingBulkSendToVendor: API_ADMIN_BASE + '/transaction-tracking/bulk-send-to-vendor',
+    transactionTrackingEstimateFee: (txId: string) =>
+      API_ADMIN_BASE + '/transaction-tracking/' + encodeURIComponent(txId) + '/estimate-fee',
+    cryptoJobsFailed: API_ADMIN_BASE + '/crypto-jobs/failed',
+    cryptoJobsRetry: API_ADMIN_BASE + '/crypto-jobs/retry',
+    depositVerificationLogs: API_ADMIN_BASE + '/deposit-verification/logs',
+    depositVerificationLog: (id: string | number) =>
+      API_ADMIN_BASE + '/deposit-verification/logs/' + encodeURIComponent(String(id)),
+    depositVerificationRetry: (id: string | number) =>
+      API_ADMIN_BASE + '/deposit-verification/logs/' + encodeURIComponent(String(id)) + '/retry',
     referralsSummary: API_ADMIN_BASE + '/referrals/summary',
     referrals: API_ADMIN_BASE + '/referrals',
     referralsByUser: (userId: string | number) => API_ADMIN_BASE + '/referrals/by-user/' + encodeURIComponent(String(userId)),
@@ -70,7 +88,9 @@ const API_ENDPOINT = {
       '/' +
       encodeURIComponent(service),
     cryptoRates: API_ADMIN_BASE + '/crypto/rates',
+    cryptoRatesBase: API_ADMIN_BASE + '/crypto/rates/base',
     cryptoRatesHistory: API_ADMIN_BASE + '/crypto/rates/history',
+    cryptoDepositFee: API_ADMIN_BASE + '/crypto/deposit-fee',
     cryptoRateById: (id: string | number) => API_ADMIN_BASE + '/crypto/rates/' + encodeURIComponent(String(id)),
     cryptoRatesByType: (type: string) => API_ADMIN_BASE + '/crypto/rates/' + encodeURIComponent(type),
     supportChats: API_ADMIN_BASE + '/support/chats',
@@ -79,6 +99,8 @@ const API_ENDPOINT = {
     customerFreeze: (customerId: string | number) => API_ADMIN_BASE + '/customers/' + encodeURIComponent(String(customerId)) + '/freeze',
     customerUnfreeze: (customerId: string | number) => API_ADMIN_BASE + '/customers/' + encodeURIComponent(String(customerId)) + '/unfreeze',
     customerBan: (customerId: string | number) => API_ADMIN_BASE + '/customers/' + encodeURIComponent(String(customerId)) + '/ban',
+    /** Profit Tracker — configs, ledger, stats, preview, backfill (see ADMIN_PANEL_API.md). */
+    profitTracker: API_ADMIN_BASE + '/profit-tracker',
   },
   CUSTOMER: {
     AllCustomers: API_DOMAIN + '/admin/operations/get-all-customers',

@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { FiSearch } from 'react-icons/fi';
 import { MasterWalletAssetAvatar } from '@renderer/components/MasterWalletAssetAvatar';
+import { formatAssetListSubtitle } from '@renderer/utils/walletCurrencyLabel';
+import {
+  formatMasterWalletQuantityDisplay,
+  formatMasterWalletUsdDisplay,
+} from '@renderer/utils/masterWalletAssets';
 
 export interface WalletAssetItem {
   symbol: string;
   name: string;
+  displayLabel?: string;
+  rowKey?: string;
+  blockchain?: string;
+  isToken?: boolean;
+  sharedMasterWalletNote?: string;
   balance: string;
   usdValue: string;
   address?: string;
@@ -12,19 +22,12 @@ export interface WalletAssetItem {
   iconUrl?: string;
 }
 
-const MOCK_ASSETS: WalletAssetItem[] = [
-  { symbol: 'BTC', name: 'Bitcoin Wallet', balance: '10 BTC', usdValue: '$10,000,000', address: '0xbtc1example' },
-  { symbol: 'USDT', name: 'Tether Wallet', balance: '10 USDT', usdValue: '$10,000,000', address: '0xusdt1example' },
-  { symbol: 'ETH', name: 'Ethereum Wallet', balance: '10 ETH', usdValue: '$10,000,000', address: '0x238fenwejcsniw9dicisndwincsnk' },
-  { symbol: 'SOL', name: 'Solana Wallet', balance: '10 SOL', usdValue: '$10,000,000', address: 'sol1example' },
-];
-
 interface WalletAssetsModalProps {
   isOpen: boolean;
   onClose: () => void;
   assets?: WalletAssetItem[];
   selectedWalletLabel?: string;
-  onDisburse?: (symbol: string) => void;
+  onDisburse?: (asset: WalletAssetItem) => void;
   onDepositAddress?: (asset: WalletAssetItem) => void;
   onCopyAddress?: (address: string) => void;
 }
@@ -32,7 +35,7 @@ interface WalletAssetsModalProps {
 const WalletAssetsModal: React.FC<WalletAssetsModalProps> = ({
   isOpen,
   onClose,
-  assets = MOCK_ASSETS,
+  assets = [],
   selectedWalletLabel,
   onDisburse,
   onDepositAddress,
@@ -75,20 +78,26 @@ const WalletAssetsModal: React.FC<WalletAssetsModalProps> = ({
         <div className="overflow-y-auto flex-1 p-4 space-y-4">
           {filtered.map((asset) => (
             <div
-              key={asset.symbol}
+              key={asset.rowKey ?? asset.symbol}
               className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <MasterWalletAssetAvatar symbol={asset.symbol} iconUrl={asset.iconUrl} className="w-10 h-10 text-lg" />
                   <div>
-                    <p className="font-semibold text-gray-800">{asset.symbol}</p>
-                    <p className="text-sm text-gray-500">{asset.name}</p>
+                    <p className="font-semibold text-gray-800">{asset.displayLabel ?? asset.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {asset.blockchain
+                        ? formatAssetListSubtitle(asset.symbol, asset.blockchain, asset.isToken)
+                        : asset.name}
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-800">{asset.balance}</p>
-                  <p className="text-sm text-gray-500">{asset.usdValue}</p>
+                  <p className="font-semibold text-gray-800">{formatMasterWalletUsdDisplay(asset.usdValue)}</p>
+                  <p className="text-sm text-gray-500">
+                    {formatMasterWalletQuantityDisplay(asset.balance, asset.symbol)}
+                  </p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -101,7 +110,7 @@ const WalletAssetsModal: React.FC<WalletAssetsModalProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onDisburse?.(asset.symbol)}
+                  onClick={() => onDisburse?.(asset)}
                   className="flex-1 min-w-[120px] py-2 px-3 bg-[#147341] text-white text-sm font-medium rounded-lg hover:bg-[#0d5a2e]"
                 >
                   Disburse

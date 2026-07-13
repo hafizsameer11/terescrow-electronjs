@@ -1,6 +1,11 @@
 import { API_ENDPOINT } from '../config';
 import { apiCall } from '../customApiCall';
-import type { AdminRatesGroupedResponse, CryptoRateTier, TransactionType } from '@renderer/types/cryptoRates';
+import type {
+  AdminRatesGroupedResponse,
+  CryptoRateBaseRates,
+  CryptoRateTier,
+  TransactionType,
+} from '@renderer/types/cryptoRates';
 
 function unwrap<T>(res: unknown): T {
   const r = res as Record<string, unknown> | null | undefined;
@@ -8,10 +13,24 @@ function unwrap<T>(res: unknown): T {
   return res as T;
 }
 
-export async function getCryptoRatesGrouped(token: string): Promise<AdminRatesGroupedResponse> {
+function unwrapRoot(res: unknown): Record<string, unknown> {
+  return (res as Record<string, unknown>) ?? {};
+}
+
+export type CryptoRatesGroupedPayload = {
+  rates: AdminRatesGroupedResponse;
+  baseRates: CryptoRateBaseRates;
+};
+
+export async function getCryptoRatesGrouped(token: string): Promise<CryptoRatesGroupedPayload> {
   const res = await apiCall(API_ENDPOINT.ADMIN.cryptoRates, 'GET', undefined, token);
+  const root = unwrapRoot(res);
   const data = unwrap<AdminRatesGroupedResponse>(res);
-  return data ?? ({} as AdminRatesGroupedResponse);
+  const baseRates = (root.baseRates as CryptoRateBaseRates) ?? {};
+  return {
+    rates: data ?? ({} as AdminRatesGroupedResponse),
+    baseRates,
+  };
 }
 
 export async function getCryptoRatesByType(token: string, type: TransactionType): Promise<CryptoRateTier[]> {
@@ -33,21 +52,34 @@ export async function getCryptoRatesHistory(
   return Array.isArray(data) ? data : [];
 }
 
+export async function setCryptoRateBase(
+  token: string,
+  body: { transactionType: 'BUY' | 'SELL'; baseRate: number }
+): Promise<unknown> {
+  const res = await apiCall(API_ENDPOINT.ADMIN.cryptoRatesBase, 'PUT', body, token);
+  return unwrap(res);
+}
+
 export async function createCryptoRate(
   token: string,
   body: {
     transactionType: TransactionType;
     minAmount: number;
     maxAmount: number | null;
-    rate: number;
+    rate?: number;
+    adjustmentPercent?: number;
   }
 ): Promise<CryptoRateTier> {
   const res = await apiCall(API_ENDPOINT.ADMIN.cryptoRates, 'POST', body, token);
   return unwrap<CryptoRateTier>(res) as CryptoRateTier;
 }
 
-export async function updateCryptoRate(token: string, id: number, rate: number): Promise<CryptoRateTier> {
-  const res = await apiCall(API_ENDPOINT.ADMIN.cryptoRateById(id), 'PUT', { rate }, token);
+export async function updateCryptoRate(
+  token: string,
+  id: number,
+  body: { rate?: number; adjustmentPercent?: number }
+): Promise<CryptoRateTier> {
+  const res = await apiCall(API_ENDPOINT.ADMIN.cryptoRateById(id), 'PUT', body, token);
   return unwrap<CryptoRateTier>(res) as CryptoRateTier;
 }
 

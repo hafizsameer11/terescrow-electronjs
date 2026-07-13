@@ -1,11 +1,58 @@
 import { AccountActivity, Role } from '@renderer/api/queries/datainterfaces'
 import React, { createContext, useContext, useReducer, ReactNode } from 'react'
+import { isReadOnlyDemoUser } from '@renderer/utils/appleReviewUser'
 
 export enum UserRoles {
   admin = 'admin',
   agent = 'agent',
   auditor = 'auditor',
   customer = 'customer'
+}
+
+/** Browse-only support agent (no writes). */
+export function isReadOnlyDemoMode(userData: AuthContextType['userData']): boolean {
+  return isReadOnlyDemoUser(userData)
+}
+
+/** Block mutations in the admin app (buttons, API writes). */
+export function canPerformAdminActions(userData: AuthContextType['userData']): boolean {
+  return !isReadOnlyDemoMode(userData)
+}
+
+/** Admin + agent can open crypto exchange rate tiers on /rates */
+export function canManageExchangeRates(role: string | undefined | null, userData?: AuthContextType['userData']): boolean {
+  if (userData && isReadOnlyDemoMode(userData)) return false
+  return role === UserRoles.admin || role === UserRoles.agent
+}
+
+function normalizeRole(role: string | undefined | null): string {
+  return String(role ?? '').trim().toLowerCase()
+}
+
+export function isAdminRole(role: string | undefined | null): boolean {
+  return normalizeRole(role) === UserRoles.admin
+}
+
+export function isAgentRole(role: string | undefined | null): boolean {
+  return normalizeRole(role) === UserRoles.agent
+}
+
+/** Agents + admins: master wallet view, sweep, transaction tracking disburse */
+export function canAccessWalletOperations(
+  role: string | undefined | null,
+  userData?: AuthContextType['userData']
+): boolean {
+  if (userData && isReadOnlyDemoMode(userData)) return false
+  const r = normalizeRole(role)
+  return r === UserRoles.admin || r === UserRoles.agent
+}
+
+/** Batch sweep of user deposits → master wallet or vendor */
+export function canSweepUserDeposits(
+  role: string | undefined | null,
+  userData?: AuthContextType['userData']
+): boolean {
+  return canAccessWalletOperations(role, userData)
 }
 
 interface AuthContextType {
@@ -17,6 +64,7 @@ interface AuthContextType {
     username: string
     email: string
     role: UserRoles | string
+    readOnlyMode?: boolean
     profilePicture: string | null
     customRole?: Role[],
     accountActivity?: AccountActivity[]

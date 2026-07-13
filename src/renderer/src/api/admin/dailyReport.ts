@@ -60,20 +60,43 @@ export async function getDailyReportReport(token: string, reportId: string): Pro
   return (res as any)?.data ?? null;
 }
 
-export async function getDailyReportSummary(token: string, agentId?: number): Promise<any> {
-  const url = agentId != null ? `${API_ENDPOINT.ADMIN.dailyReportSummary}?agentId=${agentId}` : API_ENDPOINT.ADMIN.dailyReportSummary;
+export async function getDailyReportSummary(
+  token: string,
+  params?: { agentId?: number; startDate?: string; endDate?: string }
+): Promise<any> {
+  const sp = new URLSearchParams();
+  if (params?.agentId != null) sp.set('agentId', String(params.agentId));
+  if (params?.startDate) sp.set('startDate', params.startDate);
+  if (params?.endDate) sp.set('endDate', params.endDate);
+  const url = sp.toString()
+    ? `${API_ENDPOINT.ADMIN.dailyReportSummary}?${sp}`
+    : API_ENDPOINT.ADMIN.dailyReportSummary;
   const res = await apiCall(url, 'GET', undefined, token);
   return (res as any)?.data ?? {};
 }
 
-export async function getDailyReportChartsAvgWorkHours(token: string, days = 7): Promise<{ day: string; hours: number }[]> {
-  const res = await apiCall(`${API_ENDPOINT.ADMIN.dailyReportChartsAvgWorkHours}?days=${days}`, 'GET', undefined, token);
+export async function getDailyReportChartsAvgWorkHours(
+  token: string,
+  params?: { days?: number; startDate?: string; endDate?: string }
+): Promise<{ day: string; hours: number }[]> {
+  const sp = new URLSearchParams();
+  sp.set('days', String(params?.days ?? 7));
+  if (params?.startDate) sp.set('startDate', params.startDate);
+  if (params?.endDate) sp.set('endDate', params.endDate);
+  const res = await apiCall(`${API_ENDPOINT.ADMIN.dailyReportChartsAvgWorkHours}?${sp}`, 'GET', undefined, token);
   const data = (res as any)?.data;
   return data?.data ?? data ?? [];
 }
 
-export async function getDailyReportChartsWorkHoursPerMonth(token: string, months = 3): Promise<{ month: string; workHrs: number; overTimeHrs: number }[]> {
-  const res = await apiCall(`${API_ENDPOINT.ADMIN.dailyReportChartsWorkHoursPerMonth}?months=${months}`, 'GET', undefined, token);
+export async function getDailyReportChartsWorkHoursPerMonth(
+  token: string,
+  params?: { months?: number; startDate?: string; endDate?: string }
+): Promise<{ month: string; workHrs: number; overTimeHrs: number }[]> {
+  const sp = new URLSearchParams();
+  sp.set('months', String(params?.months ?? 3));
+  if (params?.startDate) sp.set('startDate', params.startDate);
+  if (params?.endDate) sp.set('endDate', params.endDate);
+  const res = await apiCall(`${API_ENDPOINT.ADMIN.dailyReportChartsWorkHoursPerMonth}?${sp}`, 'GET', undefined, token);
   const data = (res as any)?.data;
   return data?.data ?? data ?? [];
 }

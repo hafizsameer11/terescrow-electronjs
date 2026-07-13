@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FiSearch } from 'react-icons/fi';
 import { useAuth } from '@renderer/context/authContext';
+import { useDailyReportSession } from '@renderer/context/dailyReportSessionContext';
 import CheckInModal from '@renderer/components/modal/CheckInModal';
 import ReportDetailsModal from '@renderer/components/modal/ReportDetailsModal';
 import ShiftSettingsModal from '@renderer/components/modal/ShiftSettingsModal';
@@ -11,13 +12,14 @@ import {
   getDailyReportChartsAvgWorkHours,
   getDailyReportChartsWorkHoursPerMonth,
   getDailyReportReport,
-  dailyReportCheckIn,
-  dailyReportCheckOut,
   updateDailyReportReport,
   getDailyReportShiftSettings,
   type ShiftType,
 } from '@renderer/api/admin/dailyReport';
+import { mapDailyReportDetail } from '@renderer/utils/mapDailyReportDetail';
 import { addThousandSeparator } from '@renderer/api/helper';
+import { apiDateParams } from '@renderer/utils/dateRange';
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
 import type { DailyLogEntry, ReportDetail } from '@renderer/data/dailyReportData';
 
 function formatIsoTime(iso: string | undefined | null): string {
@@ -63,34 +65,28 @@ function mapLogStatus(status: string | undefined): string {
   return status;
 }
 
-function dateRangeToStartEnd(dateRange: string): { startDate: string; endDate: string } {
-  const end = new Date();
-  const start = new Date();
-  if (dateRange === 'Last 7 days') start.setDate(end.getDate() - 7);
-  else if (dateRange === 'Last 90 days') start.setDate(end.getDate() - 90);
-  else start.setDate(end.getDate() - 30);
-  return {
-    startDate: start.toISOString().slice(0, 10),
-    endDate: end.toISOString().slice(0, 10),
-  };
-}
-
 const DailyReportPage: React.FC = () => {
   const { userData, token } = useAuth();
   const queryClient = useQueryClient();
+  const { checkIn, checkOut, isCheckingIn, isClockedIn } = useDailyReportSession();
   const role = userData?.role ?? '';
   const isAuditorOrAdmin = role === 'admin' || role === 'auditor';
 
   const [activeTab, setActiveTab] = useState<'my' | 'all'>(isAuditorOrAdmin ? 'all' : 'my');
-  const [dateRange, setDateRange] = useState('Last 30 days');
+  const [dateRange, setDateRange] = useState('All');
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
   const [shiftFilter, setShiftFilter] = useState('Shift');
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim(), 400);
   const [checkInModalOpen, setCheckInModalOpen] = useState(false);
   const [reportDetailsOpen, setReportDetailsOpen] = useState(false);
   const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
   const [shiftSettingsOpen, setShiftSettingsOpen] = useState(false);
 
-  const { startDate, endDate } = useMemo(() => dateRangeToStartEnd(dateRange), [dateRange]);
+  const { startDate, endDate } = useMemo(
+    () => apiDateParams({ dateRange, dateRangePresetActive }),
+    [dateRange, dateRangePresetActive]
+  );
   const shiftParam = shiftFilter === 'Shift' ? undefined : shiftFilter;
 
   const { data: logsRaw = [] } = useQuery({
@@ -122,18 +118,22 @@ const DailyReportPage: React.FC = () => {
         reportId: (row.reportId ?? row.report_id) != null ? String(row.reportId ?? row.report_id) : undefined,
       };
     });
-    if (!search?.trim()) return list;
-    const q = search.trim().toLowerCase();
+    if (!debouncedSearch) return list;
+    const q = debouncedSearch.toLowerCase();
     return list.filter(
       (r) =>
         r.employeeName.toLowerCase().includes(q) || r.reportPreview.toLowerCase().includes(q)
     );
-  }, [logsRaw, search]);
+  }, [logsRaw, debouncedSearch]);
   const logs = logsFiltered;
 
   const { data: summaryData } = useQuery({
-    queryKey: ['admin-daily-report-summary', token, activeTab],
-    queryFn: () => getDailyReportSummary(token!, activeTab === 'my' ? undefined : undefined),
+    queryKey: ['admin-daily-report-summary', token, activeTab, startDate, endDate],
+    queryFn: () =>
+      getDailyReportSummary(token!, {
+        startDate,
+        endDate,
+      }),
     enabled: !!token,
   });
   const summary = {
@@ -144,13 +144,14 @@ const DailyReportPage: React.FC = () => {
   };
 
   const { data: avgHoursData = [] } = useQuery({
-    queryKey: ['admin-daily-report-charts-avg', token],
-    queryFn: () => getDailyReportChartsAvgWorkHours(token!, 7),
+    queryKey: ['admin-daily-report-charts-avg', token, startDate, endDate],
+    queryFn: () => getDailyReportChartsAvgWorkHours(token!, { days: 7, startDate, endDate }),
     enabled: !!token,
   });
   const { data: monthData = [] } = useQuery({
-    queryKey: ['admin-daily-report-charts-month', token],
-    queryFn: () => getDailyReportChartsWorkHoursPerMonth(token!, 3),
+    queryKey: ['admin-daily-report-charts-month', token, startDate, endDate],
+    queryFn: () =>
+      getDailyReportChartsWorkHoursPerMonth(token!, { months: 3, startDate, endDate }),
     enabled: !!token,
   });
   const maxAvgHours = Math.max(...(avgHoursData as { hours: number }[]).map((d) => d.hours), 1);
@@ -165,27 +166,7 @@ const DailyReportPage: React.FC = () => {
     enabled: !!token && !!selectedReportId && reportDetailsOpen,
   });
   const selectedReport: ReportDetail | null = reportRaw
-    ? {
-        id: String(reportRaw.id ?? selectedReportId),
-        date: reportRaw.date ?? '—',
-        agentName: reportRaw.agentName ?? reportRaw.agent_name ?? '—',
-        position: reportRaw.position ?? '—',
-        shift: (reportRaw.shift ?? 'Day') as ShiftType,
-        auditorName: reportRaw.auditorName ?? reportRaw.auditor_name ?? '—',
-        clockInTime: reportRaw.clockInTime ?? reportRaw.clock_in_time ?? '—',
-        clockOutTime: reportRaw.clockOutTime ?? reportRaw.clock_out_time ?? '—',
-        activeHours: reportRaw.activeHours ?? reportRaw.active_hours ?? '—',
-        totalChatSessions: reportRaw.totalChatSessions ?? reportRaw.total_chat_sessions ?? 0,
-        avgResponseTimeSec: reportRaw.avgResponseTimeSec ?? reportRaw.avg_response_time_sec ?? 0,
-        giftCard: reportRaw.giftCard ?? reportRaw.gift_card ?? { purchaseAmt: '—', salesAmt: '—', profit: '—' },
-        crypto: reportRaw.crypto ?? { openingBalance: '—', closingBalance: '—', profit: '—' },
-        billPayments: reportRaw.billPayments ?? reportRaw.bill_payments ?? { openingBalance: '—', closingBalance: '—', profit: '—' },
-        chat: reportRaw.chat ?? { successful: 0, pending: 0, unsuccessful: 0, totalProfit: '—' },
-        financials: reportRaw.financials ?? { earnPayout: '—', openingBalance: '—', closingBalance: '—', totalProfit: '—' },
-        status: reportRaw.status === 'approved' ? 'approved' : 'not_approved',
-        myReport: reportRaw.myReport ?? reportRaw.my_report ?? '',
-        auditorsReport: reportRaw.auditorsReport ?? reportRaw.auditors_report ?? '',
-      }
+    ? mapDailyReportDetail(reportRaw, selectedReportId ?? undefined)
     : null;
 
   const { data: shiftSettings } = useQuery({
@@ -194,21 +175,10 @@ const DailyReportPage: React.FC = () => {
     enabled: !!token && (checkInModalOpen || shiftSettingsOpen),
   });
 
-  const checkInMutation = useMutation({
-    mutationFn: (shift: ShiftType) => dailyReportCheckIn(token!, { shift }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-daily-report-logs'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-daily-report-summary'] });
-      setCheckInModalOpen(false);
-    },
-  });
-  const checkOutMutation = useMutation({
-    mutationFn: () => dailyReportCheckOut(token!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-daily-report-logs'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-daily-report-summary'] });
-    },
-  });
+  useEffect(() => {
+    if (isClockedIn) setCheckInModalOpen(false);
+  }, [isClockedIn]);
+
   const updateReportMutation = useMutation({
     mutationFn: ({
       id,
@@ -228,11 +198,11 @@ const DailyReportPage: React.FC = () => {
   });
 
   const handleCheckIn = (shift: ShiftType) => {
-    checkInMutation.mutate(shift);
+    checkIn(shift);
   };
 
   const handleCheckOut = () => {
-    if (window.confirm('Check out now?')) checkOutMutation.mutate();
+    checkOut();
   };
 
   const handleApprove = (id: string) => {
@@ -365,12 +335,16 @@ const DailyReportPage: React.FC = () => {
         <div className="p-4 flex flex-wrap items-center gap-3 border-b border-gray-100">
           <select
             value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
+            onChange={(e) => {
+              setDateRange(e.target.value);
+              setDateRangePresetActive(true);
+            }}
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
           >
-            <option>Last 30 days</option>
-            <option>Last 7 days</option>
-            <option>Last 90 days</option>
+            <option value="All">All</option>
+            <option value="Last 7 days">Last 7 days</option>
+            <option value="Last 30 days">Last 30 days</option>
+            <option value="Last 90 days">Last 90 days</option>
           </select>
           <select
             value={shiftFilter}
@@ -457,6 +431,7 @@ const DailyReportPage: React.FC = () => {
         isOpen={checkInModalOpen}
         onClose={() => setCheckInModalOpen(false)}
         onCheckIn={handleCheckIn}
+        isPending={isCheckingIn}
         shiftSettings={shiftSettings}
       />
       <ReportDetailsModal

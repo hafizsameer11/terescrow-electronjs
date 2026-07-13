@@ -1,22 +1,12 @@
 import React, { useState } from 'react';
-
-const FREEZE_FEATURES = [
-  'Deposit',
-  'Withdrawal',
-  'Send crypto',
-  'Receive Crypto',
-  'Swap Crypto',
-  'Buy Crypto',
-  'Sell Crypto',
-  'Buy Gift Card',
-  'Sell Gift Card',
-] as const;
+import { FREEZE_FEATURE_UI_OPTIONS } from '@renderer/utils/freezeFeatures';
 
 interface FreezeFeatureModalProps {
   isOpen: boolean;
   onClose: () => void;
   customerId: number;
   onProceed: (feature: string) => void;
+  isSubmitting?: boolean;
 }
 
 const FreezeFeatureModal: React.FC<FreezeFeatureModalProps> = ({
@@ -24,19 +14,20 @@ const FreezeFeatureModal: React.FC<FreezeFeatureModalProps> = ({
   onClose,
   customerId,
   onProceed,
+  isSubmitting = false,
 }) => {
-  const [selectedFeature, setSelectedFeature] = useState<string>(FREEZE_FEATURES[0]);
+  const [selectedFeature, setSelectedFeature] = useState<string>(FREEZE_FEATURE_UI_OPTIONS[0]);
 
   if (!isOpen) return null;
 
   const handleProceed = () => {
+    if (isSubmitting) return;
     onProceed(selectedFeature);
-    setSelectedFeature(FREEZE_FEATURES[0]);
-    onClose();
   };
 
   const handleClose = () => {
-    setSelectedFeature(FREEZE_FEATURES[0]);
+    if (isSubmitting) return;
+    setSelectedFeature(FREEZE_FEATURE_UI_OPTIONS[0]);
     onClose();
   };
 
@@ -54,7 +45,7 @@ const FreezeFeatureModal: React.FC<FreezeFeatureModalProps> = ({
           </button>
         </div>
         <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
-          {FREEZE_FEATURES.map((feature) => (
+          {FREEZE_FEATURE_UI_OPTIONS.map((feature) => (
             <label
               key={feature}
               className="flex items-center gap-3 py-2 px-3 rounded-md hover:bg-gray-50 cursor-pointer"
@@ -73,10 +64,12 @@ const FreezeFeatureModal: React.FC<FreezeFeatureModalProps> = ({
         </div>
         <div className="mt-6">
           <button
+            type="button"
             onClick={handleProceed}
-            className="w-full py-3 px-4 bg-[#147341] text-white font-medium rounded-lg hover:bg-[#0d5a2e] transition-colors"
+            disabled={isSubmitting}
+            className="w-full py-3 px-4 bg-[#147341] text-white font-medium rounded-lg hover:bg-[#0d5a2e] transition-colors disabled:opacity-50"
           >
-            Proceed
+            {isSubmitting ? 'Freezing…' : 'Proceed'}
           </button>
         </div>
       </div>

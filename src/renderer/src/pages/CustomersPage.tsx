@@ -1,65 +1,88 @@
 import { getCustomerStats } from "@renderer/api/queries/admin.chat.queries";
 import { gettAllCustomerss } from "@renderer/api/queries/adminqueries";
+import type { PaginatedCustomersPayload } from "@renderer/api/queries/datainterfaces";
 import CustomerFilters from "@renderer/components/CustomerFilters";
 import CustomerTable from "@renderer/components/CustomerTable";
 import StatsCard from "@renderer/components/StatsCard";
 import { useAuth } from "@renderer/context/authContext";
-import { useQuery } from "@tanstack/react-query";
-import React, { useEffect, useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import React, { useState } from "react";
+import { useDebouncedValue } from "@renderer/utils/useDebouncedValue";
+import ListFetchingIndicator from "@renderer/components/ListFetchingIndicator";
 
-// Define the Customer Interface
+function isPaginatedCustomersPayload(
+  data: unknown
+): data is PaginatedCustomersPayload {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    "data" in data &&
+    Array.isArray((data as PaginatedCustomersPayload).data)
+  );
+}
 
 const CustomersPage: React.FC = () => {
   const { token } = useAuth();
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
     gender: "All",
     country: "All",
     search: "",
-
     startDate: '',
     endDate: '',
   });
+
+  /** Only send dates to API when admin explicitly picks them in the date inputs. */
+  const apiStartDate = filters.startDate.trim() || undefined;
+  const apiEndDate = filters.endDate.trim() || undefined;
+  const debouncedSearch = useDebouncedValue(filters.search.trim(), 400);
+
   const { data: customerStats } = useQuery({
     queryKey: ['customerStats'],
     queryFn: () => getCustomerStats({ token }),
     enabled: !!token,
   });
-  // Fetch customers using React Query
-  const { data: customersData, isLoading, isError, error } = useQuery({
-    queryKey: ["customersData"],
-    queryFn: () => gettAllCustomerss({ token }),
+
+  const { data: customersData, isLoading, isError, error, isFetching } = useQuery({
+    queryKey: [
+      "customersData",
+      page,
+      filters.gender,
+      filters.country,
+      debouncedSearch,
+      apiStartDate,
+      apiEndDate,
+    ],
+    queryFn: () =>
+      gettAllCustomerss({
+        token,
+        page,
+        limit: 20,
+        gender: filters.gender,
+        country: filters.country,
+        search: debouncedSearch || undefined,
+        startDate: apiStartDate,
+        endDate: apiEndDate,
+      }),
     enabled: !!token,
-  });
-  // Log fetched data for debugging
-  useEffect(() => {
-    if (customersData) {
-      console.log("Fetched Customers:", customersData.data);
-    }
-  }, [customersData]);
-
-  const filteredCustomers = customersData?.data.filter((customer) => {
-    const matchesGender =
-      filters.gender === "All" || customer.gender === filters.gender;
-    const matchesCountry =
-      filters.country === "All" || customer.country === filters.country;
-    const matchesSearch =
-      filters.search === "" ||
-      customer.firstname?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      customer.lastname?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      customer.username?.toLowerCase().includes(filters.search.toLowerCase());
-    const matchesDateRange =
-      (!filters.startDate || new Date(customer.createdAt) >= new Date(filters.startDate)) &&
-      (!filters.endDate || new Date(customer.createdAt) <= new Date(filters.endDate));
-
-    return matchesGender && matchesCountry && matchesSearch && matchesDateRange;
+    placeholderData: keepPreviousData,
   });
 
-  if (isLoading) return <p>Loading customers...</p>;
-  if (isError) return <p>Error fetching customers: {(error as any)?.message}</p>;
+  const payload = customersData?.data;
+  const customers = isPaginatedCustomersPayload(payload)
+    ? payload.data
+    : Array.isArray(payload)
+      ? payload
+      : [];
+  const totalPages = isPaginatedCustomersPayload(payload) ? payload.totalPages : 1;
+
+  const initialLoad = isLoading && !customersData;
+
+  if (initialLoad) return <p className="p-6 text-gray-600">Loading customers...</p>;
+  if (isError) return <p className="p-6 text-red-600">Error fetching customers: {(error as Error)?.message}</p>;
 
   return (
     <div className="w-full mb-10">
-      {/* Page Header */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-[40px] font-normal text-gray-800">Customers</h1>
         <div className="flex space-x-4">
@@ -68,9 +91,10 @@ const CustomersPage: React.FC = () => {
             <input
               type="date"
               value={filters.startDate}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, startDate: e.target.value }))
-              }
+              onChange={(e) => {
+                setPage(1);
+                setFilters((prev) => ({ ...prev, startDate: e.target.value }));
+              }}
               className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
             />
           </div>
@@ -79,16 +103,16 @@ const CustomersPage: React.FC = () => {
             <input
               type="date"
               value={filters.endDate}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, endDate: e.target.value }))
-              }
+              onChange={(e) => {
+                setPage(1);
+                setFilters((prev) => ({ ...prev, endDate: e.target.value }));
+              }}
               className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
             />
           </div>
         </div>
       </div>
 
-      {/* Stats Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         <StatsCard
           title="Total Customers"
@@ -114,14 +138,13 @@ const CustomersPage: React.FC = () => {
           change={`${customerStats?.data?.totalCustomerChats?.percentage || 0}%`}
           isPositive={customerStats?.data?.totalCustomerChats?.change === 'positive'}
         />
-         <StatsCard
+        <StatsCard
           title="Today's Customer"
           value={customerStats?.data?.todayCustomers?.count || "0"}
           change={`${customerStats?.data?.todayCustomers?.percentage || 0}%`}
           isPositive={customerStats?.data?.todayCustomers?.change === 'positive'}
         />
       </div>
-
 
       <div>
         <h2 className="text-[30px] font-normal text-black">
@@ -132,16 +155,24 @@ const CustomersPage: React.FC = () => {
         </p>
       </div>
 
-      {/* Filters Section */}
       <CustomerFilters
         filters={filters}
-        onChange={(updatedFilters) =>
-          setFilters({ ...filters, ...updatedFilters })
-        }
+        onChange={(updatedFilters) => {
+          setPage(1);
+          setFilters({ ...filters, ...updatedFilters });
+        }}
       />
 
-      {/* Customer Table */}
-      <CustomerTable data={filteredCustomers} />
+      <ListFetchingIndicator show={isFetching && !initialLoad} />
+
+      <CustomerTable
+        data={customers}
+        serverPagination={{
+          currentPage: page,
+          totalPages,
+          onPageChange: setPage,
+        }}
+      />
     </div>
   );
 };

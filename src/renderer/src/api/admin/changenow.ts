@@ -105,6 +105,7 @@ export async function createChangeNowPayoutAddress(
     address: string;
     extraId?: string | null;
     toNetworkHint?: string | null;
+    walletCurrencyId?: number | null;
     isDefault?: boolean;
   }
 ): Promise<AdminPayoutAddress> {
@@ -142,7 +143,8 @@ export async function createChangeNowSwap(
         fromTicker: string;
         toTicker: string;
         amountFrom: string;
-        payoutAddressId: number;
+        payoutAddressId?: number;
+        payoutWalletCurrencyId?: number;
         refundAddress?: string;
       }
     | {
@@ -152,7 +154,8 @@ export async function createChangeNowSwap(
         fromTicker: string;
         toTicker: string;
         amountFrom: string;
-        payoutAddressId: number;
+        payoutAddressId?: number;
+        payoutWalletCurrencyId?: number;
         refundAddress?: string;
       }
 ): Promise<SwapOrder> {

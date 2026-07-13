@@ -51,17 +51,30 @@ export async function getReferralsByUser(token: string, userId: string | number)
 }
 
 export async function getReferralsEarnSettings(token: string): Promise<{
-  firstTimeDepositBonusPct: number;
+  signupBonusNgn: number;
+  minFirstWithdrawalNgn: number;
   commissionReferralTradesPct: number;
   commissionDownlineTradesPct: number;
 }> {
   const res = await apiCall(API_ENDPOINT.ADMIN.referralsEarnSettings, 'GET', undefined, token);
-  return (res as any)?.data ?? { firstTimeDepositBonusPct: 100, commissionReferralTradesPct: 5, commissionDownlineTradesPct: 2 };
+  return (
+    (res as any)?.data ?? {
+      signupBonusNgn: 10000,
+      minFirstWithdrawalNgn: 20000,
+      commissionReferralTradesPct: 5,
+      commissionDownlineTradesPct: 2,
+    }
+  );
 }
 
 export async function updateReferralsEarnSettings(
   token: string,
-  body: { firstTimeDepositBonusPct: number; commissionReferralTradesPct: number; commissionDownlineTradesPct: number }
+  body: {
+    signupBonusNgn: number;
+    minFirstWithdrawalNgn: number;
+    commissionReferralTradesPct: number;
+    commissionDownlineTradesPct: number;
+  }
 ): Promise<unknown> {
   const res = await apiCall(API_ENDPOINT.ADMIN.referralsEarnSettings, 'PUT', body, token);
   return (res as any)?.data;

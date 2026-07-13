@@ -1,4 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { getAccountActivities } from '@renderer/api/queries/adminqueries'
+import { useAuth } from '@renderer/context/authContext'
 
 interface Activity {
   id: number
@@ -6,38 +9,82 @@ interface Activity {
   createdAt: string
 }
 
-interface TableProps {
+interface PaginatedActivityPayload {
   data: Activity[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
 }
 
-const ActivityTable: React.FC<TableProps> = ({ data }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+function isPaginatedPayload(data: unknown): data is PaginatedActivityPayload {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'data' in data &&
+    Array.isArray((data as PaginatedActivityPayload).data)
+  )
+}
 
-  // Handle undefined data early
-  if (!Array.isArray(data)) {
-    console.error('Invalid data passed to ActivityTable:', data);
-    data = []; // Fallback to an empty array
+interface TableProps {
+  data?: Activity[]
+  userId?: string
+  itemsPerPage?: number
+}
+
+const ActivityTable: React.FC<TableProps> = ({ data: staticData, userId, itemsPerPage = 5 }) => {
+  const { token } = useAuth()
+  const [page, setPage] = useState(1)
+  const [accumulated, setAccumulated] = useState<Activity[]>([])
+
+  const { data: activityResponse, isLoading, isFetching } = useQuery({
+    queryKey: ['accountActivityData', userId, page, itemsPerPage],
+    queryFn: () => getAccountActivities({ token: token!, id: userId!, page, limit: itemsPerPage }),
+    enabled: !!token && !!userId,
+  })
+
+  const payload = activityResponse?.data
+  const pageRows: Activity[] = userId
+    ? isPaginatedPayload(payload)
+      ? payload.data
+      : Array.isArray(payload)
+        ? payload
+        : []
+    : []
+
+  const totalPages = userId && isPaginatedPayload(payload) ? payload.totalPages : 1
+
+  useEffect(() => {
+    if (!userId) return
+    if (page === 1) {
+      setAccumulated(pageRows)
+    } else if (pageRows.length > 0) {
+      setAccumulated((prev) => {
+        const ids = new Set(prev.map((a) => a.id))
+        const next = pageRows.filter((a) => !ids.has(a.id))
+        return [...prev, ...next]
+      })
+    }
+  }, [userId, page, pageRows])
+
+  useEffect(() => {
+    setPage(1)
+    setAccumulated([])
+  }, [userId])
+
+  const staticList = Array.isArray(staticData) ? staticData : []
+  const [staticPage, setStaticPage] = useState(1)
+  const staticTotalPages = Math.max(1, Math.ceil(staticList.length / itemsPerPage))
+  const staticSlice = staticList.slice(
+    (staticPage - 1) * itemsPerPage,
+    staticPage * itemsPerPage
+  )
+
+  const displayData = userId ? accumulated : staticSlice
+
+  if (userId && isLoading && page === 1) {
+    return <p className="px-4 py-6 text-gray-500 text-sm">Loading activities…</p>
   }
-
-  // Calculate total pages
-  const totalPages = Math.ceil(data.length / itemsPerPage);
-
-  // Get the data for the current page
-  const currentData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  // Handlers for pagination
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
-    }
-  };
 
   return (
     <div className="bg-white rounded-lg">
@@ -50,38 +97,51 @@ const ActivityTable: React.FC<TableProps> = ({ data }) => {
           </tr>
         </thead>
         <tbody>
-          {currentData.map((activity) => (
+          {displayData.map((activity) => (
             <tr key={activity.id} className="border-b hover:bg-gray-100">
               <td className="py-4 px-4">{activity.description}</td>
               <td className="py-4 px-4 text-right">{activity.createdAt.split('T')[0]}</td>
             </tr>
           ))}
+          {displayData.length === 0 && (
+            <tr>
+              <td colSpan={2} className="py-6 px-4 text-center text-gray-500 text-sm">
+                No activities found
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
 
-      {/* Pagination Controls */}
-      {data.length > itemsPerPage && (
+      {userId && page < totalPages && (
+        <div className="flex justify-center px-4 py-4">
+          <button
+            type="button"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={isFetching}
+            className="px-6 py-2 rounded-lg bg-[#147341] text-white text-sm font-medium hover:bg-[#0d5a2e] disabled:opacity-50"
+          >
+            {isFetching ? 'Loading…' : 'Load more'}
+          </button>
+        </div>
+      )}
+
+      {!userId && staticList.length > itemsPerPage && (
         <div className="flex justify-between items-center px-4 py-4">
           <button
-            onClick={handlePrevious}
-            disabled={currentPage === 1}
-            className={`px-4 py-2 rounded ${currentPage === 1
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
+            type="button"
+            onClick={() => setStaticPage((p) => Math.max(1, p - 1))}
+            disabled={staticPage === 1}
+            className="px-4 py-2 rounded bg-gray-200 text-gray-600 disabled:opacity-50"
           >
             Previous
           </button>
-          <span className="text-gray-600">
-            Page {currentPage} of {totalPages}
-          </span>
+          <span className="text-gray-600 text-sm">Page {staticPage} of {staticTotalPages}</span>
           <button
-            onClick={handleNext}
-            disabled={currentPage === totalPages}
-            className={`px-4 py-2 rounded ${currentPage === totalPages
-              ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
-              : 'bg-green-600 text-white hover:bg-green-700'
-              }`}
+            type="button"
+            onClick={() => setStaticPage((p) => Math.min(staticTotalPages, p + 1))}
+            disabled={staticPage === staticTotalPages}
+            className="px-4 py-2 rounded bg-[#147341] text-white disabled:opacity-50"
           >
             Next
           </button>

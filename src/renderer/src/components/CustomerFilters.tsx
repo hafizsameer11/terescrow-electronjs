@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface CustomerFiltersProps {
   filters: {
@@ -11,7 +11,19 @@ interface CustomerFiltersProps {
 
 const CustomerFilters: React.FC<CustomerFiltersProps> = ({ filters, onChange }) => {
   const genderOptions = ["All", "male", "female"];
-  const countryOptions = ["All", "Nigeria", "United States", "Canada"]; // Add more countries if needed
+  const countryOptions = ["All", "Nigeria", "United States", "Canada"];
+  const [searchInput, setSearchInput] = useState(filters.search);
+
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (searchInput !== filters.search) onChange({ search: searchInput });
+    }, 400);
+    return () => clearTimeout(id);
+  }, [searchInput, filters.search, onChange]);
 
   return (
     <div className="flex flex-wrap justify-between items-center mb-4">
@@ -50,8 +62,8 @@ const CustomerFilters: React.FC<CustomerFiltersProps> = ({ filters, onChange }) 
         <input
           type="text"
           placeholder="Search customer"
-          value={filters.search}
-          onChange={(e) => onChange({ search: e.target.value })}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
           className="outline-none text-sm text-gray-600 w-full"
         />
       </div>

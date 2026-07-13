@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
 import { FiSearch } from 'react-icons/fi';
 import { FaPaperPlane } from 'react-icons/fa';
 import { IoImageOutline } from 'react-icons/io5';
@@ -42,16 +43,18 @@ const SupportPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [chatFilter, setChatFilter] = useState<SupportChatFilter>('All');
   const [searchChat, setSearchChat] = useState('');
+  const debouncedSearchChat = useDebouncedValue(searchChat.trim(), 400);
   const [selectedChat, setSelectedChat] = useState<SupportChat | null>(null);
   const [inputText, setInputText] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const chatBodyRef = useRef<HTMLDivElement>(null);
 
   const { data: chatsData } = useQuery({
-    queryKey: ['admin-support-chats', token, chatFilter, searchChat],
+    queryKey: ['admin-support-chats', token, chatFilter, debouncedSearchChat],
     queryFn: () =>
-      getSupportChats(token!, { filter: chatFilter, search: searchChat || undefined }),
+      getSupportChats(token!, { filter: chatFilter, search: debouncedSearchChat || undefined }),
     enabled: !!token,
+    placeholderData: keepPreviousData,
   });
   const chats: SupportChat[] = (chatsData?.chats ?? []).map((c: any) => ({
     id: c.id,

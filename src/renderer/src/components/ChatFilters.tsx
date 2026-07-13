@@ -20,15 +20,14 @@ interface ChatFiltersProps {
   showCategoryRow?: boolean;
 }
 
-const STATUS_TABS_HUB: { label: string; value: string }[] = [
+const STATUS_TABS: { label: string; value: string }[] = [
   { label: 'All', value: 'All' },
-  { label: 'Completed', value: 'successful' },
+  { label: 'Successful', value: 'successful' },
   { label: 'Pending', value: 'pending' },
+  { label: 'Processing', value: 'processing' },
   { label: 'Declined', value: 'declined' },
   { label: 'Unsuccessful', value: 'unsucessful' },
 ];
-
-const STATUS_TABS_LEGACY = ['All', 'successful', 'pending', 'declined', 'unsucessful'];
 
 const ChatFilters: React.FC<ChatFiltersProps> = ({
   filters,
@@ -45,13 +44,15 @@ const ChatFilters: React.FC<ChatFiltersProps> = ({
     return (
       <div className="space-y-4">
         <div>
-          <h2 className="text-[30px] font-normal text-gray-800">{title || 'Chat History'}</h2>
-          <p className="text-[20px] text-gray-500 mt-1">{subtitle || 'Manage total chat and transaction'}</p>
+          <h2 className="text-2xl font-semibold text-gray-900">{title || 'Chat History'}</h2>
+          {subtitle ? (
+            <p className="text-sm text-gray-500 mt-1">{subtitle}</p>
+          ) : null}
         </div>
 
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            {STATUS_TABS_HUB.map((tab) => {
+            {STATUS_TABS.map((tab) => {
               const active = filters.status === tab.value;
               return (
                 <button
@@ -72,7 +73,7 @@ const ChatFilters: React.FC<ChatFiltersProps> = ({
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden">
-              {(['buy', 'sell'] as const).map((t) => (
+              {(['All', 'buy', 'sell'] as const).map((t) => (
                 <button
                   key={t}
                   type="button"
@@ -144,17 +145,17 @@ const ChatFilters: React.FC<ChatFiltersProps> = ({
 
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="flex items-center flex-wrap">
-          {STATUS_TABS_LEGACY.map((status, index) => (
+          {STATUS_TABS.map((tab, index) => (
             <button
-              key={status}
+              key={tab.value}
               className={`px-6 py-2 text-sm font-medium transition ${
-                filters.status === status
+                filters.status === tab.value
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${index === STATUS_TABS_LEGACY.length - 1 ? 'rounded-r-lg' : ''}`}
-              onClick={() => onChange({ status })}
+              } ${index === 0 ? 'rounded-l-lg' : 'border-l'} ${index === STATUS_TABS.length - 1 ? 'rounded-r-lg' : ''}`}
+              onClick={() => onChange({ status: tab.value })}
             >
-              {status}
+              {tab.label}
             </button>
           ))}
         </div>

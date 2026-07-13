@@ -1,9 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import TransactionDetailsModal from '../modal/TransactionDetailsModal';
 import { Agent, Customer } from '@renderer/api/queries/datainterfaces';
 import { useAuth } from '@renderer/context/authContext';
 import { formatNairaAmount } from '@renderer/api/helper';
+import { revokeCryptoTransaction } from '@renderer/api/admin/transactions';
+import {
+  cryptoTxStatusBadgeClass,
+  cryptoTxStatusDotClass,
+  formatCryptoTxStatusLabel,
+  isRevokedOrFakeCryptoTxStatus,
+} from '@renderer/utils/fakeDeposit';
+import { toastError, toastSuccess } from '@renderer/utils/toast';
 export interface Country {
   id: number;
   title?: string;
@@ -75,7 +84,26 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const navigate = useNavigate();
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
-  const { userData } = useAuth();
+  const { userData, token } = useAuth();
+  const queryClient = useQueryClient();
+
+  const revokeMutation = useMutation({
+    mutationFn: (transactionId: string) =>
+      revokeCryptoTransaction(token!, transactionId, 'Revoked by admin — fraud/scam token'),
+    onSuccess: (data) => {
+      if (data.alreadyRevoked) {
+        toastSuccess('Transaction was already revoked');
+      } else {
+        toastSuccess('Transaction revoked and balances reversed');
+      }
+      queryClient.invalidateQueries({ queryKey: ['admin-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-transaction-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-transaction-tracking'] });
+    },
+    onError: (err: Error) => {
+      toastError(err.message || 'Failed to revoke transaction');
+    },
+  });
 
   // Ref for detecting clicks outside
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -120,6 +148,30 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
     setSelectedTransaction(transaction);
     setIsModalOpen(true);
   };
+
+  const handleRevokeTransaction = (transaction: Transaction) => {
+    setActiveMenu(null);
+    const txId = transaction.transactionId;
+    if (!txId || !token) return;
+    const label = transaction.category?.title ?? 'crypto';
+    const ok = window.confirm(
+      `Revoke this ${transaction.department?.title ?? 'crypto'} transaction?\n\n` +
+        `ID: ${txId}\n` +
+        `Asset: ${label}\n\n` +
+        'This will reverse credited balances and mark the transaction as Revoked (fraud) so you can explain to the customer it was revoked by the system.'
+    );
+    if (!ok) return;
+    revokeMutation.mutate(txId);
+  };
+
+  const isCryptoTx = (transaction: Transaction) =>
+    (transaction.department?.niche ?? '').toLowerCase() === 'crypto';
+
+  const canRevokeTx = (transaction: Transaction) =>
+    isCryptoTx(transaction) &&
+    transaction.status?.toLowerCase() === 'successful' &&
+    userData?.role !== 'agent';
+
   return (
     <div className="my-6 bg-white rounded-lg shadow-md">
       <table className="min-w-full text-left text-sm text-gray-700">
@@ -145,16 +197,12 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
               <td className="py-3 px-4 font-semibold">{transaction.customer?.username}</td>
               <td className="py-3 px-4">
                 <span
-                  className={`px-2 py-1 flex items-center gap-2 text-sm font-medium rounded-lg border ${transaction.status === 'successful'
-                    ? 'bg-green-100 text-green-700 border-green-500'
-                    : 'bg-red-100 text-red-700 border-red-500'
-                    }`}
+                  className={`px-2 py-1 flex items-center gap-2 text-sm font-medium rounded-lg border ${cryptoTxStatusBadgeClass(transaction.status)}`}
                 >
                   <span
-                    className={`w-2 h-2 rounded-full ${transaction.status === 'successful' ? 'bg-green-700' : 'bg-red-700'
-                      }`}
+                    className={`w-2 h-2 rounded-full ${cryptoTxStatusDotClass(transaction.status)}`}
                   ></span>
-                  {transaction.status}
+                  {formatCryptoTxStatusLabel(transaction.status)}
                 </span>
               </td>
               <td className="font-semibold py-3 px-4">{transaction.department?.title ?? ''}</td>
@@ -203,6 +251,23 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                       >
                         View Transaction Details
                       </button>
+                      {canRevokeTx(transaction) && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRevokeTransaction(transaction);
+                          }}
+                          disabled={revokeMutation.isPending}
+                          className="block px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full text-left font-medium disabled:opacity-50"
+                        >
+                          Revoke (fraud)
+                        </button>
+                      )}
+                      {isCryptoTx(transaction) && isRevokedOrFakeCryptoTxStatus(transaction.status) && (
+                        <span className="block px-4 py-2 text-xs text-red-600">
+                          Revoked by system — no further action
+                        </span>
+                      )}
                     </div>
                   )}
                 </td>
@@ -217,29 +282,28 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
           isOpen={isModalOpen}
           onClose={handleCloseModal}
           transactionData={{
-            dollarAmount: selectedTransaction.amount?.toString() ?? '0',
-            nairaAmount: formatNairaAmount(selectedTransaction.amountNaira ?? 0),
+            dollarAmount: String(selectedTransaction.amount ?? 0),
+            nairaAmount: String(selectedTransaction.amountNaira ?? 0),
             serviceType: selectedTransaction?.department?.title || '',
             category: selectedTransaction?.category?.title || '',
             transactionId: selectedTransaction.transactionId || `Teres-${selectedTransaction.id}`,
             assignedAgent: selectedTransaction.agent?.username || '',
             status: selectedTransaction.status,
             niche: selectedTransaction.department?.niche ?? '',
-            type: selectedTransaction.department?.Type ?? '',
+            type: selectedTransaction.department?.Type ?? selectedTransaction.nairaType ?? '',
             toAddress: selectedTransaction.toAddress ?? '',
             subCategory: selectedTransaction.subCategory?.title ?? '',
             fromAddress: selectedTransaction.fromAddress ?? '',
-
             giftCardSubType: selectedTransaction.giftCardSubType ?? selectedTransaction.cardType ?? '',
             giftCardNumber: selectedTransaction.cardNumber ?? '',
             profit: selectedTransaction.profit ?? 0,
-
             billType: selectedTransaction.billType ?? '',
             billReference: selectedTransaction.billReference ?? '',
             billProvider: selectedTransaction.billProvider ?? '',
             nairaType: selectedTransaction.nairaType ?? '',
             nairaChannel: selectedTransaction.nairaChannel ?? '',
             nairaReference: selectedTransaction.nairaReference ?? '',
+            exchangeRate: (selectedTransaction as { exchangeRate?: number }).exchangeRate ?? null,
             customerName: [selectedTransaction.customer?.firstname, selectedTransaction.customer?.lastname].filter(Boolean).join(' ') || selectedTransaction.customer?.username || '',
           }}
         />

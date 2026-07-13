@@ -1,8 +1,10 @@
 import { getTransactions } from '@renderer/api/queries/adminqueries';
 import { useQuery } from '@tanstack/react-query';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import LogTable from '@renderer/components/LogTable';
 import { useAuth } from '@renderer/context/authContext';
+import { apiDateParams, DATE_RANGE_PRESETS, matchesDateRange } from '@renderer/utils/dateRange';
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
 
 const LogPage: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -19,24 +21,18 @@ const LogPage: React.FC = () => {
     enabled: !!token,
   });
 
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
+  const debouncedSearch = useDebouncedValue(filters.search.trim(), 400);
+
   const handleFilterChange = (updatedFilters: Partial<typeof filters>) => {
+    if (updatedFilters.dateRange !== undefined) setDateRangePresetActive(true);
     setFilters((prev) => ({ ...prev, ...updatedFilters }));
   };
 
-  // Calculate date ranges
-  const calculateDateRange = (range: string): [Date | null, Date | null] => {
-    const today = new Date();
-    switch (range) {
-      case 'Last 30 days':
-        return [new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30), today];
-      case 'Last 7 days':
-        return [new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7), today];
-      case 'Last Year':
-        return [new Date(today.getFullYear() - 1, today.getMonth(), today.getDate()), today];
-      default:
-        return [null, null]; // No filtering
-    }
-  };
+  const { startDate, endDate } = useMemo(
+    () => apiDateParams({ dateRange: filters.dateRange, dateRangePresetActive }),
+    [filters.dateRange, dateRangePresetActive]
+  );
 
   // Filter the data
   const filteredData = Array.isArray(customerTransactions?.data)
@@ -48,15 +44,12 @@ const LogPage: React.FC = () => {
         filters.type === 'All' || transaction.department?.Type === filters.type;
 
       const matchesSearch =
-        filters.search === '' ||
+        debouncedSearch === '' ||
         transaction.customer?.username
           ?.toLowerCase()
-          .includes(filters.search.toLowerCase());
+          .includes(debouncedSearch.toLowerCase());
 
-      const [startDate, endDate] = calculateDateRange(filters.dateRange);
-      const transactionDate = new Date(transaction.createdAt);
-      const matchesDate =
-        !startDate || !endDate || (transactionDate >= startDate && transactionDate <= endDate);
+      const matchesDate = matchesDateRange(transaction.createdAt, startDate, endDate);
 
       return matchesNiche && matchesType && matchesSearch && matchesDate;
     })
@@ -140,8 +133,9 @@ const LogPage: React.FC = () => {
               className="border border-gray-300 rounded-lg px-4 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-green-500"
             >
               <option>All</option>
-              <option>Last 30 days</option>
-              <option>Last 7 days</option>
+              {DATE_RANGE_PRESETS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
               <option>Last Year</option>
             </select>
             <input

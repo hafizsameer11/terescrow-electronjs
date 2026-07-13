@@ -3,6 +3,17 @@ import { IoCopyOutline } from 'react-icons/io5';
 import { MdCheckCircle, MdPending } from 'react-icons/md';
 import type { TrackingStep, TrackingDetails, TrackingDisbursement } from '@renderer/data/transactionTrackingData';
 import { formatNairaAmount } from '@renderer/api/helper';
+import { formatCryptoAmountFromUnknown } from '@renderer/utils/cryptoAmountSync';
+import { BalanceBucketBadge, LedgerTypeBadge } from '@renderer/components/BalanceBucketBadge';
+import {
+  formatCryptoTxStatusLabel,
+  formatDepositStatusLabel,
+  formatFlagReasonLabel,
+  isPendingVerificationRow,
+  isFakeDepositRow,
+  isFakeScamDepositStatus,
+} from '@renderer/utils/fakeDeposit';
+import { formatRejectionDetail } from '@renderer/utils/depositRejectionReasons';
 
 type ModalTab = 'tracking' | 'transaction';
 
@@ -26,7 +37,18 @@ function disbursementTypeLabel(type: string | undefined): string {
 }
 
 function masterWalletLabel(status: string) {
-  const key = (status || 'unknown').toLowerCase().replace(/\s/g, '');
+  const raw = (status || '').trim();
+  if (!raw || raw === '—' || raw.toLowerCase() === 'n/a') {
+    return <span className="text-gray-400 text-xs">—</span>;
+  }
+  if (isFakeScamDepositStatus(raw)) {
+    return (
+      <span className="px-2 py-0.5 rounded-full text-xs font-bold border bg-red-100 text-red-800 border-red-400">
+        Fake scam
+      </span>
+    );
+  }
+  const key = raw.toLowerCase().replace(/\s/g, '');
   const map: Record<string, { label: string; cls: string }> = {
     inwallet: { label: 'In Wallet', cls: 'bg-yellow-100 text-yellow-800 border-yellow-400' },
     transferredtomaster: { label: 'Transferred to Master', cls: 'bg-green-100 text-green-800 border-green-400' },
@@ -39,16 +61,25 @@ function masterWalletLabel(status: string) {
 
 function statusBadge(status: string) {
   const s = status.toLowerCase();
+  const isFake = s === 'fake';
   const isSuccess = s === 'successful' || s === 'completed';
   const isPending = s === 'pending' || s === 'processing';
+  const label = formatCryptoTxStatusLabel(status);
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-        isSuccess ? 'bg-green-100 text-green-800' : isPending ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'
+        isFake ? 'bg-red-100 text-red-800 border border-red-300 font-bold'
+          : isSuccess ? 'bg-green-100 text-green-800'
+          : isPending ? 'bg-amber-100 text-amber-800'
+          : 'bg-red-100 text-red-800'
       }`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${isSuccess ? 'bg-green-600' : isPending ? 'bg-amber-600' : 'bg-red-600'}`} />
-      {status}
+      <span
+        className={`w-1.5 h-1.5 rounded-full ${
+          isFake ? 'bg-red-700' : isSuccess ? 'bg-green-600' : isPending ? 'bg-amber-600' : 'bg-red-600'
+        }`}
+      />
+      {label}
     </span>
   );
 }
@@ -69,6 +100,17 @@ const TrackingDetailsModal: React.FC<TrackingDetailsModalProps> = ({
   const [activeTab, setActiveTab] = useState<ModalTab>('tracking');
 
   if (!isOpen) return null;
+
+  const isDepositLedger = (details?.ledgerType ?? 'on_chain_deposit') === 'on_chain_deposit';
+  const isFakeDeposit = details
+    ? isFakeDepositRow({ status: details.status, masterWalletStatus: details.masterWalletStatus })
+    : false;
+  const isPendingVerify = details ? isPendingVerificationRow(details) : false;
+  const showDisburseActions =
+    isDepositLedger
+    && !isFakeDeposit
+    && !isPendingVerify
+    && (onOpenSendToVendor || onOpenSendToMaster || onOpenSwapChangeNow);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 overflow-y-auto p-6">
@@ -133,7 +175,11 @@ const TrackingDetailsModal: React.FC<TrackingDetailsModalProps> = ({
                                 val != null ? (
                                   <div key={key} className="flex gap-2">
                                     <span className="text-gray-500 capitalize shrink-0">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
-                                    <span className="text-gray-800 font-mono text-xs break-all">{String(val)}</span>
+                                    <span className="text-gray-800 font-mono text-xs break-all">
+                                      {key === 'amount'
+                                        ? formatCryptoAmountFromUnknown(val)
+                                        : String(val)}
+                                    </span>
                                   </div>
                                 ) : null
                               )}
@@ -151,6 +197,82 @@ const TrackingDetailsModal: React.FC<TrackingDetailsModalProps> = ({
 
         {activeTab === 'transaction' && details && (
           <div className="p-6 space-y-5">
+            {isPendingVerify && (
+              <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 text-sm text-amber-950 space-y-2">
+                <p className="font-bold text-base">PENDING ON-CHAIN VERIFICATION</p>
+                <p>
+                  This deposit is waiting for independent on-chain confirmation. Balance has{' '}
+                  <span className="font-semibold">not been credited</span> yet.
+                </p>
+                {details.depositVerification && (
+                  <div className="text-xs space-y-1 font-mono">
+                    <p>Status: {details.depositVerification.status}</p>
+                    <p>Attempts: {details.depositVerification.attempts}</p>
+                    {details.depositVerification.provider && (
+                      <p>Provider: {details.depositVerification.provider}</p>
+                    )}
+                    {details.depositVerification.webhookAmount && (
+                      <p>Webhook amount: {details.depositVerification.webhookAmount}</p>
+                    )}
+                    {details.depositVerification.onChainAmount && (
+                      <p>On-chain amount (raw): {details.depositVerification.onChainAmount}</p>
+                    )}
+                    {details.depositVerification.contractAddress && (
+                      <p className="break-all">Contract: {details.depositVerification.contractAddress}</p>
+                    )}
+                    {details.depositVerification.failureReason && (
+                      <p>
+                        Last check:{' '}
+                        {details.depositVerification.failureReasonLabel
+                          || formatFlagReasonLabel(details.depositVerification.failureReason)}
+                      </p>
+                    )}
+                    {details.depositVerification.failureReasonDetail && (
+                      <p className="font-sans text-amber-900">
+                        {details.depositVerification.failureReasonDetail}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {isFakeDeposit && (
+              <div className="rounded-lg border-2 border-red-400 bg-red-50 p-4 text-sm text-red-900 space-y-2">
+                <p className="font-bold text-base">DEPOSIT REJECTED</p>
+                <p>
+                  <span className="font-semibold">{formatFlagReasonLabel(details.flagReason)}</span>
+                  {' — '}
+                  {formatRejectionDetail(details.flagReason)}
+                </p>
+                <p>
+                  This deposit was <span className="font-semibold">never credited</span> and cannot be sent, swapped, or
+                  disbursed.
+                </p>
+                {details.depositVerification && (
+                  <div className="text-xs space-y-1 border-t border-red-200 pt-2 mt-2">
+                    <p className="font-semibold">Verification report</p>
+                    <p>Status: {details.depositVerification.status}</p>
+                    {details.depositVerification.provider && (
+                      <p>Provider: {details.depositVerification.provider}</p>
+                    )}
+                    {details.depositVerification.failureReasonDetail && (
+                      <p>{details.depositVerification.failureReasonDetail}</p>
+                    )}
+                  </div>
+                )}
+                {details.receivedAsset?.reference?.startsWith('reject:') && (
+                  <p className="font-mono text-xs break-all">
+                    Code: {details.receivedAsset.reference.slice(7)}
+                  </p>
+                )}
+                {details.receivedAsset?.reference?.startsWith('fake:') && (
+                  <p className="font-mono text-xs break-all">
+                    <span className="font-sans font-medium">Contract:</span>{' '}
+                    {details.receivedAsset.reference.slice(5)}
+                  </p>
+                )}
+              </div>
+            )}
             {details.customer && (
               <div className="flex items-center gap-3 pb-4 border-b">
                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
@@ -167,25 +289,65 @@ const TrackingDetailsModal: React.FC<TrackingDetailsModalProps> = ({
               </div>
             )}
 
+            <Section title="Ledger">
+              <div className="flex justify-between items-center py-2.5 px-4">
+                <span className="text-gray-500 text-sm">Type</span>
+                <LedgerTypeBadge type={details.ledgerType} />
+              </div>
+              <div className="flex justify-between items-center py-2.5 px-4">
+                <span className="text-gray-500 text-sm">Balance bucket</span>
+                <BalanceBucketBadge bucket={details.balanceBucket} />
+              </div>
+              {details.sellBatchId && (
+                <Field label="Split-sell batch" value={details.sellBatchId} mono copyable />
+              )}
+            </Section>
+
             <Section title="On-Chain Info">
-              <Field label="TX Hash" value={details.txHash} mono copyable />
-              <Field label="From" value={details.fromAddress} mono copyable />
-              <Field label="To" value={details.toAddress} mono copyable />
-              <Field label="Block" value={details.blockNumber ?? '—'} />
-              <Field label="Confirmations" value={String(details.confirmations)} />
+              <Field label="TX Hash" value={details.txHash || '—'} mono copyable />
+              <Field label="From" value={details.fromAddress || '—'} mono copyable />
+              <Field label="To" value={details.toAddress || '—'} mono copyable />
+              {isDepositLedger && (
+                <>
+                  <Field label="Block" value={details.blockNumber ?? '—'} />
+                  <Field label="Confirmations" value={String(details.confirmations)} />
+                </>
+              )}
             </Section>
 
             <Section title="Value">
-              <Field label="Crypto Amount" value={`${details.amount} ${details.currency}`} />
+              <Field label="Crypto Amount" value={`${formatCryptoAmountFromUnknown(details.amount)} ${details.currency}`} />
+              {isDepositLedger && details.onChainDepositBalance != null && details.onChainDepositBalance !== '' && (
+                <Field
+                  label="On-chain at deposit (live)"
+                  value={`${formatCryptoAmountFromUnknown(details.onChainDepositBalance)} ${details.currency}`}
+                />
+              )}
               <Field label="USD Value" value={`$${details.amountUsd}`} />
               <Field label="NGN Value" value={`₦${formatNairaAmount(details.amountNaira)}`} />
               <Field label="Blockchain" value={details.blockchain} className="capitalize" />
             </Section>
 
+            {details.virtualAccount && (details.virtualAccount.virtualBalance != null || details.virtualAccount.onChainBalance != null) && (
+              <Section title="Wallet balances (after tx)">
+                {details.virtualAccount.virtualBalance != null && (
+                  <Field label="Virtual" value={formatCryptoAmountFromUnknown(details.virtualAccount.virtualBalance)} />
+                )}
+                {details.virtualAccount.onChainBalance != null && (
+                  <Field label="On-chain" value={formatCryptoAmountFromUnknown(details.virtualAccount.onChainBalance)} />
+                )}
+                {details.virtualAccount.totalBalance != null && (
+                  <Field label="Total" value={formatCryptoAmountFromUnknown(details.virtualAccount.totalBalance)} />
+                )}
+              </Section>
+            )}
+
             <Section title="Transaction">
               <Field label="Transaction ID" value={details.transactionId} mono copyable />
-              <Field label="Status" value={details.status} className="capitalize" />
-              <Field label="Master Wallet" value={details.masterWalletStatus} />
+              <Field label="Status" value={formatCryptoTxStatusLabel(details.status)} className="capitalize" />
+              {isDepositLedger && (
+                <Field label="Deposit status" value={formatDepositStatusLabel(details.masterWalletStatus)} />
+              )}
               <Field label="Created" value={new Date(details.createdAt).toLocaleString()} />
               <Field label="Updated" value={new Date(details.updatedAt).toLocaleString()} />
             </Section>
@@ -193,7 +355,7 @@ const TrackingDetailsModal: React.FC<TrackingDetailsModalProps> = ({
             {details.receivedAsset && (
               <Section title="Received Asset (Internal)">
                 <Field label="Account ID" value={details.receivedAsset.accountId ?? '—'} mono />
-                <Field label="Status" value={details.receivedAsset.status} />
+                <Field label="Status" value={formatDepositStatusLabel(details.receivedAsset.status)} />
                 <Field label="Reference" value={details.receivedAsset.reference ?? '—'} />
                 <Field label="Deposit Date" value={details.receivedAsset.transactionDate ? new Date(details.receivedAsset.transactionDate).toLocaleString() : '—'} />
               </Section>
@@ -213,6 +375,16 @@ const TrackingDetailsModal: React.FC<TrackingDetailsModalProps> = ({
                         <span className="text-gray-800 font-medium">{disbursementTypeLabel(d.disbursementType)}</span>
                       </div>
                       <Field label="Status" value={d.status ?? '—'} />
+                      <Field
+                        label="Performed by"
+                        value={
+                          d.performedBy
+                            ? `${d.performedBy.name} (${d.performedBy.role})`
+                            : d.adminUserId != null
+                              ? `User #${d.adminUserId}`
+                              : '—'
+                        }
+                      />
                       <Field label="Amount" value={d.amount ?? '—'} />
                       <Field label="USD" value={d.amountUsd ?? '—'} />
                       <Field label="To" value={d.toAddress ?? '—'} mono />
@@ -239,7 +411,7 @@ const TrackingDetailsModal: React.FC<TrackingDetailsModalProps> = ({
               </div>
             )}
 
-            {(onOpenSendToVendor || onOpenSendToMaster || onOpenSwapChangeNow) && (
+            {(showDisburseActions) && (
               <div className="rounded-lg border border-[#147341]/30 bg-[#147341]/5 p-4 space-y-2">
                 <h3 className="text-sm font-semibold text-gray-800">Actions</h3>
                 <p className="text-xs text-gray-600 leading-relaxed">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MdOutlineDescription, MdChatBubbleOutline, MdEdit, MdLock } from "react-icons/md";
+import { MdOutlineDescription, MdChatBubbleOutline, MdEdit, MdLock, MdBlock } from "react-icons/md";
 import { MdEmail, MdPhone, MdPerson, MdLocationOn } from "react-icons/md";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,11 +11,18 @@ import EditProfileModal from "@renderer/components/modal/EditProfileModal";
 
 import { createNoteForCustomer, getCustomerDetails, getNotesForCustomer, updateKycStatus } from "@renderer/api/queries/adminqueries";
 import { FaTicketAlt } from "react-icons/fa";
-import { AccountActivity, Customer, KycStateTwo } from "@renderer/api/queries/datainterfaces";
+import { Customer, KycStateTwo } from "@renderer/api/queries/datainterfaces";
 import { useAuth } from "@renderer/context/authContext";
 import ChatNewNote from "@renderer/components/ChatNewNote";
-import WalletModal from "@renderer/components/modal/WalletModal";
+import WalletModal, { type CryptoAsset } from "@renderer/components/modal/WalletModal";
+import FreezeFeatureModal from "@renderer/components/modal/FreezeFeatureModal";
+import FrozenFeaturesModal from "@renderer/components/modal/FrozenFeaturesModal";
+import SuccessModal from "@renderer/components/modal/SuccessModal";
+import ActivityTable from "@renderer/components/ActivityTable";
 import { formatNairaAmount } from "@renderer/api/helper";
+import { freezeCustomerFeature, unfreezeCustomerFeature } from "@renderer/api/admin/customers";
+import { mapApiFeatureToLabel } from "@renderer/utils/freezeFeatures";
+import { toastApiError, toastSuccess } from "@renderer/utils/toast";
 
 
 const CustomerDetails: React.FC = () => {
@@ -25,10 +32,14 @@ const CustomerDetails: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [walletWidgetTab, setWalletWidgetTab] = useState<'naira' | 'crypto'>('naira');
+  const [isFrozenFeaturesModalOpen, setIsFrozenFeaturesModalOpen] = useState(false);
+  const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [frozenFeatures, setFrozenFeatures] = useState<string[]>([]);
+  const [unfreezingFeature, setUnfreezingFeature] = useState<string | null>(null);
   const { token } = useAuth();
   const [activeTab, setActiveTab] = useState<"details" | "transactions">("details");
   const [kycData, setKYCData] = useState<KycStateTwo>({} as KycStateTwo);
-  const [accoutnActivity, setAccountActivity] = useState<AccountActivity[]>([]);
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -68,11 +79,20 @@ const CustomerDetails: React.FC = () => {
     enabled: !!id,
   });
   const customer: Customer | undefined = data?.data;
-  const customerIp = (customer as any)?.ipAddress ?? '123.123.345.99';
-  const customerTier = (customer as any)?.tier ?? 'Tier 2';
-  const nairaBalanceRaw = (customer as any)?.nairaBalance ?? 'N200,000';
+  const customerIp = (customer as any)?.ipAddress ?? '—';
+  const customerTier = (customer as any)?.tier ?? 'Tier 1';
+  const nairaBalanceRaw = (customer as any)?.nairaBalance ?? 0;
   const nairaBalance = `N${formatNairaAmount(nairaBalanceRaw)}`;
-  const cryptoBalance = (customer as any)?.cryptoBalance ?? '$25';
+  const cryptoBalanceUsd = (customer as any)?.cryptoBalance ?? 0;
+  const cryptoBalance = `$${Number(cryptoBalanceUsd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const cryptoAssets: CryptoAsset[] = ((customer as any)?.cryptoAssets ?? []).map(
+    (a: { symbol: string; name: string; balance: string; usdEquivalent: number }) => ({
+      symbol: a.symbol,
+      name: a.name,
+      balance: a.balance,
+      usdEquivalent: a.usdEquivalent,
+    })
+  );
   const {
     data: notDetailsData,
     isLoading: isNotesLoading,
@@ -83,8 +103,45 @@ const CustomerDetails: React.FC = () => {
 
   useEffect(() => {
     setKYCData(customer?.KycStateTwo || {} as KycStateTwo);
-    setAccountActivity(customer?.AccountActivity || []);
-  }, [customer])
+  }, [customer]);
+
+  useEffect(() => {
+    setFrozenFeatures(customer?.frozenFeatures ?? []);
+  }, [customer]);
+
+  const freezeMutation = useMutation({
+    mutationFn: (feature: string) => freezeCustomerFeature(token!, id!, { feature }),
+    onSuccess: (result) => {
+      setFrozenFeatures(result.frozenFeatures ?? []);
+      setIsFreezeModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['customerDetails', id] });
+      queryClient.invalidateQueries({ queryKey: ['customersData'] });
+      const msg = result.message || 'Feature frozen';
+      setSuccessMessage(msg);
+      toastSuccess(msg);
+    },
+    onError: (err) => toastApiError(err, 'Failed to freeze feature.'),
+  });
+
+  const unfreezeMutation = useMutation({
+    mutationFn: (feature: string) => {
+      setUnfreezingFeature(feature);
+      return unfreezeCustomerFeature(token!, id!, { feature });
+    },
+    onSuccess: (result) => {
+      setFrozenFeatures(result.frozenFeatures ?? []);
+      setUnfreezingFeature(null);
+      queryClient.invalidateQueries({ queryKey: ['customerDetails', id] });
+      queryClient.invalidateQueries({ queryKey: ['customersData'] });
+      const msg = result.message || 'Feature unfrozen';
+      setSuccessMessage(msg);
+      toastSuccess(msg);
+    },
+    onError: (err) => {
+      setUnfreezingFeature(null);
+      toastApiError(err, 'Failed to unfreeze feature.');
+    },
+  });
   const handleTabChange = (tab: "details" | "transactions") => {
     setActiveTab(tab);
     navigate(tab === "details" ? `/customers/${id}` : `/transaction-details/${id}`);
@@ -109,10 +166,9 @@ const CustomerDetails: React.FC = () => {
       alert('Failed to update KYC status. Please try again.');
     }
   });
-  const handleKYCUpdate = (kycStatus: string, reason: string) => {
-    console.log("Updated KYC Status:", kycStatus);
-    // setIsKYCModalOpen(false);
-    updateKyc({ data: { kycStatus, reason }, token, userId: id! });
+  const handleKYCUpdate = (kycStatus: string | undefined, reason?: string) => {
+    if (!kycStatus) return;
+    updateKyc({ data: { kycStatus, reason: reason ?? '' }, token, userId: id! });
   };
 
   const handleEditProfile = (updatedData: Record<string, string>) => {
@@ -248,27 +304,55 @@ const CustomerDetails: React.FC = () => {
         </div>
       </div>
 
+      {/* Frozen features */}
+      <div className="mt-6 bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h2 className="text-lg font-semibold text-gray-800">Restricted features</h2>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setIsFrozenFeaturesModalOpen(true)}
+              className="px-4 py-2 text-sm font-medium border border-[#147341] text-[#147341] rounded-lg hover:bg-green-50"
+            >
+              View frozen features{frozenFeatures.length > 0 ? ` (${frozenFeatures.length})` : ''}
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsFreezeModalOpen(true)}
+              className="px-4 py-2 text-sm font-medium bg-[#147341] text-white rounded-lg hover:bg-[#0d5a2e]"
+            >
+              Freeze feature
+            </button>
+          </div>
+        </div>
+        {frozenFeatures.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {frozenFeatures.map((feature) => (
+              <span
+                key={feature}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-red-50 text-red-800 border border-red-200"
+              >
+                <MdBlock className="shrink-0" />
+                {mapApiFeatureToLabel(feature)}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No features are frozen for this customer.</p>
+        )}
+      </div>
+
       {/* Contact Details */}
-      <div className="grid grid-cols-2 gap-8 bg-[#F9FAFF] p-6 rounded-lg shadow-md">
+      <div className="grid grid-cols-2 gap-8 bg-[#F9FAFF] p-6 rounded-lg shadow-md mt-6">
         <ContactRow icon={<MdEmail />} label="Email Address" value={customer?.email || "N/A"} />
         <ContactRow icon={<MdPhone />} label="Mobile Number" value={customer?.phoneNumber || "N/A"} />
         <ContactRow icon={<MdLock />} label="Password" value="••••••••••" />
         <ContactRow icon={<MdPerson />} label="Gender" value={customer?.gender || "N/A"} />
-        <ContactRow icon={<FaTicketAlt />} label="Referral Code" value={"none"} />
+        <ContactRow icon={<FaTicketAlt />} label="Referral Code" value={(customer as any)?.referralCode ?? 'none'} />
         <ContactRow icon={<MdLocationOn />} label="Country" value={customer?.country || "Nigeria"} />
       </div>
-      <div className="bg-white rounded-lg shadow-md mt-11">
-        <h2 className="px-6 py-4 font-bold text-gray-700">Account Activities</h2>
-        <table className="min-w-full text-left text-sm text-gray-600">
-          <tbody>
-            {accoutnActivity.map((activity, index) => (
-              <tr key={index} className="border-t">
-                <td className="px-6 py-4 text-gray-800 font-semibold">{activity.description}</td>
-                <td className="px-6 py-4 text-gray-800 font-semibold text-right">{activity.createdAt.split("T")[0]}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mt-11 shadow-md rounded-lg overflow-hidden">
+        <ActivityTable userId={id} itemsPerPage={6} />
       </div>
       {/* Modals */}
       <KYCDetailsModal
@@ -312,6 +396,33 @@ const CustomerDetails: React.FC = () => {
         onClose={() => setIsWalletModalOpen(false)}
         nairaBalance={nairaBalance}
         cryptoBalance={cryptoBalance}
+        cryptoAssets={cryptoAssets}
+      />
+      <FrozenFeaturesModal
+        isOpen={isFrozenFeaturesModalOpen}
+        onClose={() => setIsFrozenFeaturesModalOpen(false)}
+        frozenFeatures={frozenFeatures}
+        onUnfreeze={(feature) => unfreezeMutation.mutate(feature)}
+        onFreezeAnother={() => {
+          setIsFrozenFeaturesModalOpen(false);
+          setIsFreezeModalOpen(true);
+        }}
+        unfreezingFeature={unfreezingFeature}
+        isUnfreezing={unfreezeMutation.isPending}
+      />
+      {id && (
+        <FreezeFeatureModal
+          isOpen={isFreezeModalOpen}
+          onClose={() => !freezeMutation.isPending && setIsFreezeModalOpen(false)}
+          customerId={Number(id)}
+          onProceed={(feature) => freezeMutation.mutate(feature)}
+          isSubmitting={freezeMutation.isPending}
+        />
+      )}
+      <SuccessModal
+        isOpen={successMessage !== null}
+        message={successMessage ?? ''}
+        onClose={() => setSuccessMessage(null)}
       />
     </div>
   );

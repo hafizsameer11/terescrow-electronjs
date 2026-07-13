@@ -1,14 +1,15 @@
 import { getRate } from '@renderer/api/queries/adminqueries';
 import { Rate } from '@renderer/api/queries/datainterfaces';
-import { useAuth } from '@renderer/context/authContext';
+import { useAuth, canManageExchangeRates } from '@renderer/context/authContext';
 import { formatDateTime } from '@renderer/utils/customfunctions';
 import { formatNairaAmount } from '@renderer/api/helper';
 import { useQuery } from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CryptoRatesSettings from '@renderer/components/rates/CryptoRatesSettings';
+import { GIFT_CARD_TRANSACTION_TYPES } from '@renderer/types/cryptoRates';
 
-type RatesPageTab = 'crypto' | 'history';
+type RatesPageTab = 'crypto' | 'gift-card' | 'history';
 
 const RatesHistory: React.FC = () => {
   const [filterDate, setFilterDate] = useState('Last 30 Days');
@@ -17,20 +18,22 @@ const RatesHistory: React.FC = () => {
   const { token, userData } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const isAdmin = userData?.role === 'admin';
+  const canManageRates = canManageExchangeRates(userData?.role, userData);
 
   const tabParam = searchParams.get('tab');
-  const activeTab: RatesPageTab =
-    isAdmin && tabParam === 'crypto' ? 'crypto' : 'history';
+  const activeTab: RatesPageTab = (() => {
+    if (!canManageRates) return 'history';
+    if (tabParam === 'history') return 'history';
+    if (tabParam === 'gift-card') return 'gift-card';
+    if (tabParam === 'crypto') return 'crypto';
+    return userData?.role === 'agent' ? 'crypto' : 'history';
+  })();
 
   const setRatesTab = (t: RatesPageTab) => {
     if (t === 'crypto') navigate('/rates?tab=crypto');
-    else navigate('/rates');
+    else if (t === 'gift-card') navigate('/rates?tab=gift-card');
+    else navigate('/rates?tab=history');
   };
-
-  useEffect(() => {
-    if (!isAdmin && tabParam === 'crypto') navigate('/rates', { replace: true });
-  }, [isAdmin, tabParam, navigate]);
 
   const { data: ratesData, isLoading, isError, error } = useQuery({
     queryKey: ['ratesData'],
@@ -67,7 +70,7 @@ const RatesHistory: React.FC = () => {
     <div className="p-6 w-full">
       <h1 className="text-[40px] font-semibold text-gray-800 mb-4">Rates</h1>
 
-      {isAdmin && (
+      {canManageRates && (
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <button
             type="button"
@@ -77,6 +80,15 @@ const RatesHistory: React.FC = () => {
             }`}
           >
             Crypto exchange rates
+          </button>
+          <button
+            type="button"
+            onClick={() => setRatesTab('gift-card')}
+            className={`px-4 py-2 rounded-lg font-medium ${
+              activeTab === 'gift-card' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'
+            }`}
+          >
+            Gift card buy rates
           </button>
           <button
             type="button"
@@ -90,8 +102,10 @@ const RatesHistory: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'crypto' && isAdmin && token ? (
+      {activeTab === 'crypto' && canManageRates && token ? (
         <CryptoRatesSettings token={token} />
+      ) : activeTab === 'gift-card' && canManageRates && token ? (
+        <CryptoRatesSettings token={token} transactionTypes={GIFT_CARD_TRANSACTION_TYPES} />
       ) : (
         <>
           <div className="flex justify-between items-center mb-6">

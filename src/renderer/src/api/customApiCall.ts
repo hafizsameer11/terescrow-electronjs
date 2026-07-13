@@ -1,4 +1,5 @@
 import axios, { AxiosResponse } from 'axios'
+import { isReadOnlyDemoSession } from '@renderer/utils/appleReviewUser'
 
 export class ApiError extends Error {
   data: any
@@ -14,6 +15,16 @@ export class ApiError extends Error {
 }
 
 export const apiCall = async (url: string, method: string, data?: any, token?: string) => {
+  const httpMethod = (method || 'GET').toUpperCase()
+  if (isReadOnlyDemoSession() && httpMethod !== 'GET' && httpMethod !== 'HEAD') {
+    throw new ApiError(
+      undefined,
+      'Forbidden',
+      'You do not have permission to perform this action.',
+      403
+    )
+  }
+
   let headers
   headers = {
     Authorization: token ? `Bearer ${token}` : '',

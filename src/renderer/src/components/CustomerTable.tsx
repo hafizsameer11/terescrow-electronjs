@@ -3,37 +3,28 @@ import { useNavigate } from "react-router-dom";
 import NewNotificationModal from "./modal/NewNotificationModal";
 import NotificationHistoryModal from "./modal/NotificationHistoryModal";
 import FreezeFeatureModal from "./modal/FreezeFeatureModal";
-import { InappNotification } from "@renderer/api/queries/datainterfaces";
+import SuccessModal from "./modal/SuccessModal";
+import { Customer, InappNotification } from "@renderer/api/queries/datainterfaces";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { chnageUserStatus } from "@renderer/api/queries/adminqueries";
 import { freezeCustomerFeature, banCustomer } from "@renderer/api/admin/customers";
 import { useAuth } from "@renderer/context/authContext";
+import { parseCustomerId } from "@renderer/utils/freezeFeatures";
+import { toastApiError, toastSuccess } from "@renderer/utils/toast";
+import { useClientPagination } from "@renderer/utils/useClientPagination";
 
-interface Customer {
-  id: number;
-  firstname: string;
-  lastname: string;
-  username: string;
-  email: string;
-  phoneNumber: string;
-  gender: string;
-  country: string;
-  role: string;
-  isVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-  inappNotification?: InappNotification[]
-  status: string
-  KycStateTwo?: {
-    state: string
-  }
+export interface CustomerTableServerPagination {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 interface CustomerTableProps {
   data: Customer[];
+  serverPagination?: CustomerTableServerPagination;
 }
 
-const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
+const CustomerTable: React.FC<CustomerTableProps> = ({ data, serverPagination }) => {
   const navigate = useNavigate();
   const { token } = useAuth();
   const queryClient = useQueryClient();
@@ -44,11 +35,19 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
     useState<boolean>(false);
   const [notifications, setNotifications] = useState<InappNotification[]>([]);
   const [freezeModalCustomerId, setFreezeModalCustomerId] = useState<number | null>(null);
+  const [freezeSuccessMessage, setFreezeSuccessMessage] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  const clientPagination = useClientPagination(data ?? [], 5, [data?.length]);
+  const paginatedData = serverPagination ? data : clientPagination.paginatedData;
+  const currentPage = serverPagination?.currentPage ?? clientPagination.currentPage;
+  const totalPages = serverPagination?.totalPages ?? clientPagination.totalPages;
+  const handlePageChange = serverPagination?.onPageChange ?? clientPagination.handlePageChange;
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setActiveMenu(null); // Close the active menu
+        setActiveMenu(null);
       }
     };
 
@@ -57,54 +56,46 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-  const totalPages = Math.ceil(data?.length / itemsPerPage);
-  const paginatedData = data?.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   const toggleMenu = (id: number) => {
     setActiveMenu(activeMenu === id ? null : id);
   };
 
-  const { mutate: mutation, isPending } = useMutation({
-
-    mutationFn: (data: { id: number, status: string }) => chnageUserStatus({ id: data.id.toString(), data: { status: data.status }, token: token }),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries(['customersData']);
-      alert(data.message);
+  const { mutate: mutation } = useMutation({
+    mutationFn: (payload: { id: number, status: string }) =>
+      chnageUserStatus({ id: payload.id.toString(), data: { status: payload.status }, token: token }),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries({ queryKey: ['customersData'] });
+      toastSuccess(res.message || 'Status updated');
     },
-    onError: () => alert('Failed to change status.'),
-  })
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-    }
-  };
+    onError: (err) => toastApiError(err, 'Failed to change status.'),
+  });
 
   const handleNewNotificationClick = () => {
     setIsNotificationModalOpen(false);
     setIsNewNotificationModalOpen(true);
   };
+
   const handleNotificationModalClick = (item: Customer) => {
-    setNotifications(item?.inappNotification || [])
+    setNotifications(item?.inappNotification || []);
     setIsNotificationModalOpen(true);
-  }
+  };
+
   const hanldeStatusChange = (id: number, status: string) => {
-    mutation({ id, status })
+    mutation({ id, status });
   };
 
   const freezeMutation = useMutation({
-    mutationFn: (feature: string) =>
-      freezeCustomerFeature(token!, freezeModalCustomerId!, { feature }),
-    onSuccess: () => {
+    mutationFn: ({ customerId, feature }: { customerId: number; feature: string }) =>
+      freezeCustomerFeature(token!, customerId, { feature }),
+    onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['customersData'] });
       setFreezeModalCustomerId(null);
+      const msg = result.message || 'Feature frozen successfully';
+      setFreezeSuccessMessage(msg);
+      toastSuccess(msg);
     },
-    onError: () => alert('Failed to freeze feature.'),
+    onError: (err) => toastApiError(err, 'Failed to freeze feature.'),
   });
 
   const banMutation = useMutation({
@@ -112,13 +103,22 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
       banCustomer(token!, customerId, { reason, permanent }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customersData'] });
+      toastSuccess('Account banned');
     },
-    onError: () => alert('Failed to ban account.'),
+    onError: (err) => toastApiError(err, 'Failed to ban account.'),
   });
 
   const handleFreezeFeatureProceed = (feature: string) => {
+    const customerId = parseCustomerId(freezeModalCustomerId);
+    if (customerId == null) return;
     setActiveMenu(null);
-    if (freezeModalCustomerId != null) freezeMutation.mutate(feature);
+    freezeMutation.mutate({ customerId, feature });
+  };
+
+  const handleFreezeModalClose = () => {
+    if (!freezeMutation.isPending) {
+      setFreezeModalCustomerId(null);
+    }
   };
 
   const handleBanAccount = (customer: Customer) => {
@@ -127,24 +127,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
     const reason = window.prompt('Reason for ban (optional):') ?? undefined;
     banMutation.mutate({ customerId: customer.id, reason, permanent });
   };
-  // const handleNewNotificationSubmit = (formData: {
-  //   title: string;
-  //   message: string;
-  //   image: File | null;
-  // }) => {
-  //   console.log("New Notification Data:", formData);
-  //   setIsNewNotificationModalOpen(false);
-  //   setNotifications((prev) => [
-  //     ...prev,
-  //     {
-  //       id: prev.length + 1,
-  //       content: formData.title,
-  //       date: new Date().toLocaleString(),
-  //       sentBy: "You",
-  //       status: "Pending",
-  //     },
-  //   ]);
-  // };
 
   return (
     <div className="mt-6 bg-white rounded-lg shadow-md">
@@ -255,7 +237,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
         </tbody>
       </table>
 
-      {/* Pagination Controls */}
       <div className="flex justify-between items-center p-4">
         <button
           onClick={() => handlePageChange(currentPage - 1)}
@@ -282,7 +263,6 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
         </button>
       </div>
 
-      {/* Modals */}
       {isNotificationModalOpen && (
         <NotificationHistoryModal
           isOpen={isNotificationModalOpen}
@@ -301,11 +281,17 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data }) => {
       {freezeModalCustomerId !== null && (
         <FreezeFeatureModal
           isOpen={true}
-          onClose={() => setFreezeModalCustomerId(null)}
+          onClose={handleFreezeModalClose}
           customerId={freezeModalCustomerId}
           onProceed={handleFreezeFeatureProceed}
+          isSubmitting={freezeMutation.isPending}
         />
       )}
+      <SuccessModal
+        isOpen={freezeSuccessMessage !== null}
+        message={freezeSuccessMessage ?? ''}
+        onClose={() => setFreezeSuccessMessage(null)}
+      />
     </div>
   );
 };

@@ -64,6 +64,7 @@ export interface AdminPayoutAddress {
   address: string;
   extraId: string | null;
   toNetworkHint: string | null;
+  walletCurrencyId?: number | null;
   isDefault: boolean;
   archived: boolean;
   createdAt: string;

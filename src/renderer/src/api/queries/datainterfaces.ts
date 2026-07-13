@@ -20,6 +20,7 @@ export interface Customer {
   AccountActivity?: AccountActivity[]
   inappNotification?: InappNotification[]
   status: string
+  frozenFeatures?: string[]
 }
 export interface InappNotification {
   id: number
@@ -38,6 +39,18 @@ export interface KycStateTwo {
   dob?: string
   status?: string
   state: string
+  tier?: string
+  reason?: string
+  address?: string
+  country?: string
+  documentNumber?: string
+  documentType?: string
+  nin?: string
+  idDocumentUrl?: string
+  proofOfAddressUrl?: string
+  proofOfFundsUrl?: string
+  selfieUrl?: string
+  createdAt?: string
 }
 // export intergac
 export interface Department {
@@ -145,10 +158,18 @@ export interface Rate {
   createdAt?: string // Date and time of creation (optional)
 }
 
+export interface PaginatedCustomersPayload {
+  data: Customer[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
 export interface AllCustomerRespone {
   status: string
   message: string
-  data: Customer[]
+  data: Customer[] | PaginatedCustomersPayload
 }
 export interface SIngleCustomerResponse {
   status: string

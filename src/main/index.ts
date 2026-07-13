@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, Notification, MenuItem, Menu,Tray, nativeImage, clipboard } from 'electron'
 import { join } from 'path'
+import fs from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 const iconPath = {
   mac: join(__dirname, '../../resources/mac.icns'), // macOS icon
@@ -78,7 +79,7 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   // Set app user model id for Windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.tercescrow.admin')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
@@ -86,6 +87,17 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+
+  ipcMain.on('log:error', (_event, payload: { message?: string; stack?: string; context?: string }) => {
+    try {
+      const logDir = join(app.getPath('userData'), 'logs')
+      fs.mkdirSync(logDir, { recursive: true })
+      const line = `[${new Date().toISOString()}] ${payload?.context ? `[${payload.context}] ` : ''}${payload?.message ?? 'Error'}${payload?.stack ? `\n${payload.stack}` : ''}\n`
+      fs.appendFileSync(join(logDir, 'renderer-errors.log'), line, 'utf8')
+    } catch (e) {
+      console.error('Failed to write renderer error log', e)
+    }
+  })
 
   createWindow()
 

@@ -6,7 +6,9 @@ import { getAllAgentToCusomterChats, getChatStats } from '@renderer/api/queries/
 // import ChatTable from '@renderer/components/ChatTable'
 // import StatsCard from '@renderer/components/StatsCard'
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { apiDateParams, matchesDateRange } from '@renderer/utils/dateRange'
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue'
 // import chatData from '@renderer/utils'
 import { useAuth } from '@renderer/context/authContext'
 import PendingChatsTable from '@renderer/components/PendingChatsTable'
@@ -17,7 +19,7 @@ const PendingChats = () => {
   const [filters, setFilters] = useState({
     status: 'All',
     type: 'All',
-    dateRange: 'Last 30 days',
+    dateRange: 'All',
     search: '',
     transactionType: 'All',
     category: 'All'
@@ -33,36 +35,26 @@ const PendingChats = () => {
     console.log('chatsData', chatsData)
 
   }, [chatsData])
-  const calculateDateRange = (dateRange: string) => {
-    const currentDate = new Date();
-    switch (dateRange) {
-      case 'Last 7 days':
-        return new Date(currentDate.setDate(currentDate.getDate() - 7));
-      case 'Last 15 days':
-        return new Date(currentDate.setDate(currentDate.getDate() - 15));
-      case 'Last 30 days':
-        return new Date(currentDate.setDate(currentDate.getDate() - 30));
-      default:
-        return null; // No date filter
-    }
-  };
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
+  const debouncedSearch = useDebouncedValue(filters.search.trim(), 400);
+  const { startDate, endDate } = useMemo(
+    () => apiDateParams({ dateRange: filters.dateRange, dateRangePresetActive }),
+    [filters.dateRange, dateRangePresetActive]
+  );
 
   const filteredData = chatsData?.data.filter((item) => {
     const matchesStatus = filters.status === 'All' || item.chatStatus === filters.status;
     const matchesType = filters.type === 'All' || item.department.Type === filters.type;
     const matchesSearch =
-      filters.search === '' ||
-      item.customer.username.toLowerCase().includes(filters.search.toLowerCase()) ||
-      item.agent.username.toLowerCase().includes(filters.search.toLowerCase());
+      debouncedSearch === '' ||
+      item.customer.username.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+      item.agent.username.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesCategory =
       filters.category === 'All' || item.department.niche?.toLowerCase() === filters.category.toLowerCase();
 
-    // Filter by date range
-    const selectedDateRange = calculateDateRange(filters.dateRange);
-    const matchesDateRange =
-      !selectedDateRange || new Date(item.createdAt) >= selectedDateRange;
+    const matchesDate = matchesDateRange(item.createdAt, startDate, endDate);
 
-    return matchesStatus && matchesCategory && matchesType && matchesSearch && matchesDateRange;
+    return matchesStatus && matchesCategory && matchesType && matchesSearch && matchesDate;
   });
 
 
@@ -94,7 +86,10 @@ const PendingChats = () => {
             filters={filters}
             title="Chat History"
             subtitle="Manage total chat and transaction"
-            onChange={(updatedFilters) => setFilters({ ...filters, ...updatedFilters })}
+            onChange={(updatedFilters) => {
+              if (updatedFilters.dateRange !== undefined) setDateRangePresetActive(true);
+              setFilters({ ...filters, ...updatedFilters });
+            }}
           /> */}
           {
             !chatLoading && !chatIsError && !chatError &&

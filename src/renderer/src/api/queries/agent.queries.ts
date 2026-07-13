@@ -56,8 +56,10 @@ export interface IDepartment {
 
 export enum ChatStatus {
   pending = 'pending',
+  processing = 'processing',
   successful = 'successful',
-  declined = 'declined'
+  declined = 'declined',
+  unsucessful = 'unsucessful',
 }
 export enum ChatType {
   customer_to_agent = 'customer_to_agent',

@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useMemo, useState } from 'react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { getDashBoardStats } from '@renderer/api/queries/admin.chat.queries';
-import { getTransactions } from '@renderer/api/queries/adminqueries';
+import { getAdminTransactions } from '@renderer/api/admin/transactions';
 import StatsCard from '@renderer/components/StatsCard';
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable';
 import TransactionsFilter from '@renderer/components/TransactionsFilter';
 import { useAuth } from '@renderer/context/authContext';
 import { addThousandSeparator } from '@renderer/api/helper';
+import { apiDateParams } from '@renderer/utils/dateRange';
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
+import ListFetchingIndicator from '@renderer/components/ListFetchingIndicator';
 
 const Dashboard: React.FC = () => {
-  const { token, userData } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -19,16 +22,40 @@ const Dashboard: React.FC = () => {
     }
   }, [token, navigate]);
 
-  const {
-    data: customerTransactions,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ['customerDetails'],
-    queryFn: () => getTransactions({ token }),
-    enabled: !!token,
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
+  const [filters, setFilters] = useState({
+    status: 'All',
+    type: 'All',
+    dateRange: 'All',
+    startDate: '',
+    endDate: '',
+    search: '',
   });
+
+  const { startDate, endDate } = useMemo(
+    () => apiDateParams({ ...filters, dateRangePresetActive }),
+    [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]
+  );
+  const debouncedSearch = useDebouncedValue(filters.search.trim(), 400);
+
+  const { data: txData, isLoading, isError, error, isFetching } = useQuery({
+    queryKey: ['dashboard-transactions', token, filters.status, filters.type, debouncedSearch, startDate, endDate],
+    queryFn: () =>
+      getAdminTransactions({
+        token: token!,
+        status: filters.status !== 'All' ? (filters.status.toLowerCase() as 'successful' | 'pending') : undefined,
+        type: filters.type !== 'All' ? (filters.type.toLowerCase() as 'buy' | 'sell') : undefined,
+        search: debouncedSearch || undefined,
+        startDate,
+        endDate,
+        page: 1,
+        limit: 25,
+      }),
+    enabled: !!token,
+    placeholderData: keepPreviousData,
+  });
+
+  const initialTxLoad = isLoading && !txData;
 
   const { data: dashboardStats } = useQuery({
     queryKey: ['dashboardStats'],
@@ -36,42 +63,7 @@ const Dashboard: React.FC = () => {
     enabled: !!token,
   });
 
-  const [filters, setFilters] = useState({
-    status: 'All',
-    type: 'All',
-    startDate: '',
-    endDate: '',
-    search: '',
-    transactionType: 'All',
-    category: 'All',
-  });
-
-  const filteredData = Array.isArray(customerTransactions?.data)
-    ? customerTransactions?.data.filter((transaction) => {
-      const matchesStatus =
-        filters.status === 'All' || transaction.status === filters.status;
-
-      const matchesType =
-        filters.type === 'All' ||
-        transaction.department?.Type === filters.type;
-
-      const matchesSearch =
-        filters.search === '' ||
-        transaction.category?.title
-          ?.toLowerCase()
-          .includes(filters.search.toLowerCase());
-
-      const matchesDateRange =
-        (!filters.startDate || new Date(transaction.createdAt) >= new Date(filters.startDate)) &&
-        (!filters.endDate || new Date(transaction.createdAt) <= new Date(filters.endDate));
-
-      return matchesStatus && matchesType && matchesSearch && matchesDateRange;
-    })
-    : [];
-
-  useEffect(() => {
-    console.log('dashboard Stats', dashboardStats);
-  });
+  const transactions = txData?.transactions ?? [];
 
   return (
     <div className="p-6 space-y-8 w-full">
@@ -114,7 +106,7 @@ const Dashboard: React.FC = () => {
           change={`${dashboardStats?.data.totalUsers.percentage ?? '0'}%`}
         />
         <StatsCard
-          title="Total Profit"
+          title="Total Inflow"
           value={`₦${addThousandSeparator(dashboardStats?.data.totalInflow.current) || '0'}`}
           isPositive={dashboardStats?.data.totalInflow.change === 'positive'}
           change={`${dashboardStats?.data.totalInflow.percentage ?? '0'}%`}
@@ -132,10 +124,10 @@ const Dashboard: React.FC = () => {
           change={`${dashboardStats?.data.totalRevenue.percentage ?? '0'}%`}
         />
         <StatsCard
-          title="Active Users"
-          value={`${dashboardStats?.data.totalUsers.count || '0'}`}
-          isPositive={dashboardStats?.data.totalUsers.change === 'positive'}
-          change={`${dashboardStats?.data.totalUsers.percentage ?? '0'}%`}
+          title="Today's Customers"
+          value={`${dashboardStats?.data.todayCustomers?.count ?? dashboardStats?.data.totalUsers?.count ?? '0'}`}
+          isPositive={(dashboardStats?.data.todayCustomers?.change ?? dashboardStats?.data.totalUsers.change) === 'positive'}
+          change={`${dashboardStats?.data.todayCustomers?.percentage ?? dashboardStats?.data.totalUsers.percentage ?? '0'}%`}
         />
         <StatsCard
           title="Verified Users"
@@ -162,15 +154,23 @@ const Dashboard: React.FC = () => {
       <div className="pb-5">
         <TransactionsFilter
           filters={filters}
-          onChange={(updatedFilters) =>
-            setFilters({ ...filters, ...updatedFilters })
-          }
+          onChange={(updatedFilters) => {
+            if (updatedFilters.dateRange !== undefined) setDateRangePresetActive(true);
+            setFilters((prev) => ({ ...prev, ...updatedFilters }));
+          }}
         />
-        <TransactionsTable
-          data={filteredData}
-          showCustomerDetailsButton={true}
-          showTransactionDetailsModal={false}
-        />
+        <ListFetchingIndicator show={isFetching && !initialTxLoad} />
+        {initialTxLoad && <p className="text-gray-600 py-4">Loading transactions…</p>}
+        {isError && (
+          <p className="text-red-600 py-4">{(error as Error)?.message || 'Failed to load transactions'}</p>
+        )}
+        {!initialTxLoad && !isError && (
+          <TransactionsTable
+            data={transactions}
+            showCustomerDetailsButton
+            showTransactionDetailsModal={false}
+          />
+        )}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useAuth, UserRoles } from '@renderer/context/authContext'
 import { loginUser } from '@renderer/mutation/commonMutation'
 import { ApiError } from '@renderer/api/customApiCall'
+import { isReadOnlyDemoUser, setReadOnlyDemoSession } from '@renderer/utils/appleReviewUser'
 
 const LoginPage = () => {
   const navigate = useNavigate()
@@ -20,9 +21,11 @@ const LoginPage = () => {
       console.log(`API response: `, data.data)
       // alert(`API response: ${data.data}`)
       if (data?.token) {
+        const readOnly = isReadOnlyDemoUser(data.data)
+        setReadOnlyDemoSession(readOnly)
         dispatch({ type: 'SET_TOKEN', payload: data?.token })
-        dispatch({ type: 'SET_USER_DATA', payload: data.data })
-        data.data.role === UserRoles.admin ? navigate('/dashboard') : navigate('/chats')
+        dispatch({ type: 'SET_USER_DATA', payload: { ...data.data, readOnlyMode: readOnly } })
+        navigate(data.data.role === UserRoles.admin ? '/dashboard' : '/chats')
       } else {
         // toast.error(`Error: ${data?.message}`, {
         //   position: 'top-right',

@@ -41,7 +41,27 @@ const PermissionTable = () => {
     onError: () => alert('Failed to update permissions.'),
   });
 
-  const initialPermissions: string[] = ['Customer', 'Chats', 'Transactions', 'Rates', 'Log', 'Department', 'banners', 'kyc', 'WaysOfHearing'];
+  const initialPermissions: string[] = [
+    'Customer',
+    'Chats',
+    'Transactions',
+    'Rates',
+    'Log',
+    'Department',
+    'banners',
+    'kyc',
+    'WaysOfHearing',
+    'profit-tracker',
+    'master-wallet',
+    'changenow-swaps',
+    'transaction-tracking',
+    'referrals',
+    'user-balances',
+    'daily-report',
+    'support',
+    'crypto-jobs',
+    'deposit-verify-logs',
+  ];
 
   const roles = rolesData?.data.map((role: Role) => role.name) || [];
 

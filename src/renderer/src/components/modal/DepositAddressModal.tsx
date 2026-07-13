@@ -6,6 +6,7 @@ export interface DepositAddressAsset {
   name: string;
   address: string;
   iconUrl?: string;
+  sharedMasterWalletNote?: string;
 }
 
 interface DepositAddressModalProps {
@@ -39,13 +40,20 @@ const DepositAddressModal: React.FC<DepositAddressModalProps> = ({ isOpen, onClo
           <div className="flex items-center gap-3">
             <MasterWalletAssetAvatar symbol={asset.symbol} iconUrl={asset.iconUrl} className="w-12 h-12 text-lg" />
             <div>
-              <p className="font-semibold text-gray-900">{asset.symbol}</p>
-              <p className="text-sm text-gray-500">{asset.name}</p>
+              <p className="font-semibold text-gray-900">{asset.name || asset.symbol}</p>
+              <p className="text-sm text-gray-500">{asset.symbol}</p>
             </div>
           </div>
+          {asset.sharedMasterWalletNote && (
+            <p className="text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-lg p-3">
+              {asset.sharedMasterWalletNote}
+            </p>
+          )}
           {valid ? (
             <>
-              <p className="text-sm text-gray-600">Send only {asset.symbol} to this address. Wrong assets may be lost.</p>
+              <p className="text-sm text-gray-600">
+                Send only {asset.name || asset.symbol} to this address. Wrong assets or networks may be lost.
+              </p>
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 break-all font-mono text-sm text-gray-800">{addr}</div>
               <button
                 type="button"

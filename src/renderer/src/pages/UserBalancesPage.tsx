@@ -1,148 +1,154 @@
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { FiSearch } from 'react-icons/fi';
 import { useAuth } from '@renderer/context/authContext';
-import { getAdminUserBalances } from '@renderer/api/admin/userBalances';
+import {
+  getAdminUserBalances,
+  getAdminUserBalancesSummary,
+  type AdminUserBalanceRow,
+} from '@renderer/api/admin/userBalances';
 import { addThousandSeparator } from '@renderer/api/helper';
+import { apiDateParams, DATE_RANGE_PRESETS } from '@renderer/utils/dateRange';
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
+import ListFetchingIndicator from '@renderer/components/ListFetchingIndicator';
+import UserWalletDetailModal from '@renderer/components/modal/UserWalletDetailModal';
 
-type SortOption =
-  | 'name-az'
-  | 'name-za'
-  | 'total-balance-asc'
-  | 'total-balance-desc'
-  | 'crypto-balance-asc'
-  | 'crypto-balance-desc'
-  | 'local-balance-asc'
-  | 'local-balance-desc';
+type SortOrder = 'balance-desc' | 'balance-asc' | 'name-az' | 'name-za';
+type BalanceCurrency = 'ngn' | 'usd';
 
-interface UserBalanceRow {
-  id: number;
-  name: string;
-  email: string;
-  totalBalanceUsd: string;
-  totalBalanceN: string;
-  cryptoBalanceUsd: string;
-  cryptoBalanceN: string;
-  nairaBalance: string;
-}
-
-function formatRow(row: {
-  id: number;
-  name: string;
-  email: string;
-  totalBalanceUsd: number;
-  totalBalanceN: number;
-  cryptoBalanceUsd: number;
-  cryptoBalanceN: number;
-  nairaBalance: number;
-}): UserBalanceRow {
-  return {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    totalBalanceUsd: '$' + addThousandSeparator(row.totalBalanceUsd),
-    totalBalanceN: 'N' + addThousandSeparator(row.totalBalanceN),
-    cryptoBalanceUsd: '$' + addThousandSeparator(row.cryptoBalanceUsd),
-    cryptoBalanceN: 'N' + addThousandSeparator(row.cryptoBalanceN),
-    nairaBalance: 'N' + addThousandSeparator(row.nairaBalance),
-  };
-}
-
-const SORT_OPTIONS: { value: SortOption; label: string }[] = [
-  { value: 'name-az', label: 'Name (A-Z)' },
-  { value: 'name-za', label: 'Name (Z-A)' },
-  { value: 'total-balance-asc', label: 'Total balance - Ascending' },
-  { value: 'total-balance-desc', label: 'Total balance - Descending' },
-  { value: 'crypto-balance-asc', label: 'Crypto balance - Ascending' },
-  { value: 'crypto-balance-desc', label: 'Crypto balance - Descending' },
-  { value: 'local-balance-asc', label: 'Local balance - Ascending' },
-  { value: 'local-balance-desc', label: 'Local balance - Descending' },
+const ORDER_OPTIONS: { value: SortOrder; label: string }[] = [
+  { value: 'balance-desc', label: 'Balance — highest first' },
+  { value: 'balance-asc', label: 'Balance — lowest first' },
+  { value: 'name-az', label: 'Name (A–Z)' },
+  { value: 'name-za', label: 'Name (Z–A)' },
 ];
+
+function fmtUsd(n: number) {
+  return '$' + addThousandSeparator(n);
+}
+
+function fmtNgn(n: number) {
+  return '₦' + addThousandSeparator(n);
+}
 
 const UserBalancesPage: React.FC = () => {
   const { token } = useAuth();
-  const [sort, setSort] = useState<SortOption>('name-az');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [dateRange, setDateRange] = useState('Last 30 days');
+  const [balanceCurrency, setBalanceCurrency] = useState<BalanceCurrency>('usd');
+  const [sort, setSort] = useState<SortOrder>('balance-desc');
+  const [dateRange, setDateRange] = useState('All');
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim(), 400);
   const [page, setPage] = useState(1);
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
   const limit = 20;
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['admin-user-balances', token, sort, startDate, endDate, dateRange, search, page, limit],
+  const resolvedDates = useMemo(
+    () => apiDateParams({ dateRange, dateRangePresetActive }),
+    [dateRange, dateRangePresetActive]
+  );
+
+  const { data, isLoading, isError, isFetching } = useQuery({
+    queryKey: ['admin-user-balances', token, sort, balanceCurrency, resolvedDates.startDate, resolvedDates.endDate, debouncedSearch, page, limit],
     queryFn: () =>
       getAdminUserBalances({
         token: token!,
         sort,
-        startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        dateRange: dateRange || undefined,
-        search: search || undefined,
+        balanceCurrency,
+        startDate: resolvedDates.startDate,
+        endDate: resolvedDates.endDate,
+        dateRange: dateRangePresetActive && dateRange !== 'All' ? dateRange : undefined,
+        search: debouncedSearch || undefined,
         page,
         limit,
       }),
     enabled: !!token,
+    placeholderData: keepPreviousData,
   });
 
-  const rows: UserBalanceRow[] = useMemo(() => {
-    const raw = data?.rows ?? [];
-    return raw.map(formatRow);
-  }, [data?.rows]);
+  const { data: summary } = useQuery({
+    queryKey: ['admin-user-balances-summary', token],
+    queryFn: () => getAdminUserBalancesSummary(token!),
+    enabled: !!token,
+  });
 
+  const initialLoad = isLoading && !data;
+  const rows: AdminUserBalanceRow[] = data?.rows ?? [];
   const totalPages = data?.totalPages ?? 0;
   const total = data?.total ?? 0;
 
   return (
     <div className="w-full mb-10">
-      <h1 className="text-[40px] font-normal text-gray-800 mb-6">User Balances</h1>
+      <h1 className="text-[40px] font-normal text-gray-800 mb-2">User Wallets</h1>
+      <p className="text-sm text-gray-600 mb-6 max-w-3xl">
+        Click a customer to open their wallet profile — virtual balance (bought with Naira), on-chain balance (deposits), deposit status, sold amounts, and virtual activity.
+      </p>
+
+      {summary && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-purple-50 border border-purple-100 rounded-lg p-4">
+            <p className="text-xs text-purple-700 font-medium uppercase">Total Virtual</p>
+            <p className="text-xl font-semibold text-purple-900">{fmtUsd(summary.totalVirtualUsd)}</p>
+          </div>
+          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+            <p className="text-xs text-blue-700 font-medium uppercase">Total On-chain</p>
+            <p className="text-xl font-semibold text-blue-900">{fmtUsd(summary.totalOnChainUsd)}</p>
+          </div>
+          <div className="bg-green-50 border border-green-100 rounded-lg p-4">
+            <p className="text-xs text-green-700 font-medium uppercase">Combined Crypto</p>
+            <p className="text-xl font-semibold text-green-900">{fmtUsd(summary.totalCryptoUsd)}</p>
+          </div>
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <p className="text-xs text-gray-600 font-medium uppercase">NGN Wallets</p>
+            <p className="text-xl font-semibold text-gray-900">{fmtNgn(summary.totalNairaWallet)}</p>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-3">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Sort by</label>
+            <div className="inline-flex rounded-lg border border-gray-300 overflow-hidden bg-white">
+              <button
+                type="button"
+                onClick={() => { setBalanceCurrency('usd'); setPage(1); }}
+                className={`px-4 py-2 text-sm font-medium ${balanceCurrency === 'usd' ? 'bg-[#147341] text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
+                Crypto ($)
+              </button>
+              <button
+                type="button"
+                onClick={() => { setBalanceCurrency('ngn'); setPage(1); }}
+                className={`px-4 py-2 text-sm font-medium border-l border-gray-300 ${balanceCurrency === 'ngn' ? 'bg-[#147341] text-white' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
+                NGN wallet
+              </button>
+            </div>
+          </div>
           <div className="relative">
+            <label className="block text-xs text-gray-500 mb-1">Order</label>
             <select
               value={sort}
-              onChange={(e) => setSort(e.target.value as SortOption)}
+              onChange={(e) => { setSort(e.target.value as SortOrder); setPage(1); }}
               className="appearance-none pl-4 pr-10 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white min-w-[200px]"
             >
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
+              {ORDER_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500">▼</span>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Start Date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              placeholder="dd/mm/yyyy"
-              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">End Date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder="dd/mm/yyyy"
-              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
-            />
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Period</label>
             <select
               value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
+              onChange={(e) => { setDateRange(e.target.value); setDateRangePresetActive(true); setPage(1); }}
               className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white"
             >
-              <option>Last 7 days</option>
-              <option>Last 30 days</option>
-              <option>Last 90 days</option>
+              <option value="All">All</option>
+              {DATE_RANGE_PRESETS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -158,37 +164,53 @@ const UserBalancesPage: React.FC = () => {
         </div>
       </div>
 
-      {isLoading && (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">Loading user balances…</div>
+      <ListFetchingIndicator show={isFetching && !initialLoad} />
+      {initialLoad && (
+        <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">Loading user wallets…</div>
       )}
       {isError && (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center text-red-600">Failed to load user balances.</div>
+        <div className="bg-white rounded-lg shadow-md p-8 text-center text-red-600">Failed to load user wallets.</div>
       )}
-      {!isLoading && !isError && (
+      {!initialLoad && !isError && (
         <>
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <table className="min-w-full text-left text-sm text-gray-700">
               <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
                 <tr>
-                  <th className="py-3 px-4">Name</th>
-                  <th className="py-3 px-4">Email</th>
-                  <th className="py-3 px-4">Total Balance ($)</th>
-                  <th className="py-3 px-4">Total Balance (N)</th>
-                  <th className="py-3 px-4">Crypto Balance ($)</th>
-                  <th className="py-3 px-4">Crypto Balance (N)</th>
-                  <th className="py-3 px-4">Naira Balance</th>
+                  <th className="py-3 px-4">Customer</th>
+                  <th className="py-3 px-4">Virtual ($)</th>
+                  <th className="py-3 px-4">On-chain ($)</th>
+                  <th className="py-3 px-4">Total crypto ($)</th>
+                  <th className="py-3 px-4">NGN wallet</th>
+                  <th className="py-3 px-4 text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr key={row.id} className="border-t hover:bg-gray-50">
-                    <td className="py-3 px-4 font-medium text-gray-800">{row.name}</td>
-                    <td className="py-3 px-4">{row.email}</td>
-                    <td className="py-3 px-4">{row.totalBalanceUsd}</td>
-                    <td className="py-3 px-4">{row.totalBalanceN}</td>
-                    <td className="py-3 px-4">{row.cryptoBalanceUsd}</td>
-                    <td className="py-3 px-4">{row.cryptoBalanceN}</td>
-                    <td className="py-3 px-4">{row.nairaBalance}</td>
+                  <tr key={row.id} className="border-t hover:bg-green-50/50 transition-colors">
+                    <td className="py-3 px-4">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUserId(row.id)}
+                        className="text-left group"
+                      >
+                        <p className="font-medium text-gray-800 group-hover:text-[#147341]">{row.name}</p>
+                        <p className="text-xs text-gray-500">{row.email}</p>
+                      </button>
+                    </td>
+                    <td className="py-3 px-4 text-purple-800 font-medium">{fmtUsd(row.virtualBalanceUsd)}</td>
+                    <td className="py-3 px-4 text-blue-800 font-medium">{fmtUsd(row.onChainBalanceUsd)}</td>
+                    <td className="py-3 px-4 font-semibold">{fmtUsd(row.totalBalanceUsd)}</td>
+                    <td className="py-3 px-4">{fmtNgn(row.nairaBalance)}</td>
+                    <td className="py-3 px-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedUserId(row.id)}
+                        className="px-3 py-1.5 text-sm font-medium text-[#147341] border border-[#147341]/40 rounded-lg hover:bg-[#147341] hover:text-white transition-colors"
+                      >
+                        View wallet
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -196,30 +218,23 @@ const UserBalancesPage: React.FC = () => {
           </div>
           {totalPages > 1 && (
             <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-              <span>
-                Page {page} of {totalPages} ({total} total)
-              </span>
+              <span>Page {page} of {totalPages} ({total} total)</span>
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page <= 1}
-                  className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page >= totalPages}
-                  className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50"
-                >
-                  Next
-                </button>
+                <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1} className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50">Previous</button>
+                <button type="button" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="px-3 py-1 rounded border border-gray-300 disabled:opacity-50">Next</button>
               </div>
             </div>
           )}
         </>
+      )}
+
+      {token && (
+        <UserWalletDetailModal
+          isOpen={selectedUserId != null}
+          userId={selectedUserId}
+          token={token}
+          onClose={() => setSelectedUserId(null)}
+        />
       )}
     </div>
   );

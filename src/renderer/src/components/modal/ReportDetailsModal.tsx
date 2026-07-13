@@ -32,7 +32,7 @@ const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
   if (!isOpen || !report) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 overflow-y-auto p-6">
+    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-[250] overflow-y-auto p-6">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-white">
           <div className="flex items-center gap-3">

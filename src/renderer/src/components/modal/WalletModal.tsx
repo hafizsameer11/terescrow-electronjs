@@ -1,18 +1,11 @@
 import React, { useState } from 'react';
 
-// Placeholder type; replace with API type when ready
-interface CryptoAsset {
+export interface CryptoAsset {
   symbol: string;
   name: string;
   balance: string;
-  usdEquivalent: string;
+  usdEquivalent: number | string;
 }
-
-const MOCK_CRYPTO_ASSETS: CryptoAsset[] = [
-  { symbol: 'BTC', name: 'Bitcoin', balance: '0.0012', usdEquivalent: '25,000 USD' },
-  { symbol: 'BNB', name: 'Binance coin', balance: '0.0012', usdEquivalent: '25,000 USD' },
-  { symbol: 'SOL', name: 'Solana', balance: '0.0012', usdEquivalent: '25,000 USD' },
-];
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -25,14 +18,20 @@ interface WalletModalProps {
 const WalletModal: React.FC<WalletModalProps> = ({
   isOpen,
   onClose,
-  nairaBalance = 'N200,000',
-  cryptoBalance = '$25',
-  cryptoAssets = MOCK_CRYPTO_ASSETS,
+  nairaBalance = 'N0',
+  cryptoBalance = '$0',
+  cryptoAssets = [],
 }) => {
   const [walletTab, setWalletTab] = useState<'naira' | 'crypto'>('naira');
   const [showCryptoAssets, setShowCryptoAssets] = useState(false);
 
   if (!isOpen) return null;
+
+  const formatUsd = (val: number | string) => {
+    const n = typeof val === 'number' ? val : parseFloat(String(val));
+    if (!Number.isFinite(n)) return String(val);
+    return `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 overflow-y-auto pt-32 pb-10">
@@ -76,21 +75,23 @@ const WalletModal: React.FC<WalletModalProps> = ({
             <div className="bg-[#147341] text-white rounded-lg p-6 text-center mb-4">
               <p className="text-2xl font-bold">{cryptoBalance}</p>
             </div>
-            <div className="mb-4">
-              <button
-                type="button"
-                onClick={() => setShowCryptoAssets(!showCryptoAssets)}
-                className="w-full py-2.5 px-4 bg-[#147341] text-white text-sm font-medium rounded-lg hover:bg-[#0d5a2e]"
-              >
-                {showCryptoAssets ? 'Hide Assets' : 'View Assets'}
-              </button>
-            </div>
-            {showCryptoAssets && (
+            {cryptoAssets.length > 0 && (
+              <div className="mb-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCryptoAssets(!showCryptoAssets)}
+                  className="w-full py-2.5 px-4 bg-[#147341] text-white text-sm font-medium rounded-lg hover:bg-[#0d5a2e]"
+                >
+                  {showCryptoAssets ? 'Hide Assets' : 'View Assets'}
+                </button>
+              </div>
+            )}
+            {showCryptoAssets && cryptoAssets.length > 0 && (
               <div className="space-y-3 border border-gray-200 rounded-lg p-3">
                 <p className="text-sm font-semibold text-gray-700">Assets</p>
                 {cryptoAssets.map((asset) => (
                   <div
-                    key={asset.symbol}
+                    key={`${asset.symbol}-${asset.name}`}
                     className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-md"
                   >
                     <div className="flex items-center gap-2">
@@ -99,11 +100,14 @@ const WalletModal: React.FC<WalletModalProps> = ({
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-800">{asset.balance}</p>
-                      <p className="text-xs text-gray-600">{asset.usdEquivalent}</p>
+                      <p className="text-xs text-gray-600">{formatUsd(asset.usdEquivalent)}</p>
                     </div>
                   </div>
                 ))}
               </div>
+            )}
+            {cryptoAssets.length === 0 && (
+              <p className="text-sm text-gray-500 text-center">No crypto assets with balance</p>
             )}
           </>
         )}

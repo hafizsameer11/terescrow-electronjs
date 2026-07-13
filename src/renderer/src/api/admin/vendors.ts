@@ -7,6 +7,7 @@ export interface VendorPayload {
   currency: string;
   walletAddress: string;
   notes?: string;
+  walletCurrencyId?: number;
 }
 
 export interface VendorRow {
@@ -14,6 +15,8 @@ export interface VendorRow {
   name: string;
   network: string;
   currency: string;
+  walletCurrencyId?: number | null;
+  walletCurrency?: { currency?: string; blockchain?: string } | null;
   walletAddress: string;
   notes?: string;
   createdAt: string;

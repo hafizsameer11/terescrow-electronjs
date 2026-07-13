@@ -4,3 +4,5 @@ out
 .DS_Store
 *.log*
 yarn.lock
+build/macos/*.provisionprofile
+*.p12

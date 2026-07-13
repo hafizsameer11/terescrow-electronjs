@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FiSearch } from 'react-icons/fi';
 import { useAuth } from '@renderer/context/authContext';
@@ -12,6 +12,8 @@ import {
   getReferralsByUser,
 } from '@renderer/api/admin/referrals';
 import { addThousandSeparator } from '@renderer/api/helper';
+import { apiDateParams, DATE_RANGE_PRESETS } from '@renderer/utils/dateRange';
+import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
 import type { ReferralByUser } from '@renderer/data/referralsData';
 
 function formatDate(v: string | undefined): string {
@@ -43,11 +45,16 @@ export interface ReferralRow {
 
 const ReferralsPage: React.FC = () => {
   const { token } = useAuth();
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [dateRange, setDateRange] = useState('All');
+  const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
+  const { startDate, endDate } = useMemo(
+    () => apiDateParams({ dateRange, dateRangePresetActive }),
+    [dateRange, dateRangePresetActive]
+  );
   const [referralType, setReferralType] = useState<ReferralTypeFilter>('All');
   const [dropdownFilter, setDropdownFilter] = useState('All');
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim(), 400);
   const [earnSettingsOpen, setEarnSettingsOpen] = useState(false);
   const [referralsByUserOpen, setReferralsByUserOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ReferralRow | null>(null);
@@ -64,12 +71,12 @@ const ReferralsPage: React.FC = () => {
   const summary = summaryData ?? { allUsers: 0, totalReferred: 0, amountPaidOut: 'N0' };
 
   const { data: listData } = useQuery({
-    queryKey: ['admin-referrals-list', token, referralType, search, startDate, endDate, page],
+    queryKey: ['admin-referrals-list', token, referralType, debouncedSearch, startDate, endDate, page],
     queryFn: () =>
       getReferralsList({
         token: token!,
         type: referralType === 'All' ? undefined : referralType,
-        search: search || undefined,
+        search: debouncedSearch || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         page,
@@ -98,33 +105,31 @@ const ReferralsPage: React.FC = () => {
 
 
   return (
-    <div className="w-full p-6 space-y-6">
+    <div className="w-full p-6 space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-[40px] font-normal text-gray-800">Referrals</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <div>
-            <label className="block text-xs text-gray-500 mb-0.5">Start Date</label>
-            <input
-              type="text"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              placeholder="dd/mm/yyyy"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm w-36"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-0.5">End Date</label>
-            <input
-              type="text"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              placeholder="dd/mm/yyyy"
-              className="px-3 py-2 border border-gray-300 rounded-lg text-sm w-36"
-            />
+            <label className="block text-xs text-gray-500 mb-0.5">Date range</label>
+            <select
+              value={dateRange}
+              onChange={(e) => {
+                setDateRange(e.target.value);
+                setDateRangePresetActive(true);
+                setPage(1);
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="All">All</option>
+              {DATE_RANGE_PRESETS.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
           </div>
           <button
+            type="button"
             onClick={() => setEarnSettingsOpen(true)}
-            className="px-4 py-2 rounded-xl font-normal bg-white border border-gray-300 text-gray-800 mt-5"
+            className="px-4 py-2 rounded-xl font-normal bg-white border border-gray-300 text-gray-800 self-end"
           >
             Global earn %
           </button>

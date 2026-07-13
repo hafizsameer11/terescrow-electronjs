@@ -38,12 +38,37 @@ import {
   UPdateCustomerResponse
 } from './datainterfaces'
 // import * from './index'
-export const gettAllCustomerss = async ({
-  token
-}: {
+export interface GetAllCustomersParams {
   token: string
-}): Promise<AllCustomerRespone> => {
-  return await apiCall(API_ENDPOINT.CUSTOMER.AllCustomers, 'GET', undefined, token)
+  page?: number
+  limit?: number
+  gender?: string
+  country?: string
+  search?: string
+  startDate?: string
+  endDate?: string
+}
+
+export const gettAllCustomerss = async ({
+  token,
+  page = 1,
+  limit = 20,
+  gender,
+  country,
+  search,
+  startDate,
+  endDate,
+}: GetAllCustomersParams): Promise<AllCustomerRespone> => {
+  const sp = new URLSearchParams()
+  sp.set('page', String(page))
+  sp.set('limit', String(limit))
+  if (gender && gender !== 'All') sp.set('gender', gender)
+  if (country && country !== 'All') sp.set('country', country)
+  if (search?.trim()) sp.set('search', search.trim())
+  if (startDate) sp.set('startDate', startDate)
+  if (endDate) sp.set('endDate', endDate)
+  const url = `${API_ENDPOINT.CUSTOMER.AllCustomers}?${sp}`
+  return await apiCall(url, 'GET', undefined, token)
 }
 export const getCustomerDetails = async ({
   token,
@@ -365,13 +390,20 @@ export const createTeamMember = async ({
 //account activites
 export const getAccountActivities = async ({
   token,
-  id
+  id,
+  page = 1,
+  limit = 5,
 }: {
   token: string
   id: string
+  page?: number
+  limit?: number
 }): Promise<AccountAcitivityResponse> => {
+  const sp = new URLSearchParams()
+  sp.set('page', String(page))
+  sp.set('limit', String(limit))
   return await apiCall(
-    `${API_ENDPOINT.OPERATIONS.UserAccountActivity}/${id}`,
+    `${API_ENDPOINT.OPERATIONS.UserAccountActivity}/${id}?${sp}`,
     'GET',
     undefined,
     token

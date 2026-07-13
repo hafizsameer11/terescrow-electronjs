@@ -1,9 +1,13 @@
-import { contextBridge, ipcRenderer, clipboard, nativeImage, shell, app } from 'electron'
+import { contextBridge, ipcRenderer, clipboard, nativeImage, shell } from 'electron'
 import fs from 'fs'
-import path from 'path'
 import os from 'os'
 
+function appendRendererError(payload: { message?: string; stack?: string; context?: string }) {
+  ipcRenderer.send('log:error', payload)
+}
+
 contextBridge.exposeInMainWorld('electron', {
+  logError: appendRendererError,
   ipcRenderer: {
     send: (channel: string, ...args: any[]) => ipcRenderer.send(channel, ...args),
     on: (channel: string, listener: (event: Electron.IpcRendererEvent, ...args: any[]) => void) =>

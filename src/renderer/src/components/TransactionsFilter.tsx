@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { FiSearch } from 'react-icons/fi'; // Importing the search icon
 
 interface TransactionsFilterProps {
@@ -24,7 +24,20 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
 }) => {
   const statusOptions = ['All', 'successful', 'pending'];
   const typeOption = ['All', 'buy', 'sell'];
-  const category = ['All', 'crypto', 'giftcard'];
+  const [searchInput, setSearchInput] = useState(filters.search);
+
+  useEffect(() => {
+    setSearchInput(filters.search);
+  }, [filters.search]);
+
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (searchInput !== filters.search) {
+        onChange({ search: searchInput });
+      }
+    }, 400);
+    return () => clearTimeout(id);
+  }, [searchInput, filters.search, onChange]);
 
   return (
     <>
@@ -103,7 +116,7 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
           onChange={(e) => onChange({ dateRange: e.target.value })}
           className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500"
         >
-          {['Last 7 days', 'Last 30 days', 'Last 90 days'].map((range) => (
+          {['All', 'Last 7 days', 'Last 30 days', 'Last 90 days'].map((range) => (
             <option key={range} value={range}>
               {range}
             </option>
@@ -114,8 +127,8 @@ const TransactionsFilter: React.FC<TransactionsFilterProps> = ({
           <input
             type="text"
             placeholder="Search"
-            value={filters.search}
-            onChange={(e) => onChange({ search: e.target.value })}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="outline-none text-sm text-gray-600 w-full bg-transparent placeholder-gray-400"
           />
         </div>

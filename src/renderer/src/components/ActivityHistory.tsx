@@ -3,7 +3,6 @@ import ActivityTable from './ActivityTable'
 import TeamFilterActivityTabs from './TeamFilterActivityTabs'
 import ChatTable from './ChatTable'
 import { useQuery } from '@tanstack/react-query'
-import { getAccountActivities } from '@renderer/api/queries/adminqueries'
 import { getSingleAgentToCusomterChat, getSingleAgentToTeamChats } from '@renderer/api/queries/admin.chat.queries'
 import { useAuth } from '@renderer/context/authContext'
 const dummyData = [
@@ -101,13 +100,6 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ userId }) => {
   const [isTeam, setIsTeam] = useState(false)
   const {token}=useAuth();
   const id = userId;
-  const {
-    data: accountActivityData,
-    error: errorAccitivData
-  } = useQuery({
-    queryKey: ['accountActivityData'],
-    queryFn: () => getAccountActivities({ token: token, id: id! }),
-  })
   const { data: chatsData, isLoading: chatLoading, error: chatError } = useQuery({
     queryKey: ['chats'],
     queryFn: () => getSingleAgentToCusomterChat({ token, agentId: id! }),
@@ -118,12 +110,6 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ userId }) => {
     queryFn: () => getSingleAgentToTeamChats({ token, agentId: id! }),
     enabled: !!token,
   });
-  useEffect(() => {
-    if (errorAccitivData) {
-      console.error(errorAccitivData)
-    }
-    // console.log(accountActivityData)
-  }, [accountActivityData])
   useEffect(() => {
     if (chatError) {
       console.error(chatError)
@@ -158,7 +144,7 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ userId }) => {
       />
 
       {activeTab === 'Activity History' ? (
-        <ActivityTable data={accountActivityData?.data} />
+        <ActivityTable userId={id} />
       ) : (
         !chatLoading
         &&

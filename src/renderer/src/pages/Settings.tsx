@@ -7,7 +7,7 @@ import PermissionTable from '@renderer/components/PermissionTable';
 import UserDetail from '@renderer/components/UserDetail';
 import { useAuth } from '@renderer/context/authContext';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   getAdminVendors,
@@ -25,19 +25,26 @@ import {
   upsertChangeNowTickerMapping,
   updateChangeNowPayoutAddress,
 } from '@renderer/api/admin/changenow';
+import { getMasterWalletAssets } from '@renderer/api/admin/masterWallet';
+import { formatWalletCurrencyLabel, mapAssetsToWalletCurrencyOptions } from '@renderer/utils/walletCurrencyLabel';
+import {
+  getPlatformOperationSettings,
+  updatePlatformOperationSettings,
+} from '@renderer/api/admin/platformSettings';
 type SettingsTab =
   | 'profile'
   | 'role_management'
   | 'vendors'
   | 'swap_payout_wallets'
-  | 'ticker_mapping';
+  | 'ticker_mapping'
+  | 'operation_controls';
 
 const Settings = () => {
   const { userData, token: authToken } = useAuth();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
-  const validTabs: SettingsTab[] = ['profile', 'role_management', 'vendors', 'swap_payout_wallets', 'ticker_mapping'];
+  const validTabs: SettingsTab[] = ['profile', 'role_management', 'vendors', 'swap_payout_wallets', 'ticker_mapping', 'operation_controls'];
   const initialTab: SettingsTab =
     tabFromUrl === 'crypto_rates'
       ? 'profile'
@@ -48,7 +55,18 @@ const Settings = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<VendorRow | null>(null);
-  const [newWallet, setNewWallet] = useState({ label: '', address: '', extraId: '', toNetworkHint: '', isDefault: false });
+  const [newWallet, setNewWallet] = useState({
+    label: '',
+    address: '',
+    extraId: '',
+    walletCurrencyId: '' as number | '',
+    payoutNetwork: '',
+    isDefault: false,
+  });
+  const [tickerSearch, setTickerSearch] = useState('');
+  const [tickerFilter, setTickerFilter] = useState<'all' | 'unmapped'>('all');
+  const [palmpayWithdrawDisabled, setPalmpayWithdrawDisabled] = useState(false);
+  const [cryptoOutsideSendDisabled, setCryptoOutsideSendDisabled] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -80,6 +98,35 @@ const Settings = () => {
     queryFn: () => getChangeNowInternalMap(authToken!),
     enabled: !!authToken && activeTab === 'ticker_mapping',
   });
+  const { data: walletAssetsRaw = [] } = useQuery({
+    queryKey: ['admin-master-wallet-assets-settings', authToken],
+    queryFn: () => getMasterWalletAssets(authToken!),
+    enabled: !!authToken && (activeTab === 'vendors' || activeTab === 'swap_payout_wallets'),
+  });
+  const { data: operationSettings } = useQuery({
+    queryKey: ['admin-platform-operation-settings', authToken],
+    queryFn: () => getPlatformOperationSettings(authToken!),
+    enabled: !!authToken && activeTab === 'operation_controls',
+  });
+  const walletCurrencyOptions = mapAssetsToWalletCurrencyOptions(walletAssetsRaw as any[]);
+
+  useEffect(() => {
+    if (operationSettings) {
+      setPalmpayWithdrawDisabled(operationSettings.palmpayWithdrawDisabled);
+      setCryptoOutsideSendDisabled(operationSettings.cryptoOutsideSendDisabled);
+    }
+  }, [operationSettings]);
+
+  const payoutNetworksForCurrency = useMemo(() => {
+    const wcid = newWallet.walletCurrencyId;
+    if (wcid) {
+      const match = walletCurrencyOptions.find((o) => o.id === wcid);
+      if (match?.blockchain) return [match.blockchain];
+    }
+    return Array.from(
+      new Set(walletCurrencyOptions.map((o) => o.blockchain).filter(Boolean))
+    ) as string[];
+  }, [walletCurrencyOptions, newWallet.walletCurrencyId]);
 
   const createVendorMutation = useMutation({
     mutationFn: (payload: VendorPayload) => createAdminVendor(authToken!, payload),
@@ -99,12 +146,17 @@ const Settings = () => {
         label: newWallet.label,
         address: newWallet.address,
         extraId: newWallet.extraId || null,
-        toNetworkHint: newWallet.toNetworkHint || null,
+        walletCurrencyId:
+          typeof newWallet.walletCurrencyId === 'number' ? newWallet.walletCurrencyId : null,
+        toNetworkHint:
+          newWallet.payoutNetwork ||
+          walletCurrencyOptions.find((o) => o.id === newWallet.walletCurrencyId)?.blockchain ||
+          null,
         isDefault: newWallet.isDefault,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-changenow-payout-addresses'] });
-      setNewWallet({ label: '', address: '', extraId: '', toNetworkHint: '', isDefault: false });
+      setNewWallet({ label: '', address: '', extraId: '', walletCurrencyId: '', payoutNetwork: '', isDefault: false });
     },
   });
   const archivePayoutMutation = useMutation({
@@ -118,6 +170,16 @@ const Settings = () => {
   const upsertMappingMutation = useMutation({
     mutationFn: ({ id, ticker }: { id: number; ticker: string }) => upsertChangeNowTickerMapping(authToken!, id, ticker),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-changenow-map-internal'] }),
+  });
+  const updateOperationSettingsMutation = useMutation({
+    mutationFn: () =>
+      updatePlatformOperationSettings(authToken!, {
+        palmpayWithdrawDisabled,
+        cryptoOutsideSendDisabled,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-platform-operation-settings'] });
+    },
   });
 
   const setTab = (tab: SettingsTab) => {
@@ -152,6 +214,7 @@ const Settings = () => {
                 <button onClick={() => setTab('vendors')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'vendors' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Vendors</button>
                 <button onClick={() => setTab('swap_payout_wallets')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'swap_payout_wallets' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Swap payout wallets</button>
                 <button onClick={() => setTab('ticker_mapping')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'ticker_mapping' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Ticker mapping</button>
+                <button onClick={() => setTab('operation_controls')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'operation_controls' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Operation controls</button>
               </>
             )}
           </div>
@@ -169,7 +232,13 @@ const Settings = () => {
       </div>
 
       {activeTab === 'profile' ? (
-        <UserDetail />
+        <div className="space-y-4">
+          <UserDetail />
+          <p className="text-xs text-gray-500">
+            Renderer errors are appended to{' '}
+            <span className="font-mono">logs/renderer-errors.log</span> in the app user data folder (via Electron IPC).
+          </p>
+        </div>
       ) : activeTab === 'vendors' ? (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
@@ -180,7 +249,11 @@ const Settings = () => {
                   <tr key={v.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-800 font-medium">{v.name}</td>
                     <td className="px-4 py-3 text-gray-600">{v.network}</td>
-                    <td className="px-4 py-3 text-gray-600">{v.currency}</td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {v.walletCurrency
+                        ? formatWalletCurrencyLabel(v.walletCurrency.currency, v.walletCurrency.blockchain)
+                        : v.currency}
+                    </td>
                     <td className="px-4 py-3 text-gray-600 font-mono text-sm max-w-[200px] truncate" title={v.walletAddress}>{v.walletAddress}</td>
                     <td className="px-4 py-3 text-gray-500 text-sm">{v.notes ?? '—'}</td>
                     <td className="px-4 py-3">
@@ -197,10 +270,38 @@ const Settings = () => {
         </div>
       ) : activeTab === 'swap_payout_wallets' ? (
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-5 gap-2">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 grid grid-cols-1 md:grid-cols-7 gap-2">
             <input value={newWallet.label} onChange={(e) => setNewWallet((s) => ({ ...s, label: e.target.value }))} placeholder="Label" className="px-3 py-2 border border-gray-300 rounded-lg" />
+            <select
+              value={newWallet.walletCurrencyId}
+              onChange={(e) => {
+                const id = Number(e.target.value);
+                const opt = walletCurrencyOptions.find((o) => o.id === id);
+                setNewWallet((s) => ({
+                  ...s,
+                  walletCurrencyId: id,
+                  payoutNetwork: opt?.blockchain ?? '',
+                }));
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg"
+            >
+              <option value="">Currency</option>
+              {walletCurrencyOptions.map((o) => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </select>
+            <select
+              value={newWallet.payoutNetwork}
+              onChange={(e) => setNewWallet((s) => ({ ...s, payoutNetwork: e.target.value }))}
+              className="px-3 py-2 border border-gray-300 rounded-lg"
+            >
+              <option value="">Network</option>
+              {payoutNetworksForCurrency.map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
             <input value={newWallet.address} onChange={(e) => setNewWallet((s) => ({ ...s, address: e.target.value }))} placeholder="Address" className="px-3 py-2 border border-gray-300 rounded-lg md:col-span-2" />
-            <input value={newWallet.toNetworkHint} onChange={(e) => setNewWallet((s) => ({ ...s, toNetworkHint: e.target.value }))} placeholder="Network hint" className="px-3 py-2 border border-gray-300 rounded-lg" />
+            <input value={newWallet.extraId} onChange={(e) => setNewWallet((s) => ({ ...s, extraId: e.target.value }))} placeholder="Memo / extra ID" className="px-3 py-2 border border-gray-300 rounded-lg" />
             <button type="button" onClick={() => createPayoutMutation.mutate()} className="px-4 py-2 bg-[#147341] text-white rounded-lg">Add wallet</button>
           </div>
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
@@ -224,11 +325,36 @@ const Settings = () => {
           </div>
         </div>
       ) : activeTab === 'ticker_mapping' ? (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={tickerSearch}
+              onChange={(e) => setTickerSearch(e.target.value)}
+              placeholder="Search currency or blockchain…"
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm flex-1 min-w-[200px]"
+            />
+            <select
+              value={tickerFilter}
+              onChange={(e) => setTickerFilter(e.target.value as 'all' | 'unmapped')}
+              className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="all">All mappings</option>
+              <option value="unmapped">Unmapped only</option>
+            </select>
+          </div>
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <table className="w-full text-left">
             <thead><tr className="border-b border-gray-200 bg-gray-50 text-gray-600 text-sm font-medium"><th className="px-4 py-3">Blockchain</th><th className="px-4 py-3">Currency</th><th className="px-4 py-3">Current ticker</th><th className="px-4 py-3">Source</th><th className="px-4 py-3">Override</th></tr></thead>
             <tbody>
-              {(mapData?.items ?? []).map((m) => (
+              {(mapData?.items ?? [])
+                .filter((m) => {
+                  const q = tickerSearch.trim().toLowerCase();
+                  if (q && !`${m.currency} ${m.blockchain} ${m.changenowTicker}`.toLowerCase().includes(q)) return false;
+                  if (tickerFilter === 'unmapped' && m.mappingSource === 'database') return false;
+                  return true;
+                })
+                .map((m) => (
                 <tr key={m.id} className="border-b border-gray-100">
                   <td className="px-4 py-3">{m.blockchain}</td>
                   <td className="px-4 py-3">{m.currency}</td>
@@ -250,6 +376,65 @@ const Settings = () => {
               ))}
             </tbody>
           </table>
+        </div>
+        {tickerFilter === 'unmapped' && (
+          <button
+            type="button"
+            className="px-4 py-2 border border-[#147341] text-[#147341] rounded-lg text-sm hover:bg-[#147341]/10"
+            onClick={() => {
+              const unmapped = (mapData?.items ?? []).find((m) => m.mappingSource !== 'database');
+              if (!unmapped) return;
+              const v = window.prompt(`Set ChangeNOW ticker for ${unmapped.currency}`, unmapped.changenowTicker);
+              if (v?.trim()) upsertMappingMutation.mutate({ id: unmapped.id, ticker: v.trim() });
+            }}
+          >
+            Add mapping for first unmapped
+          </button>
+        )}
+        </div>
+      ) : activeTab === 'operation_controls' ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 max-w-2xl space-y-6">
+          <div>
+            <h2 className="text-lg font-medium text-gray-800">Global operation controls</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Applies to all users. When disabled, the mobile app receives a generic &quot;Something went wrong&quot; error.
+            </p>
+          </div>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 rounded border-gray-300"
+              checked={palmpayWithdrawDisabled}
+              onChange={(e) => setPalmpayWithdrawDisabled(e.target.checked)}
+            />
+            <span>
+              <span className="block font-medium text-gray-800">Stop PalmPay withdrawals</span>
+              <span className="block text-sm text-gray-500">Blocks NGN bank withdrawals via PalmPay payout for every user.</span>
+            </span>
+          </label>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 rounded border-gray-300"
+              checked={cryptoOutsideSendDisabled}
+              onChange={(e) => setCryptoOutsideSendDisabled(e.target.checked)}
+            />
+            <span>
+              <span className="block font-medium text-gray-800">Stop crypto outside send</span>
+              <span className="block text-sm text-gray-500">Blocks sending crypto to external wallet addresses for every user.</span>
+            </span>
+          </label>
+          <button
+            type="button"
+            onClick={() => updateOperationSettingsMutation.mutate()}
+            disabled={updateOperationSettingsMutation.isPending}
+            className="px-4 py-2 rounded-lg bg-[#147341] text-white disabled:opacity-60"
+          >
+            {updateOperationSettingsMutation.isPending ? 'Saving…' : 'Save changes'}
+          </button>
+          {updateOperationSettingsMutation.isSuccess && (
+            <p className="text-sm text-green-700">Settings saved.</p>
+          )}
         </div>
       ) : (
         <div>
