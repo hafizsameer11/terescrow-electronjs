@@ -46,6 +46,7 @@ import ChangeNowSwapsPage from './pages/ChangeNowSwapsPage';
 import ProfitTrackerPage from './pages/ProfitTrackerPage';
 import CryptoJobsPage from './pages/CryptoJobsPage';
 import DepositVerifyLogsPage from './pages/DepositVerifyLogsPage';
+import BushaTestPage from './pages/BushaTestPage';
 
 function App(): JSX.Element {
   const location = useLocation();
@@ -83,6 +84,7 @@ function App(): JSX.Element {
       <Route path="/teams" element={<Teams />} />
       <Route path="/settings" element={<Settings />} />
       <Route path="/settings/vendors" element={<Settings />} />
+      <Route path="/settings/merchants" element={<Settings />} />
       <Route path="/transactions" element={<Transaction />} />
       <Route path="/transactions/gift-card-buy" element={<Transaction defaultTransactionType="giftCards" />} />
       <Route path="/transactions/crypto" element={<Transaction defaultTransactionType="crypto" />} />
@@ -98,6 +100,7 @@ function App(): JSX.Element {
       <Route path="/referrals" element={<ReferralsPage />} />
       <Route path="/crypto-jobs" element={<CryptoJobsPage />} />
       <Route path="/deposit-verify-logs" element={<DepositVerifyLogsPage />} />
+      <Route path="/busha-test" element={<BushaTestPage />} />
       <Route path="/kyc" element={<Kyc />} />
     </>
   );

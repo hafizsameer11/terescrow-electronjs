@@ -10,3 +10,5 @@ export * from './customers';
 export * from './changenow';
 export * from './cryptoRates';
 export * from './profitTracker';
+export * from './merchants';
+export * from './busha';

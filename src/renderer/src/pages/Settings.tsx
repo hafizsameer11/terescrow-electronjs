@@ -3,6 +3,8 @@ import PrivacyPageModal from '@renderer/components/modal/PrivacyPageModal';
 import RoleModal from '@renderer/components/modal/RoleModal';
 import VendorModal from '@renderer/components/modal/VendorModal';
 import type { VendorFormData } from '@renderer/components/modal/VendorModal';
+import StroWalletConfigModal from '@renderer/components/modal/StroWalletConfigModal';
+import StroWalletTopupModal from '@renderer/components/modal/StroWalletTopupModal';
 import PermissionTable from '@renderer/components/PermissionTable';
 import UserDetail from '@renderer/components/UserDetail';
 import { useAuth } from '@renderer/context/authContext';
@@ -31,10 +33,18 @@ import {
   getPlatformOperationSettings,
   updatePlatformOperationSettings,
 } from '@renderer/api/admin/platformSettings';
+import {
+  getMerchantsOverview,
+  getStroWalletSettings,
+  saveStroWalletTopupSettings,
+  topUpStroWallet,
+  type StroWalletTopupSettingsForm,
+} from '@renderer/api/admin/merchants';
 type SettingsTab =
   | 'profile'
   | 'role_management'
   | 'vendors'
+  | 'merchants'
   | 'swap_payout_wallets'
   | 'ticker_mapping'
   | 'operation_controls';
@@ -44,17 +54,20 @@ const Settings = () => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const tabFromUrl = searchParams.get('tab');
-  const validTabs: SettingsTab[] = ['profile', 'role_management', 'vendors', 'swap_payout_wallets', 'ticker_mapping', 'operation_controls'];
+  const validTabs: SettingsTab[] = ['profile', 'role_management', 'vendors', 'merchants', 'swap_payout_wallets', 'ticker_mapping', 'operation_controls'];
   const initialTab: SettingsTab =
     tabFromUrl === 'crypto_rates'
       ? 'profile'
       : (tabFromUrl && validTabs.includes(tabFromUrl as SettingsTab) ? (tabFromUrl as SettingsTab) : null) ||
-        (location.pathname === '/settings/vendors' ? 'vendors' : 'profile');
+        (location.pathname === '/settings/vendors' ? 'vendors' : null) ||
+        (location.pathname === '/settings/merchants' ? 'merchants' : 'profile');
   const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const [isPrivacyModal, setIsPrivacyModal] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
   const [editingVendor, setEditingVendor] = useState<VendorRow | null>(null);
+  const [strowalletConfigOpen, setStrowalletConfigOpen] = useState(false);
+  const [strowalletTopupOpen, setStrowalletTopupOpen] = useState(false);
   const [newWallet, setNewWallet] = useState({
     label: '',
     address: '',
@@ -76,6 +89,7 @@ const Settings = () => {
       return;
     }
     if (location.pathname === '/settings/vendors') setActiveTab('vendors');
+    else if (location.pathname === '/settings/merchants') setActiveTab('merchants');
     else {
       const raw = searchParams.get('tab');
       const t = raw as SettingsTab | null;
@@ -107,6 +121,16 @@ const Settings = () => {
     queryKey: ['admin-platform-operation-settings', authToken],
     queryFn: () => getPlatformOperationSettings(authToken!),
     enabled: !!authToken && activeTab === 'operation_controls',
+  });
+  const { data: merchantsOverview, refetch: refetchMerchants } = useQuery({
+    queryKey: ['admin-merchants-overview', authToken],
+    queryFn: () => getMerchantsOverview(authToken!),
+    enabled: !!authToken && activeTab === 'merchants',
+  });
+  const { data: strowalletSettings } = useQuery({
+    queryKey: ['admin-strowallet-settings', authToken],
+    queryFn: () => getStroWalletSettings(authToken!),
+    enabled: !!authToken && activeTab === 'merchants',
   });
   const walletCurrencyOptions = mapAssetsToWalletCurrencyOptions(walletAssetsRaw as any[]);
 
@@ -181,10 +205,26 @@ const Settings = () => {
       queryClient.invalidateQueries({ queryKey: ['admin-platform-operation-settings'] });
     },
   });
+  const saveStrowalletConfigMutation = useMutation({
+    mutationFn: (payload: StroWalletTopupSettingsForm) => saveStroWalletTopupSettings(authToken!, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-merchants-overview'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-strowallet-settings'] });
+      setStrowalletConfigOpen(false);
+    },
+  });
+  const topupStrowalletMutation = useMutation({
+    mutationFn: (amount: number) => topUpStroWallet(authToken!, { amount }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-merchants-overview'] });
+      setStrowalletTopupOpen(false);
+    },
+  });
 
   const setTab = (tab: SettingsTab) => {
     setActiveTab(tab);
     if (tab === 'vendors') navigate('/settings/vendors');
+    else if (tab === 'merchants') navigate('/settings/merchants');
     else if (tab === 'profile') navigate('/settings');
     else navigate(`/settings?tab=${tab}`);
   };
@@ -212,6 +252,7 @@ const Settings = () => {
               <>
                 <button onClick={() => setTab('role_management')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'role_management' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Role Management</button>
                 <button onClick={() => setTab('vendors')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'vendors' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Vendors</button>
+                <button onClick={() => setTab('merchants')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'merchants' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Merchants</button>
                 <button onClick={() => setTab('swap_payout_wallets')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'swap_payout_wallets' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Swap payout wallets</button>
                 <button onClick={() => setTab('ticker_mapping')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'ticker_mapping' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Ticker mapping</button>
                 <button onClick={() => setTab('operation_controls')} className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'operation_controls' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'}`}>Operation controls</button>
@@ -227,6 +268,17 @@ const Settings = () => {
         {activeTab === 'vendors' && (
           <div className="flex justify-end items-end flex-1">
             <button className="px-4 py-2 rounded-xl font-normal bg-[#147341] text-white" onClick={() => { setEditingVendor(null); setVendorModalOpen(true); }}>Add Vendor</button>
+          </div>
+        )}
+        {activeTab === 'merchants' && (
+          <div className="flex justify-end items-end flex-1 gap-2">
+            <button
+              type="button"
+              className="px-4 py-2 rounded-xl font-normal border border-[#147341] text-[#147341]"
+              onClick={() => refetchMerchants()}
+            >
+              Refresh balances
+            </button>
           </div>
         )}
       </div>
@@ -267,6 +319,199 @@ const Settings = () => {
           </div>
           {vendors.length === 0 && <p className="p-6 text-center text-gray-500">No vendors yet.</p>}
           <VendorModal isOpen={vendorModalOpen} onClose={() => { setVendorModalOpen(false); setEditingVendor(null); }} vendor={editingVendor as any} onSubmit={handleVendorSubmit} />
+        </div>
+      ) : activeTab === 'merchants' ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* PalmPay card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-medium text-gray-800">PalmPay</h2>
+                  <p className="text-sm text-gray-500">Merchant wallet for payouts &amp; deposits</p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs ${merchantsOverview?.palmpay.configured ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                  {merchantsOverview?.palmpay.configured ? 'Configured' : 'Not configured'}
+                </span>
+              </div>
+              <dl className="grid grid-cols-1 gap-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Environment</dt>
+                  <dd className="text-gray-800">{merchantsOverview?.palmpay.environment ?? '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Merchant ID</dt>
+                  <dd className="text-gray-800 font-mono text-xs">{merchantsOverview?.palmpay.merchantId ?? '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">App ID</dt>
+                  <dd className="text-gray-800 font-mono text-xs">{merchantsOverview?.palmpay.appId ?? '—'}</dd>
+                </div>
+              </dl>
+              <div className="border-t pt-4">
+                <p className="text-sm text-gray-500 mb-1">Available balance</p>
+                {merchantsOverview?.palmpay.balance ? (
+                  <p className="text-2xl font-semibold text-gray-900">
+                    ₦{merchantsOverview.palmpay.balance.availableBalanceNgn.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                ) : (
+                  <p className="text-sm text-amber-700">
+                    {merchantsOverview?.palmpay.balanceError || 'Balance unavailable'}
+                  </p>
+                )}
+                {merchantsOverview?.palmpay.balance && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Current: ₦{merchantsOverview.palmpay.balance.currentBalanceNgn.toLocaleString()} · Frozen: ₦{merchantsOverview.palmpay.balance.frozenBalanceNgn.toLocaleString()}
+                  </p>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">PalmPay credentials are managed via server environment variables.</p>
+            </div>
+
+            {/* StroWallet card */}
+            <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-medium text-gray-800">StroWallet</h2>
+                  <p className="text-sm text-gray-500">Bill payment merchant wallet</p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs ${merchantsOverview?.strowallet.configured ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+                  {merchantsOverview?.strowallet.configured ? 'Keys in .env' : 'Set STROWALLET_PUBLIC_KEY in .env'}
+                </span>
+              </div>
+              <dl className="grid grid-cols-1 gap-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Public key</dt>
+                  <dd className="text-gray-800 font-mono text-xs">{merchantsOverview?.strowallet.publicKeyMasked ?? '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Merchant ID</dt>
+                  <dd className="text-gray-800 font-mono text-xs">{merchantsOverview?.strowallet.merchantId ?? '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Secret key</dt>
+                  <dd className="text-gray-800 font-mono text-xs">{merchantsOverview?.strowallet.hasSecretKey ? 'Set in .env' : '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-gray-500">Top-up account</dt>
+                  <dd className="text-gray-800 text-right">
+                    {merchantsOverview?.strowallet.topupBank?.accountNumber
+                      ? `${merchantsOverview.strowallet.topupBank.bankName || merchantsOverview.strowallet.topupBank.bankCode} · ${merchantsOverview.strowallet.topupBank.accountNumber}`
+                      : '—'}
+                  </dd>
+                </div>
+              </dl>
+              <div className="border-t pt-4">
+                <p className="text-sm text-gray-500 mb-1">NGN balance</p>
+                {merchantsOverview?.strowallet.balanceNgn?.balance != null ? (
+                  <p className="text-2xl font-semibold text-gray-900">
+                    ₦{merchantsOverview.strowallet.balanceNgn.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </p>
+                ) : (
+                  <p className="text-sm text-amber-700">
+                    {merchantsOverview?.strowallet.balanceError || (merchantsOverview?.strowallet.configured ? 'Could not load balance' : 'Add STROWALLET_PUBLIC_KEY to server .env')}
+                  </p>
+                )}
+                {merchantsOverview?.strowallet.balanceUsd?.balance != null && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    USD: ${merchantsOverview.strowallet.balanceUsd.balance.toLocaleString()}
+                  </p>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 pt-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-lg bg-[#147341] text-white text-sm"
+                  onClick={() => setStrowalletConfigOpen(true)}
+                >
+                  Edit top-up account
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-lg border border-[#147341] text-[#147341] text-sm disabled:opacity-50"
+                  disabled={!merchantsOverview?.strowallet.configured || !merchantsOverview?.strowallet.topupBank?.accountNumber}
+                  onClick={() => setStrowalletTopupOpen(true)}
+                >
+                  Top up via PalmPay
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                API keys: <span className="font-mono">STROWALLET_PUBLIC_KEY</span> in server{' '}
+                <span className="font-mono">.env</span> (same pattern as PalmPay).
+              </p>
+            </div>
+          </div>
+
+          {/* Recent StroWallet top-ups */}
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+              <h3 className="font-medium text-gray-800">Recent StroWallet top-ups (PalmPay payout)</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 text-gray-600">
+                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Account</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">PalmPay order</th>
+                    <th className="px-4 py-3">By</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(merchantsOverview?.strowallet.recentTopups ?? []).map((t) => (
+                    <tr key={t.id} className="border-b border-gray-100">
+                      <td className="px-4 py-3 text-gray-600">{new Date(t.createdAt).toLocaleString()}</td>
+                      <td className="px-4 py-3 font-medium">₦{parseFloat(t.amount).toLocaleString()}</td>
+                      <td className="px-4 py-3 font-mono text-xs">{t.accountNumber}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${
+                          t.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          t.status === 'failed' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {t.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs">{t.palmpayOrderNo || t.palmpayOrderId || '—'}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        {t.initiatedBy ? `${t.initiatedBy.firstname} ${t.initiatedBy.lastname}` : '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {(merchantsOverview?.strowallet.recentTopups ?? []).length === 0 && (
+              <p className="p-6 text-center text-gray-500">No top-ups yet.</p>
+            )}
+          </div>
+
+          <StroWalletConfigModal
+            isOpen={strowalletConfigOpen}
+            onClose={() => setStrowalletConfigOpen(false)}
+            initial={strowalletSettings}
+            onSubmit={(data) => saveStrowalletConfigMutation.mutate(data)}
+            isSubmitting={saveStrowalletConfigMutation.isPending}
+          />
+          <StroWalletTopupModal
+            isOpen={strowalletTopupOpen}
+            onClose={() => setStrowalletTopupOpen(false)}
+            overview={merchantsOverview?.strowallet}
+            onSubmit={(amount) => topupStrowalletMutation.mutate(amount)}
+            isSubmitting={topupStrowalletMutation.isPending}
+          />
+          {(saveStrowalletConfigMutation.isError || topupStrowalletMutation.isError) && (
+            <p className="text-sm text-red-600">
+              {(saveStrowalletConfigMutation.error as Error)?.message ||
+                (topupStrowalletMutation.error as Error)?.message ||
+                'Request failed'}
+            </p>
+          )}
+          {(saveStrowalletConfigMutation.isSuccess || topupStrowalletMutation.isSuccess) && (
+            <p className="text-sm text-green-700">Saved successfully.</p>
+          )}
         </div>
       ) : activeTab === 'swap_payout_wallets' ? (
         <div className="space-y-4">

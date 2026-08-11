@@ -47,10 +47,12 @@ const pathToIdMap: Record<string, string> = {
   '/daily-report': 'daily-report',
   '/settings': 'settings',
   '/settings/vendors': 'vendors',
+  '/settings/merchants': 'merchants',
   '/support': 'support',
   '/referrals': 'referrals',
   '/crypto-jobs': 'crypto-jobs',
   '/deposit-verify-logs': 'deposit-verify-logs',
+  '/busha-test': 'busha-test',
 };
 
 export const Sidebar = () => {
@@ -130,6 +132,7 @@ export const Sidebar = () => {
     { label: 'Profit Tracker', icon: <FaChartLine />, href: '/profit-tracker', id: 'profit-tracker' },
     { label: 'Master Wallet', icon: <FaWallet />, href: '/master-wallet', id: 'master-wallet' },
     { label: 'ChangeNOW Swaps', icon: <FaExchangeAlt />, href: '/changenow-swaps', id: 'changenow-swaps' },
+    { label: 'Busha Test', icon: <FaBitcoin />, href: '/busha-test', id: 'busha-test' },
   ];
 
   const agentMenuItems = useMemo(() => [
@@ -155,6 +158,7 @@ export const Sidebar = () => {
     { label: 'Daily Report', icon: <FaFileAlt />, href: '/daily-report', id: 'daily-report', isGreenButton: true },
     { label: 'Settings', icon: <FaCog />, href: '/settings', id: 'settings' },
     { label: 'Vendors', icon: <FaWallet />, href: '/settings/vendors', id: 'vendors' },
+    { label: 'Merchants', icon: <MdReceipt />, href: '/settings/merchants', id: 'merchants' },
     { label: 'Team Chat', icon: <RiTeamFill />, href: '#', id: 'team-communication' },
     { label: 'Support', icon: <FaHeadset />, href: '/support', id: 'support' },
     { label: 'Referrals', icon: <FaUserFriends />, href: '/referrals', id: 'referrals' },

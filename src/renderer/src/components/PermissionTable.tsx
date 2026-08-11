@@ -60,6 +60,7 @@ const PermissionTable = () => {
     'daily-report',
     'support',
     'crypto-jobs',
+    'busha-test',
     'deposit-verify-logs',
   ];
 
