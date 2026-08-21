@@ -38,6 +38,8 @@ export type BushaStatus = {
     payoutAccountName?: string | null;
     payoutRecipientId?: string | null;
     sellPayoutMode?: 'palmpay_temp' | 'dashboard_bank' | string | null;
+    buyMarkupPercent?: number | null;
+    sellMarkupPercent?: number | null;
     isActive?: boolean;
   } | null;
   stats: { customerCount: number; tradeCount: number };
@@ -218,6 +220,8 @@ export async function saveBushaSettings(
     payoutAccountName?: string;
     payoutRecipientId?: string;
     sellPayoutMode?: 'palmpay_temp' | 'dashboard_bank';
+    buyMarkupPercent?: number;
+    sellMarkupPercent?: number;
     isActive?: boolean;
   }
 ) {

@@ -96,6 +96,8 @@ const BushaTestPage: React.FC = () => {
     payoutAccountName: '',
     payoutRecipientId: '',
     sellPayoutMode: 'palmpay_temp' as 'palmpay_temp' | 'dashboard_bank',
+    buyMarkupPercent: '0',
+    sellMarkupPercent: '0',
     isActive: true,
   });
 
@@ -188,6 +190,8 @@ const BushaTestPage: React.FC = () => {
         sellPayoutMode: (s.sellPayoutMode === 'dashboard_bank' ? 'dashboard_bank' : 'palmpay_temp') as
           | 'palmpay_temp'
           | 'dashboard_bank',
+        buyMarkupPercent: String(s.buyMarkupPercent ?? 0),
+        sellMarkupPercent: String(s.sellMarkupPercent ?? 0),
         isActive: s.isActive !== false,
       });
     }
@@ -299,7 +303,18 @@ const BushaTestPage: React.FC = () => {
   });
 
   const saveSettingsMutation = useMutation({
-    mutationFn: () => saveBushaSettings(token!, settingsForm),
+    mutationFn: () =>
+      saveBushaSettings(token!, {
+        payoutBankCode: settingsForm.payoutBankCode,
+        payoutBankName: settingsForm.payoutBankName,
+        payoutAccountNumber: settingsForm.payoutAccountNumber,
+        payoutAccountName: settingsForm.payoutAccountName,
+        payoutRecipientId: settingsForm.payoutRecipientId || undefined,
+        sellPayoutMode: settingsForm.sellPayoutMode,
+        buyMarkupPercent: parseFloat(settingsForm.buyMarkupPercent) || 0,
+        sellMarkupPercent: parseFloat(settingsForm.sellMarkupPercent) || 0,
+        isActive: settingsForm.isActive,
+      }),
     onSuccess: invalidateAll,
   });
 
@@ -621,6 +636,34 @@ const BushaTestPage: React.FC = () => {
                     <option value="1">Active (app uses Busha)</option>
                     <option value="0">Inactive</option>
                   </select>
+                </Field>
+                <Field
+                  label="Buy markup %"
+                  hint="Applied on Busha live buy rate. Example: Busha 1400 + 5% → user effective ~1470 (user pays more / gets less crypto)."
+                >
+                  <input
+                    className={inputClass}
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    value={settingsForm.buyMarkupPercent}
+                    onChange={(e) => setSettingsForm((f) => ({ ...f, buyMarkupPercent: e.target.value }))}
+                  />
+                </Field>
+                <Field
+                  label="Sell markup %"
+                  hint="Applied on Busha live sell rate. Example: Busha 1400 − 5% → user receives ~1330 NGN per USDT."
+                >
+                  <input
+                    className={inputClass}
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    value={settingsForm.sellMarkupPercent}
+                    onChange={(e) => setSettingsForm((f) => ({ ...f, sellMarkupPercent: e.target.value }))}
+                  />
                 </Field>
                 <Field label="Bank">
                   <select
