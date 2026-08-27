@@ -62,11 +62,8 @@ const btnCancel = 'px-4 py-2 text-sm rounded-lg border border-gray-300 bg-white 
 /** Profit `scope: SERVICE` values — sent lowercased (see ADMIN_PANEL_API.md). Extend when backend adds services. */
 const PROFIT_CONFIG_SERVICE_OPTIONS: { value: string; label: string }[] = [
   { value: 'bill_payment', label: 'Bill payment' },
-  { value: 'crypto_send', label: 'Crypto send' },
-  { value: 'crypto_receive', label: 'Crypto receive' },
-  { value: 'crypto_deposit_fee', label: 'Crypto deposit fee' },
-  { value: 'crypto_buy', label: 'Crypto buy' },
-  { value: 'crypto_sell', label: 'Crypto sell' },
+  { value: 'crypto_buy', label: 'Crypto buy (Busha)' },
+  { value: 'crypto_sell', label: 'Crypto sell (Busha)' },
   { value: 'gift_card_buy', label: 'Gift card buy' },
   { value: 'gift_card_sell', label: 'Gift card sell' },
   { value: 'fiat_deposit', label: 'Fiat deposit' },

@@ -81,12 +81,20 @@ const RatesHistory: React.FC = () => {
     <div className="p-6 w-full">
       <h1 className="text-[40px] font-semibold text-gray-800 mb-4">Rates</h1>
 
-      {bushaActive && (
+      {bushaActive ? (
         <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
           <p className="font-semibold">Busha is active — live crypto buy/sell rates come from Busha.</p>
           <p className="mt-1 text-emerald-900/90">
             Set platform <strong>Buy markup %</strong> and <strong>Sell markup %</strong> below. Gift card buy rates
             (Pagocard) still use the Gift card tab.
+          </p>
+        </div>
+      ) : (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-semibold">Busha crypto trading is the only crypto rate module.</p>
+          <p className="mt-1 text-amber-900/90">
+            Enable and configure Busha under <strong>Busha Test</strong> / settings. Legacy Tatum buy/sell rate tiers
+            are no longer used for crypto.
           </p>
         </div>
       )}
@@ -100,7 +108,7 @@ const RatesHistory: React.FC = () => {
               activeTab === 'crypto' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'
             }`}
           >
-            Crypto rates
+            Busha markup
           </button>
           <button
             type="button"
@@ -124,10 +132,7 @@ const RatesHistory: React.FC = () => {
       )}
 
       {activeTab === 'crypto' && canManageRates && token ? (
-        <>
-          <BushaMarkupSettings token={token} />
-          {!bushaActive && <CryptoRatesSettings token={token} />}
-        </>
+        <BushaMarkupSettings token={token} />
       ) : activeTab === 'gift-card' && canManageRates && token ? (
         <CryptoRatesSettings token={token} transactionTypes={GIFT_CARD_TRANSACTION_TYPES} />
       ) : (

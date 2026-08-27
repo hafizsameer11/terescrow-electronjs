@@ -60,6 +60,13 @@ const PermissionTable = () => {
 
   const roles = rolesData?.data.map((role: Role) => role.name) || [];
 
+  const moduleDisplayName = (moduleName: string) => {
+    if (moduleName === 'user-balances') return 'Busha Wallets';
+    if (moduleName === 'busha-test') return 'Busha Test';
+    if (moduleName === 'profit-tracker') return 'Profit Tracker';
+    return moduleName;
+  };
+
   const toggleRow = (row: string) => {
     setExpandedRows((prevState) => ({
       ...prevState,
@@ -128,7 +135,7 @@ const PermissionTable = () => {
                   className="p-2 font-bold cursor-pointer"
                   onClick={() => toggleRow(moduleName)}
                 >
-                  {moduleName}
+                  {moduleDisplayName(moduleName)}
                 </td>
                 {roles.map((role) => (
                   <td key={`${role}-${moduleName}-see`} className="p-2 text-center">

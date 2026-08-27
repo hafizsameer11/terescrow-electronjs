@@ -64,7 +64,7 @@ function StatsRow({
   );
 }
 
-type BalanceView = 'crypto' | 'naira';
+type BalanceView = 'customers' | 'trades';
 
 type Props = {
   chatStats: {
@@ -79,8 +79,8 @@ type Props = {
   balanceMenuOpen: boolean;
   balanceLabel: string;
   balanceValue: string;
-  masterUsdDisplay: string;
-  nairaDepositDisplay: string;
+  bushaCustomersDisplay: string;
+  bushaTradesDisplay: string;
   onBalanceMenuToggle: () => void;
   onBalanceMenuClose: () => void;
   onBalanceViewChange: (view: BalanceView) => void;
@@ -100,8 +100,8 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
   balanceMenuOpen,
   balanceLabel,
   balanceValue,
-  masterUsdDisplay,
-  nairaDepositDisplay,
+  bushaCustomersDisplay,
+  bushaTradesDisplay,
   onBalanceMenuToggle,
   onBalanceMenuClose,
   onBalanceViewChange,
@@ -111,9 +111,9 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
   const formatProfit = (n: number) => `N${formatNairaAmount(n)}`;
 
   const quickActions = [
-    { label: 'Send', icon: FaPaperPlane, href: '/master-wallet' },
-    { label: 'Swap', icon: HiArrowsUpDown, href: '/master-wallet' },
-    { label: 'Deposit', icon: HiArrowDownTray, href: '/master-wallet' },
+    { label: 'Wallets', icon: FaPaperPlane, href: '/user-balances' },
+    { label: 'Crypto', icon: HiArrowsUpDown, href: '/transactions/crypto' },
+    { label: 'Busha', icon: HiArrowDownTray, href: '/busha-test' },
   ] as const;
 
   const headerTitle = 'text-[15px] font-semibold text-gray-900 leading-tight';
@@ -202,22 +202,22 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
                 <div className="absolute right-0 mt-1 w-[180px] rounded-md border border-gray-200 bg-white shadow-lg z-20 py-0.5">
                   <button
                     type="button"
-                    onClick={() => onBalanceViewChange('crypto')}
-                    className={`w-full px-2.5 py-2 text-left hover:bg-gray-50 ${balanceView === 'crypto' ? 'bg-emerald-50/80' : ''}`}
+                    onClick={() => onBalanceViewChange('customers')}
+                    className={`w-full px-2.5 py-2 text-left hover:bg-gray-50 ${balanceView === 'customers' ? 'bg-emerald-50/80' : ''}`}
                   >
-                    <span className="block text-[10px] text-gray-500">Master Wallet balance</span>
+                    <span className="block text-[10px] text-gray-500">Busha customers</span>
                     <span className="block text-[12px] font-bold text-right truncate" style={{ color: GREEN }}>
-                      {masterUsdDisplay}
+                      {bushaCustomersDisplay}
                     </span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => onBalanceViewChange('naira')}
-                    className={`w-full px-2.5 py-2 text-left hover:bg-gray-50 border-t border-gray-100 ${balanceView === 'naira' ? 'bg-emerald-50/80' : ''}`}
+                    onClick={() => onBalanceViewChange('trades')}
+                    className={`w-full px-2.5 py-2 text-left hover:bg-gray-50 border-t border-gray-100 ${balanceView === 'trades' ? 'bg-emerald-50/80' : ''}`}
                   >
-                    <span className="block text-[10px] text-gray-500">User deposit balances</span>
+                    <span className="block text-[10px] text-gray-500">Busha trades</span>
                     <span className="block text-[12px] font-bold text-right truncate" style={{ color: GREEN }}>
-                      {nairaDepositDisplay}
+                      {bushaTradesDisplay}
                     </span>
                   </button>
                 </div>

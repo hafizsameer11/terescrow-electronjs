@@ -18,8 +18,7 @@ import {
 } from '@renderer/api/admin/dailyReport';
 import { useDailyReportSession } from '@renderer/context/dailyReportSessionContext';
 import { getProfitTrackerStats } from '@renderer/api/admin/profitTracker';
-import { getMasterWalletBalancesSummary } from '@renderer/api/admin/masterWallet';
-import { getAdminUserBalancesSummary } from '@renderer/api/admin/userBalances';
+import { listBushaCustomerWallets } from '@renderer/api/admin/busha';
 import { getReferralsSummary } from '@renderer/api/admin/referrals';
 import CheckInModal from '@renderer/components/modal/CheckInModal';
 import ChatFilters from '@renderer/components/ChatFilters';
@@ -28,7 +27,6 @@ import type { AgentToCustomerChatData } from '@renderer/api/queries/datainterfac
 import { getImageUrl, formatNairaAmount, addThousandSeparator } from '@renderer/api/helper';
 import { apiDateParams } from '@renderer/utils/dateRange';
 import { bucketChatProfitsFromLedger } from '@renderer/utils/chatFinancials';
-import { MASTER_WALLET_ID } from '@renderer/data/masterWalletData';
 
 const PAGE_SIZE = 50;
 
@@ -94,14 +92,14 @@ function formatInputDate(iso: string): string {
   return `${d}/${m}/${y}`;
 }
 
-type BalanceView = 'crypto' | 'naira';
+type BalanceView = 'customers' | 'trades';
 
 const Chat = () => {
   const { token, userData } = useAuth();
   const navigate = useNavigate();
   const { checkIn, checkOut, isCheckingIn, isCheckingOut, isClockedIn } = useDailyReportSession();
   const [checkInOpen, setCheckInOpen] = useState(false);
-  const [balanceView, setBalanceView] = useState<BalanceView>('crypto');
+  const [balanceView, setBalanceView] = useState<BalanceView>('customers');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
 
   const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
@@ -164,16 +162,11 @@ const Chat = () => {
     enabled: !!token,
   });
 
-  const { data: masterSummary } = useQuery({
-    queryKey: ['chat-master-wallet-summary', token],
-    queryFn: () => getMasterWalletBalancesSummary(token!),
+  const { data: bushaWalletsSummary } = useQuery({
+    queryKey: ['chat-busha-wallets-summary', token],
+    queryFn: () => listBushaCustomerWallets(token!, { page: 1, limit: 1 }),
     enabled: !!token,
-  });
-
-  const { data: userDepositSummary } = useQuery({
-    queryKey: ['chat-user-deposit-summary', token],
-    queryFn: () => getAdminUserBalancesSummary(token!),
-    enabled: !!token,
+    staleTime: 60_000,
   });
 
   const { data: referralSummary } = useQuery({
@@ -255,25 +248,20 @@ const Chat = () => {
   const earnNgn = profitBuckets.earn !== 0 ? profitBuckets.earn : -referralPaidOut;
   const earnNegative = earnNgn < 0;
 
-  const masterRow = useMemo(() => {
-    const list = masterSummary?.summary ?? [];
-    return list.find((s) => String(s.walletId).toLowerCase() === MASTER_WALLET_ID) ?? list[0];
-  }, [masterSummary]);
+  const bushaCustomersDisplay = useMemo(() => {
+    const n = bushaWalletsSummary?.summary?.customers;
+    if (n == null) return '—';
+    const active = bushaWalletsSummary?.summary?.activeCustomers;
+    return active != null ? `${addThousandSeparator(n)} (${addThousandSeparator(active)} active)` : addThousandSeparator(n);
+  }, [bushaWalletsSummary]);
 
-  const masterUsdDisplay = useMemo(() => {
-    const usd = masterRow?.totalUsd;
-    if (usd == null || usd === '—' || !Number.isFinite(Number(usd))) return String(usd ?? '—');
-    return `$${addThousandSeparator(Number(usd))}`;
-  }, [masterRow]);
+  const bushaTradesDisplay = useMemo(() => {
+    const n = bushaWalletsSummary?.summary?.trades;
+    return n == null ? '—' : addThousandSeparator(n);
+  }, [bushaWalletsSummary]);
 
-  const nairaDepositDisplay = useMemo(() => {
-    const ngn = userDepositSummary?.totalDepositNgn ?? 0;
-    return `N${formatNairaAmount(ngn)}`;
-  }, [userDepositSummary]);
-
-  const balanceLabel =
-    balanceView === 'crypto' ? 'Master Wallet balance' : 'User deposit balances';
-  const balanceValue = balanceView === 'crypto' ? masterUsdDisplay : nairaDepositDisplay;
+  const balanceLabel = balanceView === 'customers' ? 'Busha customers' : 'Busha trades';
+  const balanceValue = balanceView === 'customers' ? bushaCustomersDisplay : bushaTradesDisplay;
 
   const agentAvatars = agentsList?.data?.slice(0, 4) ?? [];
   const onlineTotal = teamStats?.data?.totalOnlineAgents ?? agentAvatars.length;
@@ -387,8 +375,8 @@ const Chat = () => {
           balanceMenuOpen={balanceMenuOpen}
           balanceLabel={balanceLabel}
           balanceValue={balanceValue}
-          masterUsdDisplay={masterUsdDisplay}
-          nairaDepositDisplay={nairaDepositDisplay}
+          bushaCustomersDisplay={bushaCustomersDisplay}
+          bushaTradesDisplay={bushaTradesDisplay}
           onBalanceMenuToggle={() => setBalanceMenuOpen((o) => !o)}
           onBalanceMenuClose={() => setBalanceMenuOpen(false)}
           onBalanceViewChange={(view) => {
