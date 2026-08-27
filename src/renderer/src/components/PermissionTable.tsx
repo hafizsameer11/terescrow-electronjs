@@ -46,22 +46,16 @@ const PermissionTable = () => {
     'Chats',
     'Transactions',
     'Rates',
-    'Log',
     'Department',
     'banners',
     'kyc',
     'WaysOfHearing',
     'profit-tracker',
-    'master-wallet',
-    'changenow-swaps',
-    'transaction-tracking',
     'referrals',
     'user-balances',
     'daily-report',
     'support',
-    'crypto-jobs',
     'busha-test',
-    'deposit-verify-logs',
   ];
 
   const roles = rolesData?.data.map((role: Role) => role.name) || [];

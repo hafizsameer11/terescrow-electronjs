@@ -24,7 +24,7 @@ export const TRANSACTION_TYPES: TransactionType[] = [
   ...GIFT_CARD_TRANSACTION_TYPES,
 ];
 
-/** Short labels for rate tier tabs (USD notional → NGN per $1, including Reloadly gift card buy). */
+/** Short labels for rate tier tabs (USD notional → NGN per $1, including Pagocard gift card buy). */
 export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
   BUY: 'Buy',
   SELL: 'Sell',

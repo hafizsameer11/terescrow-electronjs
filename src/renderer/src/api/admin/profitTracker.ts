@@ -147,3 +147,68 @@ export async function updateDiscountTier(token: string, id: number | string, bod
   const res = await apiCall(`${BASE}/configs/discount-tier/${encodeURIComponent(String(id))}`, 'PUT', body, token);
   return unwrap(res);
 }
+
+export type MarkupProfitOverview = {
+  summary: {
+    cryptoMarkupNgn: number;
+    buyMarkupNgn: number;
+    sellMarkupNgn: number;
+    tradesWithMarkup: number;
+    billPaymentFeeNgn: number;
+    billPaymentsWithFee: number;
+    totalProfitNgn: number;
+  };
+  settings: {
+    buyMarkupPercent: number;
+    sellMarkupPercent: number;
+    billPaymentFeePercent: number;
+    billPaymentFeeLabel: string;
+  };
+  recentMarkupTrades: Array<{
+    id: string;
+    side: string;
+    status: string;
+    sourceCurrency: string;
+    targetCurrency: string;
+    sourceAmount: string;
+    targetAmount?: string | null;
+    createdAt: string;
+    user?: { id: number; username: string; firstname: string; lastname: string; email?: string } | null;
+    markupPercent: number;
+    actualAmountNgn: number;
+    userAmountNgn: number;
+    adminMarkupNgn: number;
+  }>;
+};
+
+export async function getMarkupProfitOverview(
+  token: string,
+  params?: { startDate?: string; endDate?: string; limit?: number }
+): Promise<MarkupProfitOverview> {
+  const sp = new URLSearchParams();
+  if (params?.startDate) sp.set('startDate', params.startDate);
+  if (params?.endDate) sp.set('endDate', params.endDate);
+  if (params?.limit != null) sp.set('limit', String(params.limit));
+  const qs = sp.toString() ? `?${sp.toString()}` : '';
+  const res = await apiCall(`${BASE}/markup-overview${qs}`, 'GET', undefined, token);
+  return unwrap(res);
+}
+
+export async function getProfitFeeSettings(token: string) {
+  const res = await apiCall(`${BASE}/fee-settings`, 'GET', undefined, token);
+  return unwrap<{
+    buyMarkupPercent: number;
+    sellMarkupPercent: number;
+    billPaymentFeePercent: number;
+    billPaymentFeeLabel: string;
+    note?: string;
+  }>(res);
+}
+
+export async function saveProfitFeeSettings(
+  token: string,
+  body: { billPaymentFeePercent?: number; billPaymentFeeLabel?: string }
+) {
+  const res = await apiCall(`${BASE}/fee-settings`, 'PUT', body, token);
+  return unwrap(res);
+}

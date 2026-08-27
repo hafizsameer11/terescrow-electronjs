@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import NavItem from './NavItem';
-import { FaBell, FaCog, FaCreditCard, FaBitcoin, FaWallet, FaFileAlt, FaHeadset, FaUserFriends, FaClipboardList, FaExchangeAlt, FaChartLine } from 'react-icons/fa';
+import { FaBell, FaCog, FaCreditCard, FaBitcoin, FaWallet, FaFileAlt, FaHeadset, FaUserFriends, FaChartLine } from 'react-icons/fa';
 import { RiTeamFill } from 'react-icons/ri';
 import { MdReceipt, MdAttachMoney } from 'react-icons/md';
 import { Images } from '@renderer/constant/Image';
@@ -26,10 +26,8 @@ const pathToIdMap: Record<string, string> = {
   '/transactions/crypto': 'crypto-txns',
   '/transactions/bill-payments': 'bill-payments',
   '/transactions/naira': 'naira-txns',
-  '/transactions': 'transactions',
   '/user-balances': 'user-balances',
   '/rates': 'rates',
-  '/log': 'log',
   '/departments': 'department',
   '/services': 'services',
   '/teams': 'teams',
@@ -39,19 +37,13 @@ const pathToIdMap: Record<string, string> = {
   '/notifications/in-app/banners': 'banner',
   '/pending-chats': 'pending-chats',
   '/WaysOfHearing': 'WaysOfHearing',
-  '/transaction-tracking': 'transaction-tracking',
   '/profit-tracker': 'profit-tracker',
-  '/master-wallet': 'master-wallet',
-  '/changenow-swaps': 'changenow-swaps',
   '/notifications': 'notifications',
   '/daily-report': 'daily-report',
   '/settings': 'settings',
-  '/settings/vendors': 'vendors',
   '/settings/merchants': 'merchants',
   '/support': 'support',
   '/referrals': 'referrals',
-  '/crypto-jobs': 'crypto-jobs',
-  '/deposit-verify-logs': 'deposit-verify-logs',
   '/busha-test': 'busha-test',
 };
 
@@ -64,7 +56,7 @@ export const Sidebar = () => {
 
   useEffect(() => {
     const path = location.pathname;
-    const id = pathToIdMap[path] || (path.startsWith('/customers') ? 'customers' : path.startsWith('/transaction-details') ? 'transactions' : null);
+    const id = pathToIdMap[path] || (path.startsWith('/customers') ? 'customers' : path.startsWith('/transaction-details') ? 'crypto-txns' : null);
     if (id) setActiveItem(id);
   }, [location.pathname]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,10 +106,8 @@ export const Sidebar = () => {
     { label: 'Crypto Txns', icon: <FaBitcoin />, href: '/transactions/crypto', id: 'crypto-txns' },
     { label: 'Bill Payments', icon: <MdReceipt />, href: '/transactions/bill-payments', id: 'bill-payments' },
     { label: 'Naira Txns', icon: <MdAttachMoney />, href: '/transactions/naira', id: 'naira-txns' },
-    { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
-    { label: 'User Wallets', icon: <FaWallet />, href: '/user-balances', id: 'user-balances' },
+    { label: 'Busha Wallets', icon: <FaWallet />, href: '/user-balances', id: 'user-balances' },
     { label: 'Rates', icon: Images.rates, href: '/rates', id: 'rates' },
-    { label: 'Log', icon: Images.log, href: '/log', id: 'log' },
     { label: 'Department', icon: Images.department, href: '/departments', id: 'department' },
     { label: 'Services', icon: <FaCog />, href: '/services', id: 'services' },
     { label: 'Teams', icon: Images.teams, href: '/teams', id: 'teams' },
@@ -126,13 +116,7 @@ export const Sidebar = () => {
     { label: 'KYC', icon: <MdOutlinePermIdentity />, href: '/kyc', id: 'kyc' },
     { label: 'Banners', icon: <PiSlideshowThin />, href: '/notifications/in-app/banners', id: 'banner' },
     { label: 'Ways Of Hearing', icon: <PiSlideshowThin />, href: '/WaysOfHearing', id: 'WaysOfHearing' },
-    { label: 'Deposit Tracking', icon: <FaClipboardList />, href: '/transaction-tracking', id: 'transaction-tracking' },
-    { label: 'Deposit Verify Logs', icon: <FaClipboardList />, href: '/deposit-verify-logs', id: 'deposit-verify-logs' },
-    { label: 'Crypto Jobs', icon: <FaBitcoin />, href: '/crypto-jobs', id: 'crypto-jobs' },
     { label: 'Profit Tracker', icon: <FaChartLine />, href: '/profit-tracker', id: 'profit-tracker' },
-    { label: 'Master Wallet', icon: <FaWallet />, href: '/master-wallet', id: 'master-wallet' },
-    { label: 'ChangeNOW Swaps', icon: <FaExchangeAlt />, href: '/changenow-swaps', id: 'changenow-swaps' },
-    { label: 'Busha Test', icon: <FaBitcoin />, href: '/busha-test', id: 'busha-test' },
   ];
 
   const agentMenuItems = useMemo(() => [
@@ -145,9 +129,10 @@ export const Sidebar = () => {
       badge: typeof pendingChatsCount === 'number' && pendingChatsCount > 0 ? pendingChatsCount : null,
     },
     { label: 'Quick Replies', icon: <FaReplyAll />, href: '/quick-replies', id: 'quick-replies' },
-    { label: 'Transactions', icon: Images.transactions, href: '/transactions', id: 'transactions' },
-    { label: 'Deposit Tracking', icon: <FaClipboardList />, href: '/transaction-tracking', id: 'transaction-tracking' },
-    { label: 'Master Wallet', icon: <FaWallet />, href: '/master-wallet', id: 'master-wallet' },
+    { label: 'Gift Card Buy Txns', icon: <FaCreditCard />, href: '/transactions/gift-card-buy', id: 'gift-card-buy-txns' },
+    { label: 'Crypto Txns', icon: <FaBitcoin />, href: '/transactions/crypto', id: 'crypto-txns' },
+    { label: 'Bill Payments', icon: <MdReceipt />, href: '/transactions/bill-payments', id: 'bill-payments' },
+    { label: 'Naira Txns', icon: <MdAttachMoney />, href: '/transactions/naira', id: 'naira-txns' },
     { label: 'Rates', icon: Images.rates, href: '/rates?tab=crypto', id: 'rates' },
     { label: 'Banners', icon: <PiSlideshowThin />, href: '/notifications/in-app/banners', id: 'banner' },
   ], [pendingChatsCount,countData]);
@@ -157,7 +142,6 @@ export const Sidebar = () => {
     { label: 'Notifications', icon: <FaBell />, href: '/notifications/', id: 'notifications' },
     { label: 'Daily Report', icon: <FaFileAlt />, href: '/daily-report', id: 'daily-report', isGreenButton: true },
     { label: 'Settings', icon: <FaCog />, href: '/settings', id: 'settings' },
-    { label: 'Vendors', icon: <FaWallet />, href: '/settings/vendors', id: 'vendors' },
     { label: 'Merchants', icon: <MdReceipt />, href: '/settings/merchants', id: 'merchants' },
     { label: 'Team Chat', icon: <RiTeamFill />, href: '#', id: 'team-communication' },
     { label: 'Support', icon: <FaHeadset />, href: '/support', id: 'support' },

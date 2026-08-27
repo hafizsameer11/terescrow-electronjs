@@ -154,7 +154,17 @@ export type BushaTrade = {
   status: string;
   errorMessage?: string | null;
   createdAt: string;
+  updatedAt?: string;
   completedAt?: string | null;
+  userId?: number | null;
+  user?: {
+    id: number;
+    username: string;
+    firstname: string;
+    lastname: string;
+    profilePicture?: string | null;
+    country?: string;
+  } | null;
   customer?: {
     email: string;
     firstName: string;
@@ -236,6 +246,114 @@ export async function syncBushaRecipient(token: string, profileId: string) {
 
 export async function listBushaCustomers(token: string): Promise<BushaCustomer[]> {
   const res = await apiCall(base + '/customers', 'GET', undefined, token);
+  return unwrap(res);
+}
+
+export type BushaTradeStats = {
+  buy: number;
+  sell: number;
+  receive: number;
+  send: number;
+  convert: number;
+  other: number;
+  total: number;
+  completed: number;
+  volumeBuyNgn: number;
+  volumeSellNgn: number;
+};
+
+export type BushaCustomerWalletRow = {
+  id: string;
+  bushaProfileId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  countryId: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+  userId?: number | null;
+  user?: {
+    id: number;
+    username: string;
+    firstname: string;
+    lastname: string;
+    email: string;
+    profilePicture?: string | null;
+  } | null;
+  tradeStats: BushaTradeStats;
+  lastTrade?: {
+    id: string;
+    side: string;
+    status: string;
+    sourceCurrency: string;
+    targetCurrency: string;
+    sourceAmount: string;
+    targetAmount?: string | null;
+    createdAt: string;
+  } | null;
+};
+
+export type BushaCustomerWalletListResponse = {
+  rows: BushaCustomerWalletRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  summary: {
+    customers: number;
+    activeCustomers: number;
+    trades: number;
+    statusBreakdown: Record<string, number>;
+    sideBreakdown: Record<string, number>;
+  };
+};
+
+export type BushaCustomerWalletOverview = {
+  customer: BushaCustomerWalletRow & {
+    createdBy?: { id: number; firstname: string; lastname: string; email: string };
+  };
+  bushaRemote?: BushaCustomerRemote | null;
+  tradeStats: BushaTradeStats;
+  trades: BushaTrade[];
+  wallet: BushaWalletResponse | null;
+  walletError?: string | null;
+};
+
+export async function listBushaCustomerWallets(
+  token: string,
+  params?: {
+    search?: string;
+    status?: string;
+    sort?: string;
+    page?: number;
+    limit?: number;
+  }
+): Promise<BushaCustomerWalletListResponse> {
+  const q = new URLSearchParams();
+  if (params?.search) q.set('search', params.search);
+  if (params?.status) q.set('status', params.status);
+  if (params?.sort) q.set('sort', params.sort);
+  if (params?.page) q.set('page', String(params.page));
+  if (params?.limit) q.set('limit', String(params.limit));
+  const qs = q.toString() ? `?${q.toString()}` : '';
+  const res = await apiCall(base + `/customer-wallets${qs}`, 'GET', undefined, token);
+  return unwrap(res);
+}
+
+export async function getBushaCustomerWalletOverview(
+  token: string,
+  customerId: string,
+  tradeLimit = 25
+): Promise<BushaCustomerWalletOverview> {
+  const qs = tradeLimit ? `?tradeLimit=${tradeLimit}` : '';
+  const res = await apiCall(
+    base + `/customer-wallets/${encodeURIComponent(customerId)}${qs}`,
+    'GET',
+    undefined,
+    token
+  );
   return unwrap(res);
 }
 
@@ -422,9 +540,12 @@ export async function executeBushaCryptoSend(
   return unwrap<BushaTrade>(res);
 }
 
-export async function listBushaTrades(token: string): Promise<BushaTrade[]> {
-  const res = await apiCall(base + '/trades', 'GET', undefined, token);
-  return unwrap(res);
+export async function listBushaTrades(token: string, limit = 100): Promise<BushaTrade[]> {
+  const res = await apiCall(`${base}/trades?limit=${Math.min(200, Math.max(1, limit))}`, 'GET', undefined, token);
+  const data = unwrap<BushaTrade[] | { trades?: BushaTrade[] }>(res);
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray((data as any).trades)) return (data as any).trades;
+  return [];
 }
 
 export async function getBushaTrade(token: string, tradeId: string) {

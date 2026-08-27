@@ -17,7 +17,6 @@ import {
   TRANSACTION_TYPE_LABELS,
   usesPercentRateTiers,
 } from '@renderer/types/cryptoRates';
-import CryptoDepositFeeSettings from './CryptoDepositFeeSettings';
 
 function num(v: string | number | null | undefined): number {
   if (v == null) return NaN;
@@ -85,7 +84,6 @@ const CryptoRatesSettings: React.FC<CryptoRatesSettingsProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const types = transactionTypes.length > 0 ? transactionTypes : CRYPTO_TRANSACTION_TYPES;
-  const showDepositFee = types.includes('RECEIVE');
   const [txTab, setTxTab] = useState<TransactionType>(types[0]);
   const [addOpen, setAddOpen] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -247,8 +245,6 @@ const CryptoRatesSettings: React.FC<CryptoRatesSettingsProps> = ({
 
   return (
     <div className="space-y-4">
-      {showDepositFee && <CryptoDepositFeeSettings token={token} />}
-
       <div className="flex flex-wrap items-center justify-end gap-3">
         <div className="flex gap-2">
           <button
@@ -321,8 +317,8 @@ const CryptoRatesSettings: React.FC<CryptoRatesSettingsProps> = ({
       {txTab === 'GIFT_CARD_BUY' && (
         <p className="text-xs text-gray-600 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
           Tiers apply to <span className="font-medium">USD notional</span> (unit price × quantity) for USD-priced
-          Reloadly gift cards; customers pay <span className="font-mono">usdNotional × rate</span> NGN from fiat before
-          Reloadly is charged.
+          Pagocard gift cards; customers pay <span className="font-mono">usdNotional × rate</span> NGN from fiat before
+          the order is placed.
         </p>
       )}
 

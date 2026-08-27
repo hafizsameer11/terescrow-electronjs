@@ -137,25 +137,25 @@ const Transactions: React.FC<TransactionsProps> = ({ defaultTransactionType = 'a
             isPositive={statsData?.totalTransactions?.change === 'positive'}
           />
           <StatsCard
-            title="Crypto"
+            title="Crypto (Busha)"
             value={`$${addThousandSeparator(statsData?.cryptoTransactions?._sum?.amount ?? 0)}`}
             change={`${statsData?.cryptoTransactions?.percentage ?? 0}%`}
             isPositive={statsData?.cryptoTransactions?.change === 'positive'}
           />
           <StatsCard
-            title="Gift Cards"
+            title="Gift Cards (Pagocard)"
             value={`$${addThousandSeparator(statsData?.giftCardTransactions?._sum?.amount ?? 0)}`}
             change={`${statsData?.giftCardTransactions?.percentage ?? 0}%`}
             isPositive={statsData?.giftCardTransactions?.change === 'positive'}
           />
           <StatsCard
-            title="Bill Payments"
+            title="Bills (StroWallet/PalmPay)"
             value={`N${addThousandSeparator(statsData?.billPaymentTransactions?._sum?.amountNaira ?? 0)}`}
             change={`${statsData?.billPaymentTransactions?.percentage ?? 0}%`}
             isPositive={statsData?.billPaymentTransactions?.change === 'positive'}
           />
           <StatsCard
-            title="Naira"
+            title="Naira (PalmPay)"
             value={`N${addThousandSeparator(statsData?.nairaTransactions?._sum?.amountNaira ?? 0)}`}
             change={`${statsData?.nairaTransactions?.percentage ?? 0}%`}
             isPositive={statsData?.nairaTransactions?.change === 'positive'}

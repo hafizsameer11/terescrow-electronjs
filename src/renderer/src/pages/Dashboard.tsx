@@ -106,19 +106,19 @@ const Dashboard: React.FC = () => {
           change={`${dashboardStats?.data.totalUsers.percentage ?? '0'}%`}
         />
         <StatsCard
-          title="Total Inflow"
+          title="Naira Inflow (PalmPay)"
           value={`₦${addThousandSeparator(dashboardStats?.data.totalInflow.current) || '0'}`}
           isPositive={dashboardStats?.data.totalInflow.change === 'positive'}
           change={`${dashboardStats?.data.totalInflow.percentage ?? '0'}%`}
         />
         <StatsCard
-          title="Total Outflow"
+          title="Bill Outflow"
           value={`₦${addThousandSeparator(dashboardStats?.data.totalOutflow.current) || '0'}`}
           isPositive={dashboardStats?.data.totalOutflow.change === 'positive'}
           change={`${dashboardStats?.data.totalOutflow.percentage ?? '0'}%`}
         />
         <StatsCard
-          title="Total Revenue"
+          title="Provider Volume (NGN)"
           value={`₦${addThousandSeparator(dashboardStats?.data.totalRevenue.current) || '0'}`}
           isPositive={dashboardStats?.data.totalRevenue.change === 'positive'}
           change={`${dashboardStats?.data.totalRevenue.percentage ?? '0'}%`}
@@ -150,8 +150,9 @@ const Dashboard: React.FC = () => {
       </div>
 
 
-      {/* Transactions Table */}
+      {/* Recent activity from Busha / Pagocard / StroWallet / PalmPay */}
       <div className="pb-5">
+        <h2 className="text-xl font-medium text-gray-800 mb-3">Recent provider activity</h2>
         <TransactionsFilter
           filters={filters}
           onChange={(updatedFilters) => {

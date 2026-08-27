@@ -99,7 +99,6 @@ const API_ENDPOINT = {
     cryptoRates: API_ADMIN_BASE + '/crypto/rates',
     cryptoRatesBase: API_ADMIN_BASE + '/crypto/rates/base',
     cryptoRatesHistory: API_ADMIN_BASE + '/crypto/rates/history',
-    cryptoDepositFee: API_ADMIN_BASE + '/crypto/deposit-fee',
     cryptoRateById: (id: string | number) => API_ADMIN_BASE + '/crypto/rates/' + encodeURIComponent(String(id)),
     cryptoRatesByType: (type: string) => API_ADMIN_BASE + '/crypto/rates/' + encodeURIComponent(type),
     supportChats: API_ADMIN_BASE + '/support/chats',

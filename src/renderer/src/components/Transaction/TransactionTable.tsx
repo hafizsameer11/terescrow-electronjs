@@ -37,6 +37,7 @@ export interface Transaction {
   customer?: Customer;
   profit: number;
   giftCardSubType?: string | null;
+  giftCardProvider?: string | null;
 
   billType?: string | null;
   billReference?: string | null;
@@ -44,6 +45,23 @@ export interface Transaction {
   nairaType?: string | null;
   nairaChannel?: string | null;
   nairaReference?: string | null;
+  provider?: string | null;
+  side?: string | null;
+  sourceCurrency?: string | null;
+  targetCurrency?: string | null;
+  sourceAmount?: number | null;
+  targetAmount?: number | null;
+  sceneCode?: string | null;
+  markup?: {
+    markupPercent?: number;
+    actualAmountNgn?: number;
+    userAmountNgn?: number;
+    adminMarkupNgn?: number;
+  } | null;
+  billFeeNgn?: number | null;
+  billFeePercent?: number | null;
+  billFeeLabel?: string | null;
+  providerAmountNgn?: number | null;
 }
 export interface Department {
   id: number;
@@ -83,7 +101,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const navigate = useNavigate();
-  const [activeMenu, setActiveMenu] = useState<number | null>(null);
+  const [activeMenu, setActiveMenu] = useState<number | string | null>(null);
   const { userData, token } = useAuth();
   const queryClient = useQueryClient();
 
@@ -126,7 +144,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
     navigate(`/customers/${customerId}`);
   };
 
-  const toggleMenu = (id: number) => {
+  const toggleMenu = (id: number | string) => {
     setActiveMenu(activeMenu === id ? null : id);
   };
 
@@ -167,20 +185,61 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
   const isCryptoTx = (transaction: Transaction) =>
     (transaction.department?.niche ?? '').toLowerCase() === 'crypto';
 
+  const isBushaTx = (transaction: Transaction) =>
+    String(transaction.provider || '').toLowerCase() === 'busha';
+
   const canRevokeTx = (transaction: Transaction) =>
     isCryptoTx(transaction) &&
+    !isBushaTx(transaction) &&
     transaction.status?.toLowerCase() === 'successful' &&
     userData?.role !== 'agent';
 
+  const providerLabel = (transaction: Transaction) => {
+    const p = String(
+      transaction.provider ||
+        transaction.billProvider ||
+        transaction.giftCardProvider ||
+        ''
+    ).toLowerCase();
+    if (!p) return '—';
+    if (p === 'busha') return 'Busha';
+    if (p === 'strowallet') return 'StroWallet';
+    if (p === 'palmpay') return 'PalmPay';
+    if (p === 'pagocard') return 'Pagocard';
+    if (p === 'reloadly') return 'Reloadly';
+    return p;
+  };
+
+  const serviceLabel = (transaction: Transaction) => {
+    const n = (transaction.department?.niche ?? '').toLowerCase();
+    if (n === 'crypto') {
+      const pair = transaction.category?.subTitle || transaction.category?.title || '';
+      const side = transaction.side ? String(transaction.side) : '';
+      return [side, pair].filter(Boolean).join(' · ') || transaction.category?.title || '';
+    }
+    if (n === 'billpayment') {
+      return [transaction.sceneCode || transaction.billType, transaction.category?.subTitle]
+        .filter(Boolean)
+        .join(' · ') || transaction.category?.title || '';
+    }
+    if (n === 'giftcard') {
+      return transaction.category?.title || 'Gift Card';
+    }
+    if (n === 'naira') {
+      return transaction.nairaType || transaction.category?.title || 'Naira';
+    }
+    return transaction.category?.title ?? '';
+  };
+
   return (
-    <div className="my-6 bg-white rounded-lg shadow-md">
+    <div className="my-6 bg-white rounded-lg shadow-md overflow-x-auto">
       <table className="min-w-full text-left text-sm text-gray-700">
         <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
           <tr>
             <th className="py-3 px-4">Name</th>
             <th className="py-3 px-4">Status</th>
-            <th className="py-3 px-4">Department</th>
-
+            <th className="py-3 px-4">Type</th>
+            <th className="py-3 px-4">Provider</th>
             <th className="py-3 px-4">Service</th>
             <th className="py-3 px-4">Amount</th>
             <th className="py-3 px-4">Date</th>
@@ -206,11 +265,45 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
                 </span>
               </td>
               <td className="font-semibold py-3 px-4">{transaction.department?.title ?? ''}</td>
-              <td className="font-semibold py-3 px-4">{transaction.category?.title ?? ''}</td>
+              <td className="font-semibold py-3 px-4">{providerLabel(transaction)}</td>
+              <td className="font-semibold py-3 px-4">{serviceLabel(transaction)}</td>
               <td className="font-semibold py-3 px-4">
                 {(() => {
                   const n = (transaction.department?.niche ?? '').toLowerCase();
-                  if (n === 'billpayment' || n === 'naira') return `₦${formatNairaAmount(transaction.amountNaira)}`;
+                  if (n === 'billpayment' || n === 'naira') {
+                    return `₦${formatNairaAmount(transaction.amountNaira)}`;
+                  }
+                  if (n === 'crypto') {
+                    const side = String(transaction.side || '').toLowerCase();
+                    const src = (transaction.sourceCurrency || '').toUpperCase();
+                    const tgt = (transaction.targetCurrency || '').toUpperCase();
+                    const srcAmt = transaction.sourceAmount;
+                    const tgtAmt = transaction.targetAmount;
+                    if (srcAmt != null && tgtAmt != null && src && tgt) {
+                      const from =
+                        src === 'NGN' ? `₦${formatNairaAmount(srcAmt)}` : `${srcAmt} ${src}`;
+                      const to =
+                        tgt === 'NGN' ? `₦${formatNairaAmount(tgtAmt)}` : `${tgtAmt} ${tgt}`;
+                      return `${from} → ${to}`;
+                    }
+                    if (side === 'buy' && tgt) {
+                      const crypto = `${transaction.amount} ${tgt}`;
+                      const ngn =
+                        transaction.amountNaira > 0
+                          ? ` / ₦${formatNairaAmount(transaction.amountNaira)}`
+                          : '';
+                      return `${crypto}${ngn}`;
+                    }
+                    if (src) {
+                      const crypto = `${transaction.amount} ${src}`;
+                      const ngn =
+                        transaction.amountNaira > 0
+                          ? ` / ₦${formatNairaAmount(transaction.amountNaira)}`
+                          : '';
+                      return `${crypto}${ngn}`;
+                    }
+                    return String(transaction.amount);
+                  }
                   return `$${transaction.amount}/₦${formatNairaAmount(transaction.amountNaira)}`;
                 })()}
               </td>
@@ -296,6 +389,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
             fromAddress: selectedTransaction.fromAddress ?? '',
             giftCardSubType: selectedTransaction.giftCardSubType ?? selectedTransaction.cardType ?? '',
             giftCardNumber: selectedTransaction.cardNumber ?? '',
+            giftCardProvider: selectedTransaction.giftCardProvider ?? selectedTransaction.provider ?? '',
             profit: selectedTransaction.profit ?? 0,
             billType: selectedTransaction.billType ?? '',
             billReference: selectedTransaction.billReference ?? '',
@@ -303,8 +397,20 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
             nairaType: selectedTransaction.nairaType ?? '',
             nairaChannel: selectedTransaction.nairaChannel ?? '',
             nairaReference: selectedTransaction.nairaReference ?? '',
+            provider: selectedTransaction.provider ?? '',
+            side: selectedTransaction.side ?? '',
+            sourceCurrency: selectedTransaction.sourceCurrency ?? '',
+            targetCurrency: selectedTransaction.targetCurrency ?? '',
+            sourceAmount: selectedTransaction.sourceAmount ?? null,
+            targetAmount: selectedTransaction.targetAmount ?? null,
+            sceneCode: selectedTransaction.sceneCode ?? '',
             exchangeRate: (selectedTransaction as { exchangeRate?: number }).exchangeRate ?? null,
             customerName: [selectedTransaction.customer?.firstname, selectedTransaction.customer?.lastname].filter(Boolean).join(' ') || selectedTransaction.customer?.username || '',
+            markup: selectedTransaction.markup ?? null,
+            billFeeNgn: selectedTransaction.billFeeNgn ?? null,
+            billFeePercent: selectedTransaction.billFeePercent ?? null,
+            billFeeLabel: selectedTransaction.billFeeLabel ?? null,
+            providerAmountNgn: selectedTransaction.providerAmountNgn ?? null,
           }}
         />
       )}
