@@ -79,6 +79,10 @@ interface ICardTransactionReq extends ITransactionReq {
   cardNumber: string
   departmentId?: number
   categoryId?: number
+  /** When true, credit customer Naira wallet after logging the sale */
+  creditWallet?: boolean
+  /** NGN amount to credit; defaults to amountNaira on the backend */
+  walletCreditAmount?: number
 }
 interface IMesssageToCustomer extends ApiResponse {
   data: IResMessage

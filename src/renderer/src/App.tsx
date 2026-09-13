@@ -77,6 +77,10 @@ function App(): JSX.Element {
       {/* Niche transaction views — legacy catch-all /transactions redirects to crypto */}
       <Route path="/transactions" element={<Navigate to="/transactions/crypto" replace />} />
       <Route path="/transactions/gift-card-buy" element={<Transaction defaultTransactionType="giftCards" />} />
+      <Route
+        path="/transactions/gift-card-sell"
+        element={<Transaction defaultTransactionType="giftCards" defaultBuySellType="sell" />}
+      />
       <Route path="/transactions/crypto" element={<Transaction defaultTransactionType="crypto" />} />
       <Route path="/transactions/bill-payments" element={<Transaction defaultTransactionType="billPayments" />} />
       <Route path="/transactions/naira" element={<Transaction defaultTransactionType="naira" />} />

@@ -33,9 +33,14 @@ function tabToNiche(tab: TransactionTypeTab): TransactionNiche | undefined {
 
 interface TransactionsProps {
   defaultTransactionType?: TransactionTypeTab
+  /** Prefill Buy/Sell filter (e.g. gift-card-sell page) */
+  defaultBuySellType?: 'buy' | 'sell'
 }
 
-const Transactions: React.FC<TransactionsProps> = ({ defaultTransactionType = 'all' }) => {
+const Transactions: React.FC<TransactionsProps> = ({
+  defaultTransactionType = 'all',
+  defaultBuySellType,
+}) => {
   const { token } = useAuth()
   const [transactionTypeTab, setTransactionTypeTab] = useState<TransactionTypeTab>(defaultTransactionType)
   const [page, setPage] = useState(1)
@@ -48,12 +53,21 @@ const Transactions: React.FC<TransactionsProps> = ({ defaultTransactionType = 'a
   const [dateRangePresetActive, setDateRangePresetActive] = useState(false)
   const [filters, setFilters] = useState({
     status: 'All',
-    type: 'All',
+    type: defaultBuySellType === 'sell' ? 'Sell' : defaultBuySellType === 'buy' ? 'Buy' : 'All',
     dateRange: 'All',
     search: '',
     startDate: '',
     endDate: '',
   })
+
+  useEffect(() => {
+    if (!defaultBuySellType) return
+    setFilters((prev) => ({
+      ...prev,
+      type: defaultBuySellType === 'sell' ? 'Sell' : 'Buy',
+    }))
+    setPage(1)
+  }, [defaultBuySellType])
 
   const niche = useMemo(() => tabToNiche(transactionTypeTab), [transactionTypeTab])
 
@@ -101,7 +115,13 @@ const Transactions: React.FC<TransactionsProps> = ({ defaultTransactionType = 'a
   return (
     <div className="w-full">
       <div className='flex justify-between items-center mb-7'>
-        <h2 className="text-4xl font-semibold text-gray-800 mb-5">Transactions</h2>
+        <h2 className="text-4xl font-semibold text-gray-800 mb-5">
+          {defaultBuySellType === 'sell' && niche === 'giftcard'
+            ? 'Gift Card Sell Transactions'
+            : defaultBuySellType === 'buy' && niche === 'giftcard'
+              ? 'Gift Card Buy Transactions'
+              : 'Transactions'}
+        </h2>
         <div className="flex space-x-4">
           <div>
             <label className="block text-sm text-gray-700">Start Date</label>

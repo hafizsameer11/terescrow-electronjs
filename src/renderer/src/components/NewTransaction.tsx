@@ -23,6 +23,8 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
     fromAddress: '',
     toAddress: '',
     profit: '',
+    creditWallet: false,
+    walletCreditAmount: '',
   });
 
   const closeModal = () => {
@@ -59,7 +61,7 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
     },
   });
 
-  const { mutate: cardTransaction, isLoading: isCardTransactionPending } = useMutation({
+  const { mutate: cardTransaction, isPending: isCardTransactionPending } = useMutation({
     mutationKey: ['create-card-transaction'],
     mutationFn: createCardTransaction,
     onSuccess: (data) => {
@@ -76,18 +78,40 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
   const handleInputChange = (field, value) => {
     const updatedData = { ...formData, [field]: value };
 
-
     if (field === 'amount' || field === 'exchangeRate') {
       const amount = parseFloat(updatedData.amount) || 0;
       const exchangeRate = parseFloat(updatedData.exchangeRate) || 0;
-      updatedData.amountNaira = amount * exchangeRate || '';
+      const naira = amount * exchangeRate || '';
+      updatedData.amountNaira = naira;
+      if (updatedData.creditWallet && (field === 'amount' || field === 'exchangeRate')) {
+        updatedData.walletCreditAmount = naira === '' ? '' : String(naira);
+      }
+    }
+
+    if (field === 'creditWallet' && value === true) {
+      updatedData.walletCreditAmount =
+        updatedData.walletCreditAmount ||
+        (updatedData.amountNaira !== '' ? String(updatedData.amountNaira) : '');
     }
 
     setFormData(updatedData);
   };
 
   const handleSubmit = () => {
-    const { subcategory, amount, exchangeRate, amountNaira, cardType, cardNumber, cryptoAmount, fromAddress, toAddress, profit } = formData;
+    const {
+      subcategory,
+      amount,
+      exchangeRate,
+      amountNaira,
+      cardType,
+      cardNumber,
+      cryptoAmount,
+      fromAddress,
+      toAddress,
+      profit,
+      creditWallet,
+      walletCreditAmount,
+    } = formData;
 
     const commonData = {
       subCategoryId: parseInt(subcategory),
@@ -104,15 +128,29 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
         alert('Please provide card type and card number.');
         return;
       }
+      if (creditWallet) {
+        const creditAmt = parseFloat(String(walletCreditAmount));
+        if (!Number.isFinite(creditAmt) || creditAmt <= 0) {
+          alert('Enter a valid Naira amount to credit the customer wallet.');
+          return;
+        }
+      }
       cardTransaction({
         data: {
-
           ...commonData,
           cardType,
           cardNumber,
           departmentId: department?.id,
           categoryId: category?.id,
-        }, token
+          // Only send new fields when agent opts in — unchecked = identical to old API body
+          ...(creditWallet
+            ? {
+                creditWallet: true,
+                walletCreditAmount: parseFloat(String(walletCreditAmount)),
+              }
+            : {}),
+        },
+        token,
       });
     } else if (type === 'crypto') {
       if (!cryptoAmount || !fromAddress || !toAddress) {
@@ -127,7 +165,8 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
           toAddress,
           departmentId: department?.id,
           categoryId: category?.id,
-        }, token
+        },
+        token,
       });
     }
   };
@@ -191,6 +230,37 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
 
                   <label className="block text-gray-700">Card Number</label>
                   <input type="text" value={formData.cardNumber} onChange={(e) => handleInputChange('cardNumber', e.target.value)} className="w-full p-2 border rounded-lg mb-4" />
+
+                  <div className="mb-4 p-3 rounded-lg border border-green-200 bg-green-50">
+                    <label className="flex items-start gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.creditWallet}
+                        onChange={(e) => handleInputChange('creditWallet', e.target.checked)}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block font-medium text-gray-800">Credit Naira wallet</span>
+                        <span className="block text-sm text-gray-600">
+                          Optional. Credits the customer&apos;s in-app Naira wallet. If they are on the old app (no wallet), this will be blocked — complete the sale without wallet credit instead.
+                        </span>
+                      </span>
+                    </label>
+                    {formData.creditWallet && (
+                      <div className="mt-3">
+                        <label className="block text-gray-700 text-sm">Wallet credit amount (₦)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={formData.walletCreditAmount}
+                          onChange={(e) => handleInputChange('walletCreditAmount', e.target.value)}
+                          className="w-full p-2 border rounded-lg mt-1 bg-white"
+                          placeholder="Enter amount to credit"
+                        />
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
 
@@ -209,8 +279,12 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
             </div>
 
             <div className="px-6 pb-4 border-t flex justify-end">
-              <button onClick={handleSubmit} className="bg-green-800 w-full text-white px-4 py-2 rounded-md hover:bg-green-900">
-                Continue
+              <button
+                onClick={handleSubmit}
+                disabled={isCardTransactionPending || isCryptoTransactionPending}
+                className="bg-green-800 w-full text-white px-4 py-2 rounded-md hover:bg-green-900 disabled:opacity-60"
+              >
+                {isCardTransactionPending || isCryptoTransactionPending ? 'Submitting…' : 'Continue'}
               </button>
             </div>
           </div>

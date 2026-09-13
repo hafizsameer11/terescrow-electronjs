@@ -5,7 +5,7 @@ import { listBushaTrades, type BushaTrade } from './busha';
 /**
  * Backend `niche` values map to frontend page routes:
  *   crypto      → /transactions/crypto  (Busha trades — live provider)
- *   giftcard    → /transactions/gift-card-buy
+ *   giftcard    → /transactions/gift-card-buy | /transactions/gift-card-sell
  *   billpayment → /transactions/bill-payments
  *   naira       → /transactions/naira
  */

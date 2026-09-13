@@ -292,6 +292,25 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
               <Row label="Product" value={transactionData.category || undefined} />
               <Row label="Card Type" value={transactionData.giftCardSubType || undefined} />
               <Row label="Card Number" value={transactionData.giftCardNumber || undefined} />
+              {transactionData.nairaChannel && (
+                <Row label="Wallet payout" value={transactionData.nairaChannel} />
+              )}
+              {transactionData.nairaType === 'GIFT_CARD_SELL' &&
+                transactionData.targetAmount != null &&
+                Number(transactionData.targetAmount) > 0 && (
+                <Row
+                  label="Wallet credited"
+                  value={`₦${formatNairaAmount(transactionData.targetAmount)}`}
+                />
+              )}
+              {transactionData.nairaReference && (
+                <Row
+                  label="Wallet txn ID"
+                  value={transactionData.nairaReference}
+                  mono
+                  copyable={transactionData.nairaReference}
+                />
+              )}
               {provider && <Row label="Provider" value={provider} />}
             </>
           )}
