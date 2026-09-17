@@ -16,6 +16,16 @@ export type BushaCryptoAsset = {
   rampSell: boolean;
 };
 
+export type BushaMarkupRange = {
+  id: number;
+  side: 'buy' | 'sell' | string;
+  minUsd: number;
+  maxUsd: number;
+  percent: number;
+  isActive: boolean;
+  sortOrder: number;
+};
+
 export type BushaStatus = {
   busha: {
     configured: boolean;
@@ -42,6 +52,7 @@ export type BushaStatus = {
     sellMarkupPercent?: number | null;
     isActive?: boolean;
   } | null;
+  markupRanges?: BushaMarkupRange[];
   stats: { customerCount: number; tradeCount: number };
   currencies: {
     fiat: string[];
@@ -237,6 +248,140 @@ export async function saveBushaSettings(
 ) {
   const res = await apiCall(base + '/settings', 'PUT', payload, token);
   return unwrap(res);
+}
+
+export async function listBushaMarkupRanges(
+  token: string,
+  side?: 'buy' | 'sell'
+): Promise<BushaMarkupRange[]> {
+  const qs = side ? `?side=${side}` : '';
+  const res = await apiCall(base + '/markup-ranges' + qs, 'GET', undefined, token);
+  return unwrap(res) || [];
+}
+
+export async function createBushaMarkupRange(
+  token: string,
+  payload: {
+    side: 'buy' | 'sell';
+    minUsd: number;
+    maxUsd: number;
+    percent: number;
+    isActive?: boolean;
+    sortOrder?: number;
+  }
+): Promise<BushaMarkupRange> {
+  const res = await apiCall(base + '/markup-ranges', 'POST', payload, token);
+  return unwrap(res);
+}
+
+export async function updateBushaMarkupRange(
+  token: string,
+  id: number,
+  payload: Partial<{
+    side: 'buy' | 'sell';
+    minUsd: number;
+    maxUsd: number;
+    percent: number;
+    isActive: boolean;
+    sortOrder: number;
+  }>
+): Promise<BushaMarkupRange> {
+  const res = await apiCall(base + `/markup-ranges/${id}`, 'PUT', payload, token);
+  return unwrap(res);
+}
+
+export async function deleteBushaMarkupRange(token: string, id: number) {
+  const res = await apiCall(base + `/markup-ranges/${id}`, 'DELETE', undefined, token);
+  return unwrap(res);
+}
+
+export type BushaCoinFeeConfigRow = {
+  currency: string;
+  name: string;
+  defaultNetwork?: string;
+  depositFeePercent: number;
+  withdrawFeePercent: number;
+  isActive: boolean;
+  configured?: boolean;
+};
+
+export async function listBushaCoinFeeConfigs(token: string): Promise<{
+  rows: BushaCoinFeeConfigRow[];
+}> {
+  const res = await apiCall(base + '/fee-configs', 'GET', undefined, token);
+  return unwrap(res) || { rows: [] };
+}
+
+export async function saveBushaCoinFeeConfigs(
+  token: string,
+  rules: Array<{
+    currency: string;
+    depositFeePercent: number;
+    withdrawFeePercent: number;
+    isActive?: boolean;
+  }>
+) {
+  const res = await apiCall(base + '/fee-configs', 'PUT', { rules }, token);
+  return unwrap(res);
+}
+
+export type BushaFeeLedgerRow = {
+  id: string;
+  userId: number;
+  currency: string;
+  type: string;
+  amountCrypto: string | number;
+  status: string;
+  soldAmountNgn?: string | number | null;
+  soldAt?: string | null;
+  createdAt: string;
+  user?: {
+    id: number;
+    username?: string;
+    firstname?: string;
+    lastname?: string;
+    email?: string;
+  };
+};
+
+export async function listBushaFeeLedger(
+  token: string,
+  params?: {
+    status?: string;
+    currency?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }
+): Promise<{
+  rows: BushaFeeLedgerRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  totals: {
+    heldByCurrency: Array<{ currency: string; amount: string }>;
+    soldNgnEarned: string;
+  };
+}> {
+  const sp = new URLSearchParams();
+  if (params?.status) sp.set('status', params.status);
+  if (params?.currency) sp.set('currency', params.currency);
+  if (params?.search) sp.set('search', params.search);
+  if (params?.page) sp.set('page', String(params.page));
+  if (params?.limit) sp.set('limit', String(params.limit));
+  const qs = sp.toString() ? `?${sp}` : '';
+  const res = await apiCall(base + '/fee-ledger' + qs, 'GET', undefined, token);
+  return (
+    unwrap(res) || {
+      rows: [],
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
+      totals: { heldByCurrency: [], soldNgnEarned: '0' },
+    }
+  );
 }
 
 export async function syncBushaRecipient(token: string, profileId: string) {

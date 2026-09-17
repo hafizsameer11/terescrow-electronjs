@@ -8,6 +8,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CryptoRatesSettings from '@renderer/components/rates/CryptoRatesSettings';
 import BushaMarkupSettings from '@renderer/components/rates/BushaMarkupSettings';
+import BushaCoinFeeSettings from '@renderer/components/rates/BushaCoinFeeSettings';
+import BushaFeeLedgerPanel from '@renderer/components/rates/BushaFeeLedgerPanel';
 import { GIFT_CARD_TRANSACTION_TYPES } from '@renderer/types/cryptoRates';
 import { getBushaStatus } from '@renderer/api/admin';
 
@@ -132,7 +134,11 @@ const RatesHistory: React.FC = () => {
       )}
 
       {activeTab === 'crypto' && canManageRates && token ? (
-        <BushaMarkupSettings token={token} />
+        <>
+          <BushaMarkupSettings token={token} />
+          <BushaCoinFeeSettings token={token} />
+          <BushaFeeLedgerPanel token={token} />
+        </>
       ) : activeTab === 'gift-card' && canManageRates && token ? (
         <CryptoRatesSettings token={token} transactionTypes={GIFT_CARD_TRANSACTION_TYPES} />
       ) : (
