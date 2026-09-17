@@ -45,7 +45,6 @@ const pathToIdMap: Record<string, string> = {
   '/settings/merchants': 'merchants',
   '/support': 'support',
   '/referrals': 'referrals',
-  '/busha-test': 'busha-test',
 };
 
 export const Sidebar = () => {
@@ -109,7 +108,6 @@ export const Sidebar = () => {
     { label: 'Bill Payments', icon: <MdReceipt />, href: '/transactions/bill-payments', id: 'bill-payments' },
     { label: 'Naira Txns', icon: <MdAttachMoney />, href: '/transactions/naira', id: 'naira-txns' },
     { label: 'Busha Wallets', icon: <FaWallet />, href: '/user-balances', id: 'user-balances' },
-    { label: 'Busha Test', icon: <FaBitcoin />, href: '/busha-test', id: 'busha-test' },
     { label: 'Rates', icon: Images.rates, href: '/rates', id: 'rates' },
     { label: 'Department', icon: Images.department, href: '/departments', id: 'department' },
     { label: 'Services', icon: <FaCog />, href: '/services', id: 'services' },
