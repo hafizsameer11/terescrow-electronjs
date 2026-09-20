@@ -93,9 +93,17 @@ export function apiDateParams(opts: {
 
 /** Inclusive end-of-day for Date comparisons in client-side filters. */
 export function parseEndDateInclusive(endDate: string): Date {
-  const d = new Date(endDate);
+  const d = new Date(endDate.includes('T') ? endDate : `${endDate}T00:00:00`);
   d.setHours(23, 59, 59, 999);
   return d;
+}
+
+/** API end bound so a YYYY-MM-DD filter includes the full local day. */
+export function toApiInclusiveEnd(isoDate: string): string {
+  const s = isoDate.trim();
+  if (!s) return s;
+  if (s.includes('T')) return s;
+  return `${s}T23:59:59.999`;
 }
 
 export function matchesDateRange(

@@ -25,10 +25,12 @@ import ChatFilters from '@renderer/components/ChatFilters';
 import ChatTable from '@renderer/components/ChatTable';
 import type { AgentToCustomerChatData } from '@renderer/api/queries/datainterfaces';
 import { getImageUrl, formatNairaAmount, addThousandSeparator } from '@renderer/api/helper';
-import { apiDateParams } from '@renderer/utils/dateRange';
+import { apiDateParams, toDateString, toApiInclusiveEnd } from '@renderer/utils/dateRange';
 import { bucketChatProfitsFromLedger } from '@renderer/utils/chatFinancials';
 
 const PAGE_SIZE = 50;
+/** Live hub refresh — light enough for admin, fresh enough for the client. */
+const HUB_POLL_MS = 15_000;
 
 type UIFilters = {
   status: string;
@@ -103,6 +105,7 @@ const Chat = () => {
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
 
   const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
+  const todayIso = toDateString(new Date());
   const [filters, setFilters] = useState<UIFilters>({
     status: 'All',
     type: 'All',
@@ -110,8 +113,8 @@ const Chat = () => {
     search: '',
     transactionType: 'All',
     category: 'All',
-    startDate: '',
-    endDate: '',
+    startDate: todayIso,
+    endDate: todayIso,
   });
 
   const [page, setPage] = useState(1);
@@ -124,23 +127,43 @@ const Chat = () => {
     return () => clearTimeout(t);
   }, [searchInput]);
 
+  const hubDateParams = useMemo(() => {
+    const { startDate, endDate } = apiDateParams({
+      startDate: filters.startDate,
+      endDate: filters.endDate,
+      dateRange: filters.dateRange,
+      dateRangePresetActive,
+    });
+    return {
+      start: startDate || undefined,
+      end: endDate ? toApiInclusiveEnd(endDate) : undefined,
+    };
+  }, [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]);
+
   const { data: chatStatsData } = useQuery({
-    queryKey: ['chatStats', token],
-    queryFn: () => getChatStats({ token: token! }),
+    queryKey: ['chatStats', token, hubDateParams],
+    queryFn: () =>
+      getChatStats({
+        token: token!,
+        start: hubDateParams.start,
+        end: hubDateParams.end,
+      }),
     enabled: !!token,
-    refetchInterval: 3000,
+    refetchInterval: HUB_POLL_MS,
   });
 
   const { data: teamStats } = useQuery({
     queryKey: ['teamStats', token],
     queryFn: () => getTeamStats({ token: token! }),
     enabled: !!token,
+    refetchInterval: HUB_POLL_MS,
   });
 
   const { data: agentsList } = useQuery({
     queryKey: ['all-agents-chat-page'],
     queryFn: () => getAllAgentss({ token: token! }),
     enabled: !!token,
+    refetchInterval: HUB_POLL_MS,
   });
 
   const profitDateParams = useMemo(() => {
@@ -160,6 +183,7 @@ const Chat = () => {
     queryKey: ['chat-profit-stats', token, profitDateParams],
     queryFn: () => getProfitTrackerStats(token!, profitDateParams),
     enabled: !!token,
+    refetchInterval: HUB_POLL_MS,
   });
 
   const { data: bushaWalletsSummary } = useQuery({
@@ -167,12 +191,14 @@ const Chat = () => {
     queryFn: () => listBushaCustomerWallets(token!, { page: 1, limit: 1 }),
     enabled: !!token,
     staleTime: 60_000,
+    refetchInterval: HUB_POLL_MS,
   });
 
   const { data: referralSummary } = useQuery({
     queryKey: ['chat-referral-summary', token, profitDateParams],
     queryFn: () => getReferralsSummary(token!, profitDateParams),
     enabled: !!token,
+    refetchInterval: HUB_POLL_MS,
   });
 
   const { data: shiftSettings } = useQuery({
@@ -202,7 +228,7 @@ const Chat = () => {
       dateRangePresetActive,
     });
     if (startDate) out.start = startDate;
-    if (endDate) out.end = endDate;
+    if (endDate) out.end = toApiInclusiveEnd(endDate);
 
     if (filters.search.trim()) out.q = filters.search.trim();
     return out;
@@ -225,7 +251,7 @@ const Chat = () => {
       }),
     enabled: !!token,
     placeholderData: keepPreviousData,
-    refetchInterval: 3000,
+    refetchInterval: HUB_POLL_MS,
   });
 
   const rows: ChatRow[] = chatsResp?.data ?? [];

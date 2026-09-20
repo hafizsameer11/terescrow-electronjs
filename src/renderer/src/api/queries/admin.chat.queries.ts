@@ -78,8 +78,25 @@ export type PaginatedChatsResponse = {
   totalPages: number;
 };
 
-export const getChatStats = async ({ token }: { token: string }) => {
-  return apiCall(`${API_ENDPOINT.OPERATIONS.GetChatStats}`, 'GET', undefined, token);
+export const getChatStats = async ({
+  token,
+  start,
+  end,
+}: {
+  token: string;
+  start?: string;
+  end?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (start?.trim()) params.set('start', start.trim());
+  if (end?.trim()) params.set('end', end.trim());
+  const q = params.toString();
+  return apiCall(
+    `${API_ENDPOINT.OPERATIONS.GetChatStats}${q ? `?${q}` : ''}`,
+    'GET',
+    undefined,
+    token
+  );
 };
 
 type Filters = {

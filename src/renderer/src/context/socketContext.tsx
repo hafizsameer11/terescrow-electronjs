@@ -29,6 +29,7 @@ interface SocketContextType {
   isAdminOnline: NonAgentUser | false;
   disconnectFromSocket: () => void;
   onlineCustomers: NonAgentUser[];
+  isSocketConnected: boolean;
 }
 
 const SocketContext = createContext<SocketContextType | undefined>(undefined);
@@ -42,10 +43,18 @@ function invalidateChatListQueries(queryClient: ReturnType<typeof useQueryClient
   void queryClient.invalidateQueries({ queryKey: ['notificationCount'] });
 }
 
+/**
+ * Keep the agent socket alive while logged in.
+ * Backend only auto-assigns chats to agents present in its in-memory `onlineAgents`
+ * list — that list is filled on socket connect. Tearing down the client on every
+ * `disconnect` event previously prevented Socket.IO reconnection, so agents looked
+ * "logged in" in the UI but were offline for assignment (chats → Pending).
+ */
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [isSocketConnected, setIsSocketConnected] = useState(false);
   const [onlineAgents, setOnlineAgents] = useState<Agent[]>([]);
   const [isAdminOnline, setIsAdminOnline] = useState<NonAgentUser | false>(false);
   const [onlineCustomers, setOnlineCustomers] = useState<NonAgentUser[]>([]);
@@ -61,6 +70,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       activeSocket.disconnect();
       socketRef.current = null;
       setSocket(null);
+      setIsSocketConnected(false);
     }
   }, []);
 
@@ -77,15 +87,50 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const newSocket = io(API_BASE_URL, {
       query: { token },
+      // Stay registered with the backend so agents remain assignable.
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1_000,
+      reconnectionDelayMax: 10_000,
+      timeout: 20_000,
     });
     socketRef.current = newSocket;
+    setSocket(newSocket);
 
     newSocket.on('connect', () => {
+      console.log('[socket] connected', newSocket.id);
+      setIsSocketConnected(true);
       setSocket(newSocket);
     });
 
+    newSocket.on('reconnect', (attempt) => {
+      console.log('[socket] reconnected after', attempt, 'attempt(s)', newSocket.id);
+      setIsSocketConnected(true);
+      // Server treats reconnect as a fresh connection and re-adds this agent
+      // to onlineAgents when role is agent.
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('[socket] connect_error', error.message);
+      setIsSocketConnected(false);
+    });
+
+    // Do NOT call disconnectFromSocket here — that kills auto-reconnect and
+    // removes the agent from backend onlineAgents permanently until re-login.
+    newSocket.on('disconnect', (reason) => {
+      console.warn('[socket] disconnected', reason);
+      setIsSocketConnected(false);
+    });
+
     newSocket.on('newAgentJoined', (agent: Agent) => {
-      setOnlineAgents((prev) => [...prev, agent]);
+      setOnlineAgents((prev) => {
+        if (prev.some((a) => String(a.userId) === String(agent.userId))) {
+          return prev.map((a) =>
+            String(a.userId) === String(agent.userId) ? agent : a
+          );
+        }
+        return [...prev, agent];
+      });
     });
 
     newSocket.on(
@@ -95,18 +140,19 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
         agents,
         admin,
       }: {
-        customers: NonAgentUser[];
-        agents: Agent[];
-        admin: NonAgentUser | null;
+        customers?: NonAgentUser[];
+        agents?: Agent[];
+        admin?: NonAgentUser | null;
       }) => {
-        if (agents?.length > 0) {
-          setOnlineAgents((previous) => [...previous, ...agents]);
+        // Replace from server snapshot (append was duplicating / going stale).
+        if (Array.isArray(agents)) {
+          setOnlineAgents(agents);
         }
         if (userData?.role !== UserRoles.admin && admin) {
           setIsAdminOnline(admin);
         }
-        if (customers?.length > 0) {
-          setOnlineCustomers((prev) => [...prev, ...customers]);
+        if (Array.isArray(customers)) {
+          setOnlineCustomers(customers);
         }
       }
     );
@@ -119,7 +165,10 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
 
     newSocket.on('customerJoined', (customer: NonAgentUser) => {
       if (userData?.role === UserRoles.agent) return;
-      setOnlineCustomers((prev) => [...prev, customer]);
+      setOnlineCustomers((prev) => {
+        if (prev.some((c) => String(c.userId) === String(customer.userId))) return prev;
+        return [...prev, customer];
+      });
     });
 
     newSocket.on('customerAssigned', () => {
@@ -141,14 +190,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
           setOnlineAgents((prev) => prev.filter((agent) => +agent.userId !== id));
         }
         if (role === UserRoles.customer) {
-          setOnlineCustomers((prev) => prev.filter((customer) => +customer.userId !== id));
+          setOnlineCustomers((prev) =>
+            prev.filter((customer) => +customer.userId !== id)
+          );
         }
       }
     );
-
-    newSocket.on('disconnect', () => {
-      disconnectFromSocket();
-    });
 
     return () => {
       disconnectFromSocket();
@@ -163,6 +210,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
         disconnectFromSocket,
         isAdminOnline,
         onlineCustomers,
+        isSocketConnected,
       }}
     >
       {children}
