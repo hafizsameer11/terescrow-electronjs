@@ -15,6 +15,8 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
   const [inputValue, setInputValue] = useState<string>('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
   const [messages, setMessages] = useState<ITeamChatDetailsResponse['data']['messages']>([]);
   const currParticipantsIds = useRef<number[]>([]);
   const chatContainerRef = useRef<HTMLDivElement | null>(null);
@@ -139,7 +141,9 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
       </div>
       <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto bg-gray-50">
         {isError && <p className="text-red-500">Failed to load chat details.</p>}
-        {messages.map((message) => (
+        {messages.map((message) => {
+          const imageUrl = message.image ? getImageUrl(message.image) : '';
+          return (
           <div
             key={message.id}
             className={`flex ${message.senderId === userData?.id ? 'justify-end' : 'justify-start'} mb-2`}
@@ -156,14 +160,19 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
               )}
               {message.image && (
                 <img
-                  src={getImageUrl(message.image)}
+                  src={imageUrl}
                   alt="Uploaded"
-                  className="mt-2 rounded-lg max-w-[150px]"
+                  className="mt-2 rounded-lg max-w-[150px] cursor-pointer"
+                  onClick={() => {
+                    setLightboxUrl(imageUrl);
+                    setLightboxZoom(1);
+                  }}
                 />
               )}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Input Field */}
@@ -226,6 +235,41 @@ const TeamChatSection: React.FC<TeamChatSectionProps> = ({ chatId }) => {
           <IoSend className="w-6 h-6" />
         </button>
       </div>
+
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center"
+          onClick={() => {
+            setLightboxUrl(null);
+            setLightboxZoom(1);
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image lightbox"
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 text-white hover:text-gray-200 focus:outline-none"
+            onClick={() => {
+              setLightboxUrl(null);
+              setLightboxZoom(1);
+            }}
+            aria-label="Close"
+          >
+            <IoClose className="w-8 h-8" />
+          </button>
+          <img
+            src={lightboxUrl}
+            alt="Full size"
+            className="max-w-[90vw] max-h-[90vh] object-contain select-none transition-transform duration-150"
+            style={{ transform: `scale(${lightboxZoom})` }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightboxZoom((z) => (z === 1 ? 1.75 : 1));
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -17,10 +17,11 @@ interface HeaderProps {
   username: string | undefined
   id?: string | number | undefined
   onClose: () => void
-  onSendRate: (rate: string, amountDollar: string, amountNaira: string) => void // Adjusted here
-  onLogChat: () => void
+  onSendRate?: (rate: string, amountDollar: string, amountNaira: string) => void // Adjusted here
+  onLogChat?: () => void
   onStatusChange: (status: string, reason?: string) => void // Callback for status change,
   status: string
+  onUserViewed?: () => void
 }
 
 const ChatHeader: React.FC<HeaderProps> = ({
@@ -30,7 +31,8 @@ const ChatHeader: React.FC<HeaderProps> = ({
   onClose,
   onSendRate,
   onLogChat,
-  onStatusChange, status, id
+  onStatusChange, status, id,
+  onUserViewed,
 }) => {
   // console.log("THis is the ChatHeader");
   // console.log(name, username);
@@ -135,13 +137,19 @@ const ChatHeader: React.FC<HeaderProps> = ({
           </button>
 
           {/* Avatar and Name */}
-          <div>
+          <button
+            type="button"
+            className="flex items-center space-x-3 text-left hover:opacity-80 focus:outline-none rounded-lg"
+            onClick={onUserViewed}
+            disabled={!onUserViewed}
+            title={onUserViewed ? 'View customer chat history' : undefined}
+          >
             <img src={avatar} alt="User Avatar" className="w-10 h-10 rounded-full" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-800">{name}</h3>
-            <p className="text-sm text-gray-500 mb-0">@{username}</p>
-          </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">{name}</h3>
+              <p className="text-sm text-gray-500 mb-0">@{username}</p>
+            </div>
+          </button>
         </div>
 
         {/* Right Section */}

@@ -16,7 +16,7 @@ type Props = {
 };
 
 type Draft = {
-  side: 'buy' | 'sell';
+  side: 'sell';
   minUsd: string;
   maxUsd: string;
   percent: string;
@@ -64,10 +64,9 @@ const BushaMarkupSettings: React.FC<Props> = ({ token }) => {
 
   const ranges = useMemo(() => {
     const list = (rangesQuery.data || statusQuery.data?.markupRanges || []) as BushaMarkupRange[];
-    return [...list].sort((a, b) => {
-      if (a.side !== b.side) return a.side.localeCompare(b.side);
-      return Number(a.minUsd) - Number(b.minUsd);
-    });
+    return [...list]
+      .filter((r) => String(r.side).toLowerCase() === 'sell')
+      .sort((a, b) => Number(a.minUsd) - Number(b.minUsd));
   }, [rangesQuery.data, statusQuery.data?.markupRanges]);
 
   const saveFlatMutation = useMutation({
@@ -86,7 +85,7 @@ const BushaMarkupSettings: React.FC<Props> = ({ token }) => {
   const saveRangeMutation = useMutation({
     mutationFn: async () => {
       const payload = {
-        side: draft.side,
+        side: 'sell' as const,
         minUsd: parseFloat(draft.minUsd),
         maxUsd: parseFloat(draft.maxUsd),
         percent: parseFloat(draft.percent),
@@ -126,7 +125,7 @@ const BushaMarkupSettings: React.FC<Props> = ({ token }) => {
   const startEdit = (row: BushaMarkupRange) => {
     setEditingId(row.id);
     setDraft({
-      side: row.side === 'buy' ? 'buy' : 'sell',
+      side: 'sell',
       minUsd: String(row.minUsd),
       maxUsd: String(row.maxUsd),
       percent: String(row.percent),
@@ -173,18 +172,7 @@ const BushaMarkupSettings: React.FC<Props> = ({ token }) => {
 
       <div className="p-5 border-b border-gray-100">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">USD range tiers</h3>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end mb-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Side</label>
-            <select
-              value={draft.side}
-              onChange={(e) => setDraft((d) => ({ ...d, side: e.target.value as 'buy' | 'sell' }))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-            >
-              <option value="sell">Sell</option>
-              <option value="buy">Buy</option>
-            </select>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-4">
           <div>
             <label className="block text-xs font-medium text-gray-700 mb-1">Min USD</label>
             <input
@@ -242,6 +230,10 @@ const BushaMarkupSettings: React.FC<Props> = ({ token }) => {
           </div>
         </div>
 
+        <p className="text-xs text-gray-500 mb-3">
+          USD range tiers apply to <strong>sell</strong> only. Use fallback buy markup % below for non-tier buy quotes.
+        </p>
+
         <div className="overflow-x-auto rounded-lg border border-gray-200">
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50 text-left text-gray-600">
@@ -257,7 +249,7 @@ const BushaMarkupSettings: React.FC<Props> = ({ token }) => {
               {ranges.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-3 py-4 text-gray-500">
-                    No ranges yet — quotes will use the flat fallback % below.
+                    No sell ranges yet — quotes will use the flat fallback % below.
                   </td>
                 </tr>
               ) : (

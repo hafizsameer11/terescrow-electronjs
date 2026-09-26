@@ -78,18 +78,27 @@ export type PaginatedChatsResponse = {
   totalPages: number;
 };
 
+export type StatsTimeWindow = 'all' | 'last12hrs' | 'dayShift' | 'nightShift';
+
 export const getChatStats = async ({
   token,
   start,
   end,
+  timeWindow,
 }: {
   token: string;
   start?: string;
   end?: string;
+  /** When set (and not `all`), BE resolveStatsTimeWindow applies; omit start/end. */
+  timeWindow?: StatsTimeWindow;
 }) => {
   const params = new URLSearchParams();
-  if (start?.trim()) params.set('start', start.trim());
-  if (end?.trim()) params.set('end', end.trim());
+  if (timeWindow && timeWindow !== 'all') {
+    params.set('timeWindow', timeWindow);
+  } else {
+    if (start?.trim()) params.set('start', start.trim());
+    if (end?.trim()) params.set('end', end.trim());
+  }
   const q = params.toString();
   return apiCall(
     `${API_ENDPOINT.OPERATIONS.GetChatStats}${q ? `?${q}` : ''}`,
@@ -204,12 +213,22 @@ export const getCustomerStats = async ({
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetCustomerStats}`, 'GET', undefined, token)
 }
 export const getDashBoardStats = async ({
-  token
+  token,
+  timeWindow,
 }: {
-  token: string
+  token: string;
+  timeWindow?: StatsTimeWindow;
 }): Promise<AdminDashboardStatsResponse> => {
-  return await apiCall(`${API_ENDPOINT.OPERATIONS.GetDashboardStats}`, 'GET', undefined, token)
-}
+  const params = new URLSearchParams();
+  if (timeWindow && timeWindow !== 'all') params.set('timeWindow', timeWindow);
+  const q = params.toString();
+  return await apiCall(
+    `${API_ENDPOINT.OPERATIONS.GetDashboardStats}${q ? `?${q}` : ''}`,
+    'GET',
+    undefined,
+    token
+  );
+};
 export const getTeamStats = async ({ token }: { token: string }): Promise<TeamStatsResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.GetTeamStats}`, 'GET', undefined, token)
 }

@@ -20,6 +20,8 @@ export type MerchantTopupLog = {
   amount: string;
   currency: string;
   status: string;
+  trigger?: 'manual' | 'auto' | string;
+  balanceBeforeNgn?: number | null;
   palmpayOrderId?: string | null;
   palmpayOrderNo?: string | null;
   bankCode: string;
@@ -29,7 +31,7 @@ export type MerchantTopupLog = {
   errorMessage?: string | null;
   createdAt: string;
   completedAt?: string | null;
-  initiatedBy?: { id: number; firstname: string; lastname: string; email: string };
+  initiatedBy?: { id: number; firstname: string; lastname: string; email: string } | null;
 };
 
 export type MerchantsOverview = {
@@ -62,6 +64,10 @@ export type MerchantsOverview = {
       accountNumber?: string | null;
       accountName?: string | null;
     } | null;
+    autoTopupEnabled?: boolean;
+    autoTopupThresholdNgn?: number | null;
+    autoTopupAmountNgn?: number | null;
+    autoTopupCooldownMinutes?: number;
     balanceNgn?: StroWalletBalanceResult | null;
     balanceUsd?: StroWalletBalanceResult | null;
     balanceError?: string | null;
@@ -75,6 +81,10 @@ export type StroWalletTopupSettingsForm = {
   topupAccountNumber?: string;
   topupAccountName?: string;
   isActive?: boolean;
+  autoTopupEnabled?: boolean;
+  autoTopupThresholdNgn?: number | null;
+  autoTopupAmountNgn?: number | null;
+  autoTopupCooldownMinutes?: number;
 };
 
 export type StroWalletSettingsResponse = StroWalletTopupSettingsForm & {

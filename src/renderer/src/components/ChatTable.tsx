@@ -202,12 +202,29 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
             </button>
             {userData?.role !== 'agent' ? (
               currentItem ? (
-                <AdminChatApplication data={currentItem} id={activeChatId || 0} onClose={() => setIsChatOpen(false)} isAdmin={true} />
+                <AdminChatApplication
+                  data={currentItem}
+                  id={activeChatId || 0}
+                  onClose={() => setIsChatOpen(false)}
+                  isAdmin={true}
+                  onUserViewed={(customerId) => {
+                    setIsChatOpen(false);
+                    onUserViewed?.(customerId);
+                  }}
+                />
               ) : (
                 <div className="p-6 text-center">Loading chat data...</div>
               )
             ) : currentItem ? (
-              <ChatApplication data={currentItem} id={activeChatId || 0} onClose={() => setIsChatOpen(false)} />
+              <ChatApplication
+                data={currentItem}
+                id={activeChatId || 0}
+                onClose={() => setIsChatOpen(false)}
+                onUserViewed={(customerId) => {
+                  setIsChatOpen(false);
+                  onUserViewed?.(customerId);
+                }}
+              />
             ) : (
               <div className="p-6 text-center">Loading chat data...</div>
             )}
@@ -275,9 +292,13 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                 const emoji = countryEmoji(item.customer.country);
 
                 return (
-                  <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50/80 relative">
+                  <tr
+                    key={item.id}
+                    className="border-t border-gray-100 hover:bg-gray-50/80 relative cursor-pointer"
+                    onClick={() => handleeyeclick(item.id, item)}
+                  >
                     {hubLayout ? (
-                      <td className="py-3 pl-4 align-middle">
+                      <td className="py-3 pl-4 align-middle" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           className="rounded border-gray-400"
@@ -354,7 +375,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                         </span>
                       </td>
                     )}
-                    <td className="py-3 px-4 relative">
+                    <td className="py-3 px-4 relative" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-center items-center gap-4">
                         <button
                           type="button"
@@ -468,7 +489,11 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
           </thead>
           <tbody>
             {teamData?.map((member) => (
-              <tr key={member.id} className="border-t hover:bg-gray-50">
+              <tr
+                key={member.id}
+                className="border-t hover:bg-gray-50 cursor-pointer"
+                onClick={() => handlesecondEyeClick(member.id, member as AgentToAgentChatData)}
+              >
                 {/* Name and Username */}
                 <td className="py-3 px-4">
                   <div className="flex items-center space-x-3">
@@ -489,7 +514,7 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                   </span>
                 </td>
                 <td className="py-3 px-4">{member.recentMessageTimestamp.split('T')[0]}</td>
-                <td className="py-3 px-4 text-center">
+                <td className="py-3 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-center space-x-2">
                     <button
                       className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200"

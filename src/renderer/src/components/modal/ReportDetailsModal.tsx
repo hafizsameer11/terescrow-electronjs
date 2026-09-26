@@ -7,8 +7,11 @@ interface ReportDetailsModalProps {
   report: ReportDetail | null;
   /** true for admin/auditor: show Approve/Disapprove and Auditors Report editable */
   canApprove?: boolean;
-  onApprove?: (reportId: string) => void;
-  onDisapprove?: (reportId: string) => void;
+  onApprove?: (reportId: string, auditorsReport: string) => void;
+  onDisapprove?: (reportId: string, auditorsReport: string) => void;
+  /** Agent save for My Report */
+  onSaveMyReport?: (reportId: string, myReport: string) => void;
+  isSaving?: boolean;
 }
 
 const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
@@ -18,6 +21,8 @@ const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
   canApprove = false,
   onApprove,
   onDisapprove,
+  onSaveMyReport,
+  isSaving = false,
 }) => {
   const [myReport, setMyReport] = useState(report?.myReport ?? '');
   const [auditorsReport, setAuditorsReport] = useState(report?.auditorsReport ?? '');
@@ -140,17 +145,30 @@ const ReportDetailsModal: React.FC<ReportDetailsModalProps> = ({
             <div className="flex gap-3 pt-2">
               <button
                 type="button"
-                onClick={() => onApprove?.(report.id)}
+                onClick={() => onApprove?.(report.id, auditorsReport)}
                 className="flex-1 py-2.5 bg-[#147341] text-white font-medium rounded-lg hover:bg-[#0d5a2e]"
               >
                 Approve
               </button>
               <button
                 type="button"
-                onClick={() => onDisapprove?.(report.id)}
-                className="flex-1 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700"
+                onClick={() => onDisapprove?.(report.id, auditorsReport)}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700"
               >
                 Disapprove
+              </button>
+            </div>
+          )}
+
+          {!canApprove && (
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => onSaveMyReport?.(report.id, myReport)}
+                className="flex-1 py-2.5 bg-[#147341] text-white font-medium rounded-lg hover:bg-[#0d5a2e] disabled:opacity-60"
+              >
+                {isSaving ? 'Saving…' : 'Save Report'}
               </button>
             </div>
           )}

@@ -75,6 +75,8 @@ type Props = {
     declined?: number;
     totalTransactions?: number;
   };
+  /** When true, labels note that counts are since the agent's clock-in. */
+  sinceClockIn?: boolean;
   balanceView: BalanceView;
   balanceMenuOpen: boolean;
   balanceLabel: string;
@@ -96,6 +98,7 @@ type Props = {
 
 const ChatsHubSummaryCards: React.FC<Props> = ({
   chatStats,
+  sinceClockIn = false,
   balanceView,
   balanceMenuOpen,
   balanceLabel,
@@ -131,11 +134,17 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
             <ChatsCardIcon />
             <div className="min-w-0">
               <h2 className={headerTitle}>Chat Summary</h2>
-              <p className={headerSub}>View quick stats for your chats.</p>
+              <p className={headerSub}>
+                {sinceClockIn
+                  ? 'Stats since clock-in.'
+                  : 'View quick stats for your chats.'}
+              </p>
             </div>
           </div>
           <div className="shrink-0 rounded-md border border-gray-400/60 bg-white/40 px-2.5 py-1.5 text-center min-w-[96px]">
-            <p className="text-[10px] text-gray-600 leading-tight">Total Transactions</p>
+            <p className="text-[10px] text-gray-600 leading-tight">
+              {sinceClockIn ? 'Total Transactions (Since clock-in)' : 'Total Transactions'}
+            </p>
             <p className="text-[15px] font-bold text-gray-900 mt-0.5 tabular-nums leading-none">
               {chatStats.totalTransactions ?? '—'}
             </p>

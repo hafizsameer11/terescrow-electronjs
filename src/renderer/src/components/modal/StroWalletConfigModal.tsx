@@ -25,6 +25,10 @@ const emptyForm: StroWalletTopupSettingsForm = {
   topupAccountNumber: '',
   topupAccountName: '',
   isActive: true,
+  autoTopupEnabled: false,
+  autoTopupThresholdNgn: null,
+  autoTopupAmountNgn: null,
+  autoTopupCooldownMinutes: 30,
 };
 
 export default function StroWalletConfigModal({
@@ -84,6 +88,10 @@ export default function StroWalletConfigModal({
       topupAccountNumber: initial?.topupAccountNumber ?? '',
       topupAccountName: initial?.topupAccountName ?? '',
       isActive: initial?.isActive ?? true,
+      autoTopupEnabled: initial?.autoTopupEnabled ?? false,
+      autoTopupThresholdNgn: initial?.autoTopupThresholdNgn ?? null,
+      autoTopupAmountNgn: initial?.autoTopupAmountNgn ?? null,
+      autoTopupCooldownMinutes: initial?.autoTopupCooldownMinutes ?? 30,
     });
     setVerifyMessage(null);
   }, [isOpen, initial]);
@@ -95,6 +103,20 @@ export default function StroWalletConfigModal({
     if (!form.topupBankCode?.trim()) {
       setVerifyMessage('Please select a bank from the PalmPay list.');
       return;
+    }
+    if (form.autoTopupEnabled) {
+      if (form.autoTopupThresholdNgn == null || !Number.isFinite(form.autoTopupThresholdNgn)) {
+        setVerifyMessage('Set a threshold amount before enabling auto top-up.');
+        return;
+      }
+      if (
+        form.autoTopupAmountNgn == null ||
+        !Number.isFinite(form.autoTopupAmountNgn) ||
+        form.autoTopupAmountNgn <= 0
+      ) {
+        setVerifyMessage('Set a transfer amount greater than 0 before enabling auto top-up.');
+        return;
+      }
     }
     onSubmit(form);
   };
@@ -222,6 +244,83 @@ export default function StroWalletConfigModal({
             />
             <span className="text-sm text-gray-700">Enable StroWallet top-ups</span>
           </label>
+
+          <div className="border-t pt-4 space-y-3">
+            <h3 className="text-sm font-semibold text-gray-800">Auto top-up (PalmPay → StroWallet)</h3>
+            <p className="text-xs text-gray-500">
+              When NGN balance is at or below the threshold, send the transfer amount from PalmPay
+              (checked every 5 minutes).
+            </p>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.autoTopupEnabled ?? false}
+                onChange={(e) => setForm((s) => ({ ...s, autoTopupEnabled: e.target.checked }))}
+              />
+              <span className="text-sm text-gray-700">Enable auto top-up</span>
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Threshold (₦)</label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.autoTopupThresholdNgn ?? ''}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      autoTopupThresholdNgn:
+                        e.target.value === '' ? null : parseFloat(e.target.value),
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  placeholder="e.g. 100000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Transfer amount (₦)
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={form.autoTopupAmountNgn ?? ''}
+                  onChange={(e) =>
+                    setForm((s) => ({
+                      ...s,
+                      autoTopupAmountNgn:
+                        e.target.value === '' ? null : parseFloat(e.target.value),
+                    }))
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  placeholder="e.g. 500000"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Cooldown (minutes)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={1440}
+                value={form.autoTopupCooldownMinutes ?? 30}
+                onChange={(e) =>
+                  setForm((s) => ({
+                    ...s,
+                    autoTopupCooldownMinutes: parseInt(e.target.value, 10) || 30,
+                  }))
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg max-w-[200px]"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Minimum wait between successful/pending auto transfers (default 30).
+              </p>
+            </div>
+          </div>
 
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-lg">

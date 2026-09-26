@@ -36,10 +36,24 @@ function formatActiveHours(value: unknown): string {
   return parts.join(' ');
 }
 
+function asMoney(value: unknown, fallback = '—'): string {
+  if (value == null || value === '') return fallback;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return `₦${Math.round(value).toLocaleString('en-NG')}`;
+  }
+  return String(value);
+}
+
 export function mapDailyReportDetail(reportRaw: any, fallbackId?: string): ReportDetail {
   const clockInRaw = reportRaw.clockInTime ?? reportRaw.clock_in_time;
   const clockOutRaw = reportRaw.clockOutTime ?? reportRaw.clock_out_time;
   const activeRaw = reportRaw.activeHours ?? reportRaw.active_hours;
+  const giftCardRaw = reportRaw.giftCard ?? reportRaw.gift_card ?? {};
+  const cryptoRaw = reportRaw.crypto ?? {};
+  const billRaw = reportRaw.billPayments ?? reportRaw.bill_payments ?? {};
+  const chatRaw = reportRaw.chat ?? {};
+  const financialsRaw = reportRaw.financials ?? {};
 
   return {
     id: String(reportRaw.id ?? fallbackId ?? ''),
@@ -53,11 +67,36 @@ export function mapDailyReportDetail(reportRaw: any, fallbackId?: string): Repor
     activeHours: formatActiveHours(activeRaw),
     totalChatSessions: reportRaw.totalChatSessions ?? reportRaw.total_chat_sessions ?? 0,
     avgResponseTimeSec: reportRaw.avgResponseTimeSec ?? reportRaw.avg_response_time_sec ?? 0,
-    giftCard: reportRaw.giftCard ?? reportRaw.gift_card ?? { purchaseAmt: '—', salesAmt: '—', profit: '—' },
-    crypto: reportRaw.crypto ?? { openingBalance: '—', closingBalance: '—', profit: '—' },
-    billPayments: reportRaw.billPayments ?? reportRaw.bill_payments ?? { openingBalance: '—', closingBalance: '—', profit: '—' },
-    chat: reportRaw.chat ?? { successful: 0, pending: 0, unsuccessful: 0, totalProfit: '—' },
-    financials: reportRaw.financials ?? { earnPayout: '—', openingBalance: '—', closingBalance: '—', totalProfit: '—' },
+    giftCard: {
+      purchaseAmt: asMoney(giftCardRaw.purchaseAmt ?? giftCardRaw.purchase_amt, '₦0'),
+      salesAmt: asMoney(giftCardRaw.salesAmt ?? giftCardRaw.sales_amt ?? giftCardRaw.amount, '₦0'),
+      profit: asMoney(giftCardRaw.profit, '₦0'),
+    },
+    crypto: {
+      openingBalance: asMoney(cryptoRaw.openingBalance ?? cryptoRaw.opening_balance, '—'),
+      closingBalance: asMoney(cryptoRaw.closingBalance ?? cryptoRaw.closing_balance ?? cryptoRaw.amount, '₦0'),
+      profit: asMoney(cryptoRaw.profit, '₦0'),
+    },
+    billPayments: {
+      openingBalance: asMoney(billRaw.openingBalance ?? billRaw.opening_balance, '—'),
+      closingBalance: asMoney(billRaw.closingBalance ?? billRaw.closing_balance ?? billRaw.amount, '₦0'),
+      profit: asMoney(billRaw.profit, '₦0'),
+    },
+    chat: {
+      successful: Number(chatRaw.successful ?? 0) || 0,
+      pending: Number(chatRaw.pending ?? 0) || 0,
+      unsuccessful: Number(chatRaw.unsuccessful ?? 0) || 0,
+      totalProfit: asMoney(chatRaw.totalProfit ?? chatRaw.total_profit, '₦0'),
+    },
+    financials: {
+      earnPayout: asMoney(financialsRaw.earnPayout ?? financialsRaw.earn_payout, '—'),
+      openingBalance: asMoney(financialsRaw.openingBalance ?? financialsRaw.opening_balance, '—'),
+      closingBalance: asMoney(financialsRaw.closingBalance ?? financialsRaw.closing_balance, '—'),
+      totalProfit: asMoney(
+        financialsRaw.totalProfit ?? financialsRaw.total_profit ?? financialsRaw.amountMade,
+        '₦0'
+      ),
+    },
     status: reportRaw.status === 'approved' ? 'approved' : 'not_approved',
     myReport: reportRaw.myReport ?? reportRaw.my_report ?? '',
     auditorsReport: reportRaw.auditorsReport ?? reportRaw.auditors_report ?? '',

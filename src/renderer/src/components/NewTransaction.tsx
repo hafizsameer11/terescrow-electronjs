@@ -66,7 +66,14 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
     mutationFn: createCardTransaction,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['customer-chat-details'] });
-      alert(data?.message || 'Transaction Completed successfully');
+      if (formData.creditWallet) {
+        const credited = formData.walletCreditAmount || formData.amountNaira;
+        alert(
+          `${data?.message || 'Transaction Completed successfully'}\n\nCustomer Naira wallet was credited with ₦${credited}.`
+        );
+      } else {
+        alert(data?.message || 'Transaction Completed successfully');
+      }
       changeStatus({ chatId, setStatus: ChatStatus.successful });
       closeModal();
     },
@@ -231,7 +238,13 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
                   <label className="block text-gray-700">Card Number</label>
                   <input type="text" value={formData.cardNumber} onChange={(e) => handleInputChange('cardNumber', e.target.value)} className="w-full p-2 border rounded-lg mb-4" />
 
-                  <div className="mb-4 p-3 rounded-lg border border-green-200 bg-green-50">
+                  <div
+                    className={`mb-4 p-3 rounded-lg border ${
+                      formData.creditWallet
+                        ? 'border-2 border-green-600 bg-green-50 shadow-sm ring-2 ring-green-200'
+                        : 'border border-green-200 bg-green-50'
+                    }`}
+                  >
                     <label className="flex items-start gap-2 cursor-pointer">
                       <input
                         type="checkbox"
@@ -240,7 +253,9 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
                         className="mt-1"
                       />
                       <span>
-                        <span className="block font-medium text-gray-800">Credit Naira wallet</span>
+                        <span className="block font-medium text-gray-800">
+                          Pay customer (credit Naira wallet)
+                        </span>
                         <span className="block text-sm text-gray-600">
                           Optional. Credits the customer&apos;s in-app Naira wallet. If they are on the old app (no wallet), this will be blocked — complete the sale without wallet credit instead.
                         </span>

@@ -1,7 +1,11 @@
 import { app, shell, BrowserWindow, ipcMain, Notification, MenuItem, Menu,Tray, nativeImage, clipboard } from 'electron'
 import { join } from 'path'
 import fs from 'fs'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+
+const execFileAsync = promisify(execFile)
 const iconPath = {
   mac: join(__dirname, '../../resources/mac.icns'), // macOS icon
   win: join(__dirname, '../../resources/win.ico'), // Windows icon
@@ -121,18 +125,96 @@ ipcMain.on('show-image-context-menu', (event) => {
     window: BrowserWindow.getFocusedWindow()!,
   });
 });
-ipcMain.on('copy-image-from-buffer', (_event, byteArray: Uint8Array) => {
-  const buffer = Buffer.from(byteArray); // Convert Uint8Array to Buffer
+const copyImageFromBuffer = (byteArray: Uint8Array) => {
+  const buffer = Buffer.from(byteArray);
   const image = nativeImage.createFromBuffer(buffer);
 
   if (image.isEmpty()) {
     console.warn('⚠️ Image buffer is empty or corrupted.');
-  } else {
-    clipboard.clear();
-    clipboard.writeImage(image);
-    console.log('✅ Image copied to clipboard');
+    return false;
   }
+  clipboard.clear();
+  clipboard.writeImage(image);
+  console.log('✅ Image copied to clipboard');
+  return true;
+};
+
+function sniffImageExt(buf: Buffer): string {
+  if (buf.length >= 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
+  if (buf.length >= 8 && buf[0] === 0x89 && buf[1] === 0x50) return 'png';
+  if (buf.length >= 6 && buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return 'gif';
+  if (buf.length >= 12 && buf[0] === 0x52 && buf[1] === 0x49 && buf[8] === 0x57) return 'webp';
+  return 'png';
+}
+
+/** Put multiple files on the system clipboard (Mac/Windows). Mac has no clipboard history. */
+async function copyFilesToClipboard(paths: string[]): Promise<void> {
+  if (paths.length === 0) return;
+
+  if (process.platform === 'darwin') {
+    const list = paths
+      .map((p) => `POSIX file "${p.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`)
+      .join(', ');
+    await execFileAsync('osascript', ['-e', `set the clipboard to {${list}}`]);
+    return;
+  }
+
+  if (process.platform === 'win32') {
+    const quoted = paths.map((p) => `'${p.replace(/'/g, "''")}'`).join(',');
+    await execFileAsync('powershell.exe', [
+      '-NoProfile',
+      '-Command',
+      `Set-Clipboard -Path @(${quoted})`,
+    ]);
+    return;
+  }
+
+  // Linux / other: best-effort single image
+  copyImageFromBuffer(new Uint8Array(fs.readFileSync(paths[0])));
+}
+
+ipcMain.on('copy-image-from-buffer', (_event, byteArray: Uint8Array) => {
+  copyImageFromBuffer(byteArray);
 });
+
+ipcMain.handle('copy-image-from-buffer', (_event, byteArray: Uint8Array) => {
+  return copyImageFromBuffer(byteArray);
+});
+
+/** One image → bitmap clipboard; multiple → file list (works on Mac without clipboard history). */
+ipcMain.handle(
+  'copy-images-from-buffers',
+  async (_event, payloads: Array<{ bytes: number[] | Uint8Array }>) => {
+    if (!payloads?.length) {
+      return { ok: false, reason: 'empty' };
+    }
+
+    if (payloads.length === 1) {
+      const bytes =
+        payloads[0].bytes instanceof Uint8Array
+          ? payloads[0].bytes
+          : Uint8Array.from(payloads[0].bytes as number[]);
+      const ok = copyImageFromBuffer(bytes);
+      return { ok, mode: 'image' as const, count: 1 };
+    }
+
+    const tmpDir = fs.mkdtempSync(join(app.getPath('temp'), 'terescrow-imgs-'));
+    const paths: string[] = [];
+    for (let i = 0; i < payloads.length; i++) {
+      const raw = payloads[i].bytes;
+      const buf = Buffer.from(
+        raw instanceof Uint8Array ? raw : Uint8Array.from(raw as number[])
+      );
+      const ext = sniffImageExt(buf);
+      const filePath = join(tmpDir, `giftcard-${i + 1}.${ext}`);
+      fs.writeFileSync(filePath, buf);
+      paths.push(filePath);
+    }
+
+    await copyFilesToClipboard(paths);
+    return { ok: true, mode: 'files' as const, count: paths.length, dir: tmpDir };
+  }
+);
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()

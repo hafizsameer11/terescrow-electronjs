@@ -212,8 +212,8 @@ const API_ENDPOINT = {
     // GetTeamChatDetails: API_DOMAIN + 'get-team-chat-details',
   },
   AGENT: {
-    CreateCryptoTransaction: API_DOMAIN + '/agent/create-crypto-transaction',
-    CreateCardTransaction: API_DOMAIN + '/agent/create-card-transaction',
+    CreateCryptoTransaction: API_DOMAIN + '/agent/utilities/create-crypto-transaction',
+    CreateCardTransaction: API_DOMAIN + '/agent/utilities/create-card-transaction',
     ChangeChatStatus: API_DOMAIN + '/agent/change-chat-status',
     GetPendingChats: API_DOMAIN + '/agent/utilities/get-all-default-chats',
     TakeOverDefaultChat: API_DOMAIN + '/agent/utilities/take-over-chat',

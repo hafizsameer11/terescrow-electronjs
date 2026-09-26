@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiSearch } from 'react-icons/fi';
+import { FiCalendar, FiSearch } from 'react-icons/fi';
 
 export interface ChatFiltersState {
   status: string;
@@ -8,6 +8,8 @@ export interface ChatFiltersState {
   search: string;
   category: string;
   transactionType?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 interface ChatFiltersProps {
@@ -18,6 +20,8 @@ interface ChatFiltersProps {
   /** Legacy: category row + date dropdown. Chats hub: compact toolbar like design mock. */
   layout?: 'legacy' | 'chatsHub';
   showCategoryRow?: boolean;
+  /** When false, hub layout omits search (parent may render it in the page header). */
+  showSearch?: boolean;
 }
 
 const STATUS_TABS: { label: string; value: string }[] = [
@@ -29,6 +33,8 @@ const STATUS_TABS: { label: string; value: string }[] = [
   { label: 'Unsuccessful', value: 'unsucessful' },
 ];
 
+const DATE_RANGE_OPTIONS = ['Last 7 days', 'Last 15 days', 'Last 30 days', 'Last 90 days', 'All'] as const;
+
 const ChatFilters: React.FC<ChatFiltersProps> = ({
   filters,
   onChange,
@@ -36,6 +42,7 @@ const ChatFilters: React.FC<ChatFiltersProps> = ({
   subtitle,
   layout = 'legacy',
   showCategoryRow = true,
+  showSearch = true,
 }) => {
   const typeOptions = ['All', 'buy', 'sell'];
   const categoryOptions = ['All', 'crypto', 'giftCard'];
@@ -99,16 +106,57 @@ const ChatFilters: React.FC<ChatFiltersProps> = ({
               </option>
             </select>
 
-            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white min-w-[220px] flex-1 max-w-md">
-              <FiSearch className="text-gray-400 shrink-0 mr-2" />
-              <input
-                type="text"
-                placeholder="Search customer"
-                value={filters.search}
-                onChange={(e) => onChange({ search: e.target.value })}
-                className="outline-none text-sm text-gray-700 w-full bg-transparent"
-              />
-            </div>
+            {/* Date range where search used to sit (right side) */}
+            <select
+              value={filters.dateRange}
+              onChange={(e) => onChange({ dateRange: e.target.value })}
+              className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white min-w-[140px]"
+              aria-label="Date range"
+            >
+              {DATE_RANGE_OPTIONS.map((range) => (
+                <option key={range} value={range}>
+                  {range}
+                </option>
+              ))}
+            </select>
+
+            <label className="flex items-center gap-1.5 text-xs text-gray-600">
+              <span className="sr-only">Start Date</span>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={filters.startDate ?? ''}
+                  onChange={(e) => onChange({ startDate: e.target.value })}
+                  className="pl-3 pr-8 py-2 rounded-lg border border-gray-300 text-sm text-gray-800 min-w-[140px]"
+                />
+                <FiCalendar className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-3.5 h-3.5" />
+              </div>
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-gray-600">
+              <span className="sr-only">End Date</span>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={filters.endDate ?? ''}
+                  onChange={(e) => onChange({ endDate: e.target.value })}
+                  className="pl-3 pr-8 py-2 rounded-lg border border-gray-300 text-sm text-gray-800 min-w-[140px]"
+                />
+                <FiCalendar className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-3.5 h-3.5" />
+              </div>
+            </label>
+
+            {showSearch ? (
+              <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2 bg-white min-w-[220px] flex-1 max-w-md">
+                <FiSearch className="text-gray-400 shrink-0 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Search customer"
+                  value={filters.search}
+                  onChange={(e) => onChange({ search: e.target.value })}
+                  className="outline-none text-sm text-gray-700 w-full bg-transparent"
+                />
+              </div>
+            ) : null}
           </div>
         </div>
 
@@ -193,7 +241,19 @@ const ChatFilters: React.FC<ChatFiltersProps> = ({
         )}
       </div>
 
+      {/* Swapped: search (was right) ↔ date range (was left) */}
       <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center border bg-white border-gray-300 rounded-lg px-4 py-2 flex-1 max-w-md">
+          <FiSearch className="text-gray-400 shrink-0 mr-2" />
+          <input
+            type="text"
+            placeholder="Search"
+            value={filters.search}
+            onChange={(e) => onChange({ search: e.target.value })}
+            className="outline-none text-sm text-gray-600 w-full"
+          />
+        </div>
+
         <select
           value={filters.dateRange}
           onChange={(e) => onChange({ dateRange: e.target.value })}
@@ -205,16 +265,6 @@ const ChatFilters: React.FC<ChatFiltersProps> = ({
             </option>
           ))}
         </select>
-
-        <div className="flex items-center border bg-white border-gray-300 rounded-lg px-4 py-2 flex-1 max-w-md">
-          <input
-            type="text"
-            placeholder="Search"
-            value={filters.search}
-            onChange={(e) => onChange({ search: e.target.value })}
-            className="outline-none text-sm text-gray-600 w-full"
-          />
-        </div>
       </div>
     </div>
   );

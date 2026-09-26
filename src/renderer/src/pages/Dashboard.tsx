@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { getDashBoardStats } from '@renderer/api/queries/admin.chat.queries';
+import {
+  getDashBoardStats,
+  type StatsTimeWindow,
+} from '@renderer/api/queries/admin.chat.queries';
 import { getAdminTransactions } from '@renderer/api/admin/transactions';
 import StatsCard from '@renderer/components/StatsCard';
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable';
@@ -11,6 +14,13 @@ import { addThousandSeparator } from '@renderer/api/helper';
 import { apiDateParams } from '@renderer/utils/dateRange';
 import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
 import ListFetchingIndicator from '@renderer/components/ListFetchingIndicator';
+
+const TIME_WINDOW_OPTIONS: { label: string; value: StatsTimeWindow }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Last 12 hours', value: 'last12hrs' },
+  { label: 'Day 8am–8pm', value: 'dayShift' },
+  { label: 'Night 8pm–8am', value: 'nightShift' },
+];
 
 const Dashboard: React.FC = () => {
   const { token } = useAuth();
@@ -23,6 +33,7 @@ const Dashboard: React.FC = () => {
   }, [token, navigate]);
 
   const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
+  const [timeWindow, setTimeWindow] = useState<StatsTimeWindow>('all');
   const [filters, setFilters] = useState({
     status: 'All',
     type: 'All',
@@ -58,8 +69,8 @@ const Dashboard: React.FC = () => {
   const initialTxLoad = isLoading && !txData;
 
   const { data: dashboardStats } = useQuery({
-    queryKey: ['dashboardStats'],
-    queryFn: () => getDashBoardStats({ token }),
+    queryKey: ['dashboardStats', timeWindow],
+    queryFn: () => getDashBoardStats({ token: token!, timeWindow }),
     enabled: !!token,
   });
 
@@ -67,11 +78,25 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="p-6 space-y-8 w-full">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-[40px] text-gray-800">Dashboard</h1>
 
-        {/* Custom Date Range Filter */}
-        <div className="flex space-x-4">
+        <div className="flex flex-wrap items-end gap-4">
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">Time window</label>
+            <select
+              value={timeWindow}
+              onChange={(e) => setTimeWindow(e.target.value as StatsTimeWindow)}
+              className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800 min-w-[160px]"
+              aria-label="Stats time window"
+            >
+              {TIME_WINDOW_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="block text-sm text-gray-700">Start Date</label>
             <input

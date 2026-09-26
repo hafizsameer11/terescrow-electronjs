@@ -13,7 +13,7 @@ interface HeaderProps {
   name: string
   username: string
   onClose: () => void
-
+  onUserViewed?: () => void
 }
 
 const AdminChatHeader: React.FC<HeaderProps> = ({
@@ -21,7 +21,7 @@ const AdminChatHeader: React.FC<HeaderProps> = ({
   name,
   username,
   onClose,
-
+  onUserViewed,
 }) => {
   console.log("THis is the ChatHeader");
   console.log(name, username);
@@ -49,13 +49,18 @@ const AdminChatHeader: React.FC<HeaderProps> = ({
           </button>
 
           {/* Avatar and Name */}
-          <div>
+          <button
+            type="button"
+            className="flex items-center space-x-3 text-left hover:opacity-80 focus:outline-none"
+            onClick={onUserViewed}
+            disabled={!onUserViewed}
+          >
             <img src={avatar} alt="User Avatar" className="w-10 h-10 rounded-full" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-800">{name}</h3>
-            <p className="text-sm text-gray-500 mb-0">@{username}</p>
-          </div>
+            <div>
+              <h3 className="font-semibold text-gray-800">{name}</h3>
+              <p className="text-sm text-gray-500 mb-0">@{username}</p>
+            </div>
+          </button>
         </div>
 
         {/* Right Section */}

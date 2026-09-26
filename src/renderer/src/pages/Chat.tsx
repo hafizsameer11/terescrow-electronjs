@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { FiCalendar } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom';
+import { FiSearch } from 'react-icons/fi';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import ChatsHubSummaryCards from '@renderer/components/chats/ChatsHubSummaryCards';
 import { useAuth } from '@renderer/context/authContext';
 import {
@@ -10,6 +10,7 @@ import {
   getTeamStats,
   PaginatedChatsResponse,
   ChatRow,
+  type StatsTimeWindow,
 } from '@renderer/api/queries/admin.chat.queries';
 import { getAllAgentss } from '@renderer/api/queries/adminqueries';
 import {
@@ -24,7 +25,7 @@ import CheckInModal from '@renderer/components/modal/CheckInModal';
 import ChatFilters from '@renderer/components/ChatFilters';
 import ChatTable from '@renderer/components/ChatTable';
 import type { AgentToCustomerChatData } from '@renderer/api/queries/datainterfaces';
-import { getImageUrl, formatNairaAmount, addThousandSeparator } from '@renderer/api/helper';
+import { getImageUrl, addThousandSeparator } from '@renderer/api/helper';
 import { apiDateParams, toDateString, toApiInclusiveEnd } from '@renderer/utils/dateRange';
 import { bucketChatProfitsFromLedger } from '@renderer/utils/chatFinancials';
 
@@ -32,10 +33,17 @@ const PAGE_SIZE = 50;
 /** Live hub refresh — light enough for admin, fresh enough for the client. */
 const HUB_POLL_MS = 15_000;
 
+const TIME_WINDOW_OPTIONS: { label: string; value: StatsTimeWindow }[] = [
+  { label: 'All', value: 'all' },
+  { label: 'Last 12 hours', value: 'last12hrs' },
+  { label: 'Day 8am–8pm', value: 'dayShift' },
+  { label: 'Night 8pm–8am', value: 'nightShift' },
+];
+
 type UIFilters = {
   status: string;
   type: string;
-  dateRange: 'Last 7 days' | 'Last 15 days' | 'Last 30 days' | 'All';
+  dateRange: 'Last 7 days' | 'Last 15 days' | 'Last 30 days' | 'All' | 'Last 90 days';
   search: string;
   transactionType: string;
   category: string;
@@ -87,11 +95,9 @@ function chatRowToAgentData(row: ChatRow): AgentToCustomerChatData {
   };
 }
 
-function formatInputDate(iso: string): string {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-');
-  if (!y || !m || !d) return iso;
-  return `${d}/${m}/${y}`;
+function toCheckInIso(checkInTime: string): string {
+  const d = new Date(checkInTime);
+  return Number.isNaN(d.getTime()) ? checkInTime : d.toISOString();
 }
 
 type BalanceView = 'customers' | 'trades';
@@ -99,10 +105,13 @@ type BalanceView = 'customers' | 'trades';
 const Chat = () => {
   const { token, userData } = useAuth();
   const navigate = useNavigate();
-  const { checkIn, checkOut, isCheckingIn, isCheckingOut, isClockedIn } = useDailyReportSession();
+  const [searchParams] = useSearchParams();
+  const { checkIn, checkOut, isCheckingIn, isCheckingOut, isClockedIn, session } =
+    useDailyReportSession();
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [balanceView, setBalanceView] = useState<BalanceView>('customers');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
+  const [timeWindow, setTimeWindow] = useState<StatsTimeWindow>('all');
 
   const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
   const todayIso = toDateString(new Date());
@@ -127,6 +136,16 @@ const Chat = () => {
     return () => clearTimeout(t);
   }, [searchInput]);
 
+  // Filter chat history when navigating from customer header click (?q=username)
+  useEffect(() => {
+    const q = searchParams.get('q');
+    if (q != null && q !== '') {
+      setSearchInput(q);
+      setFilters((prev) => ({ ...prev, search: q }));
+      setPage(1);
+    }
+  }, [searchParams]);
+
   const hubDateParams = useMemo(() => {
     const { startDate, endDate } = apiDateParams({
       startDate: filters.startDate,
@@ -140,13 +159,41 @@ const Chat = () => {
     };
   }, [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]);
 
+  // Align summary with chat list dates. Clock-in only floors start when the
+  // selected range is the same calendar day as check-in (keeps "since clock-in"
+  // for today without zeroing historical ranges like yesterday).
+  const statsQueryParams = useMemo(() => {
+    if (timeWindow !== 'all') {
+      return { timeWindow } as const;
+    }
+    let start = hubDateParams.start;
+    const end = hubDateParams.end;
+    if (isClockedIn && session?.checkInTime && start) {
+      const checkInIso = toCheckInIso(session.checkInTime);
+      const checkInDay = checkInIso.slice(0, 10);
+      const startDay = start.includes('T') ? start.slice(0, 10) : start;
+      if (startDay === checkInDay && new Date(checkInIso) > new Date(start)) {
+        start = checkInIso;
+      }
+    }
+    return { start, end } as const;
+  }, [timeWindow, isClockedIn, session?.checkInTime, hubDateParams.start, hubDateParams.end]);
+
+  const sinceClockIn =
+    timeWindow === 'all' &&
+    !!isClockedIn &&
+    !!session?.checkInTime &&
+    !!hubDateParams.start &&
+    (hubDateParams.start.includes('T')
+      ? hubDateParams.start.slice(0, 10)
+      : hubDateParams.start) === toCheckInIso(session.checkInTime).slice(0, 10);
+
   const { data: chatStatsData } = useQuery({
-    queryKey: ['chatStats', token, hubDateParams],
+    queryKey: ['chatStats', token, statsQueryParams],
     queryFn: () =>
       getChatStats({
         token: token!,
-        start: hubDateParams.start,
-        end: hubDateParams.end,
+        ...statsQueryParams,
       }),
     enabled: !!token,
     refetchInterval: HUB_POLL_MS,
@@ -323,37 +370,29 @@ const Chat = () => {
               </button>
             </div>
 
-            <div className="flex flex-wrap items-end gap-4">
-              <label className="flex flex-col gap-1 text-xs text-gray-600">
-                Start Date
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={filters.startDate}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, startDate: e.target.value }))}
-                    className="pl-3 pr-9 py-2 rounded-lg border border-gray-300 text-sm text-gray-800 min-w-[160px]"
-                  />
-                  <FiCalendar className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4" />
-                </div>
-                {filters.startDate ? (
-                  <span className="text-[10px] text-gray-400">{formatInputDate(filters.startDate)}</span>
-                ) : null}
-              </label>
-              <label className="flex flex-col gap-1 text-xs text-gray-600">
-                End Date
-                <div className="relative">
-                  <input
-                    type="date"
-                    value={filters.endDate}
-                    onChange={(e) => setFilters((prev) => ({ ...prev, endDate: e.target.value }))}
-                    className="pl-3 pr-9 py-2 rounded-lg border border-gray-300 text-sm text-gray-800 min-w-[160px]"
-                  />
-                  <FiCalendar className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none w-4 h-4" />
-                </div>
-                {filters.endDate ? (
-                  <span className="text-[10px] text-gray-400">{formatInputDate(filters.endDate)}</span>
-                ) : null}
-              </label>
+            <select
+              value={timeWindow}
+              onChange={(e) => setTimeWindow(e.target.value as StatsTimeWindow)}
+              className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-700 bg-white min-w-[160px]"
+              aria-label="Stats time window"
+            >
+              {TIME_WINDOW_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Search moved here from ChatFilters (was date range position) */}
+            <div className="flex items-center border border-gray-300 rounded-lg px-3 py-2.5 bg-white min-w-[220px] flex-1 max-w-md">
+              <FiSearch className="text-gray-400 shrink-0 mr-2" />
+              <input
+                type="text"
+                placeholder="Search customer"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="outline-none text-sm text-gray-700 w-full bg-transparent"
+              />
             </div>
 
             <div className="flex items-center gap-6 border-l border-gray-200 pl-6 ml-auto xl:ml-0">
@@ -391,12 +430,15 @@ const Chat = () => {
         <ChatsHubSummaryCards
           chatStats={{
             totalChats: stats?.totalChats?.count,
-            successful: stats?.successfulTransactions?.count,
+            successful:
+              stats?.successfulChats?.count ?? stats?.successfulTransactions?.count,
             unsuccessful: stats?.unsuccessfulChats?.count,
             pending: stats?.pendingChats?.count,
             declined: stats?.declinedChats?.count,
-            totalTransactions: stats?.totalChats?.count ?? stats?.successfulTransactions?.count,
+            totalTransactions:
+              stats?.successfulTransactions?.count ?? stats?.totalChats?.count,
           }}
+          sinceClockIn={sinceClockIn}
           balanceView={balanceView}
           balanceMenuOpen={balanceMenuOpen}
           balanceLabel={balanceLabel}
@@ -422,12 +464,30 @@ const Chat = () => {
         <ChatFilters
           layout="chatsHub"
           showCategoryRow={false}
-          filters={{ ...filters, search: searchInput }}
+          showSearch={false}
+          filters={{
+            ...filters,
+            search: searchInput,
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+          }}
           title="Chat History"
           subtitle="Manage total chat and transaction"
           onChange={(updated) => {
             if ('search' in updated) setSearchInput(String(updated.search ?? ''));
-            if ('dateRange' in updated) setDateRangePresetActive(true);
+            if ('dateRange' in updated) {
+              setDateRangePresetActive(true);
+              // Clearing custom dates lets the preset drive the API range
+              if (updated.dateRange && updated.dateRange !== 'All') {
+                setFilters((prev) => ({
+                  ...prev,
+                  ...updated,
+                  startDate: '',
+                  endDate: '',
+                }));
+                return;
+              }
+            }
             setFilters((prev) => ({ ...prev, ...updated }));
           }}
         />
@@ -439,7 +499,17 @@ const Chat = () => {
               isChat
               hubLayout
               disableInternalPagination
-              onUserViewed={() => null}
+              onUserViewed={(customerId) => {
+                const row = tableRows.find((r) => r.customer.id === customerId);
+                const q =
+                  row?.customer.username ||
+                  [row?.customer.firstname, row?.customer.lastname].filter(Boolean).join(' ') ||
+                  String(customerId);
+                setSearchInput(q);
+                setFilters((prev) => ({ ...prev, search: q }));
+                setPage(1);
+                navigate(`/chats?q=${encodeURIComponent(q)}`, { replace: true });
+              }}
             />
 
             <div className="flex items-center justify-between pt-2">

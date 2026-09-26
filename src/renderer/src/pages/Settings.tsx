@@ -273,6 +273,23 @@ const Settings = () => {
                   </p>
                 )}
               </div>
+              <div className="border-t pt-4 space-y-2">
+                <p className="text-sm font-medium text-gray-800">Auto top-up</p>
+                {merchantsOverview?.strowallet.autoTopupEnabled ? (
+                  <p className="text-sm text-gray-700">
+                    On — when balance ≤ ₦
+                    {(merchantsOverview.strowallet.autoTopupThresholdNgn ?? 0).toLocaleString()}
+                    , send ₦
+                    {(merchantsOverview.strowallet.autoTopupAmountNgn ?? 0).toLocaleString()}
+                    <span className="text-xs text-gray-500">
+                      {' '}
+                      · cooldown {merchantsOverview.strowallet.autoTopupCooldownMinutes ?? 30}m
+                    </span>
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500">Off — enable in Edit top-up account</p>
+                )}
+              </div>
               <div className="flex flex-wrap gap-2 pt-2">
                 <button
                   type="button"
@@ -308,6 +325,7 @@ const Settings = () => {
                   <tr className="border-b border-gray-200 text-gray-600">
                     <th className="px-4 py-3">Date</th>
                     <th className="px-4 py-3">Amount</th>
+                    <th className="px-4 py-3">Type</th>
                     <th className="px-4 py-3">Account</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">PalmPay order</th>
@@ -318,7 +336,25 @@ const Settings = () => {
                   {(merchantsOverview?.strowallet.recentTopups ?? []).map((t) => (
                     <tr key={t.id} className="border-b border-gray-100">
                       <td className="px-4 py-3 text-gray-600">{new Date(t.createdAt).toLocaleString()}</td>
-                      <td className="px-4 py-3 font-medium">₦{parseFloat(t.amount).toLocaleString()}</td>
+                      <td className="px-4 py-3 font-medium">
+                        ₦{parseFloat(t.amount).toLocaleString()}
+                        {t.balanceBeforeNgn != null && (
+                          <span className="block text-xs text-gray-400 font-normal">
+                            bal was ₦{Number(t.balanceBeforeNgn).toLocaleString()}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-xs ${
+                            t.trigger === 'auto'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {t.trigger === 'auto' ? 'Auto' : 'Manual'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 font-mono text-xs">{t.accountNumber}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs ${
@@ -328,10 +364,19 @@ const Settings = () => {
                         }`}>
                           {t.status}
                         </span>
+                        {t.errorMessage && (
+                          <span className="block text-xs text-red-600 mt-0.5 max-w-[180px] truncate" title={t.errorMessage}>
+                            {t.errorMessage}
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3 font-mono text-xs">{t.palmpayOrderNo || t.palmpayOrderId || '—'}</td>
                       <td className="px-4 py-3 text-gray-600">
-                        {t.initiatedBy ? `${t.initiatedBy.firstname} ${t.initiatedBy.lastname}` : '—'}
+                        {t.trigger === 'auto'
+                          ? 'System'
+                          : t.initiatedBy
+                            ? `${t.initiatedBy.firstname} ${t.initiatedBy.lastname}`
+                            : '—'}
                       </td>
                     </tr>
                   ))}

@@ -5,6 +5,7 @@ import { Icons } from "@renderer/constant/Icons";
 
 interface HeaderProps {
   customer: {
+    id?: number;
     name: string;
     username: string;
     avatar: string;
@@ -13,6 +14,7 @@ interface HeaderProps {
   onLogChat: () => void;
   onSendRate: () => void;
   onOpenNotes: () => void; // To handle notes icon click
+  onUserViewed?: () => void;
 }
 
 const ModalHeader: React.FC<HeaderProps> = ({
@@ -21,6 +23,7 @@ const ModalHeader: React.FC<HeaderProps> = ({
   onLogChat,
   onSendRate,
   onOpenNotes,
+  onUserViewed,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -38,15 +41,23 @@ const ModalHeader: React.FC<HeaderProps> = ({
         >
           <img className="w-4" src={Icons.darkCross} alt="" />
         </button>
-        <img
-          src={customer.avatar}
-          alt={customer.name}
-          className="w-10 h-10 rounded-full"
-        />
-        <div>
-          <h4 className="font-semibold text-gray-800">{customer.name}</h4>
-          <span className="text-sm text-gray-500">@{customer.username}</span>
-        </div>
+        <button
+          type="button"
+          className="flex items-center gap-2 text-left hover:opacity-80 focus:outline-none"
+          onClick={onUserViewed}
+          disabled={!onUserViewed}
+          title={onUserViewed ? 'View customer chat history' : undefined}
+        >
+          <img
+            src={customer.avatar}
+            alt={customer.name}
+            className="w-10 h-10 rounded-full"
+          />
+          <div>
+            <h4 className="font-semibold text-gray-800">{customer.name}</h4>
+            <span className="text-sm text-gray-500">@{customer.username}</span>
+          </div>
+        </button>
       </div>
 
       {/* Right Section: Buttons and Dropdown */}

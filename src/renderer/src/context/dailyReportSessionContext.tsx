@@ -14,6 +14,7 @@ import {
   dailyReportCheckOut,
   getDailyReportLogs,
   getDailyReportReport,
+  updateDailyReportReport,
   type ShiftType,
 } from '@renderer/api/admin/dailyReport';
 import ReportDetailsModal from '@renderer/components/modal/ReportDetailsModal';
@@ -186,6 +187,19 @@ export function DailyReportSessionProvider({ children }: { children: ReactNode }
     }
   }, [checkOutMutation, role]);
 
+  const saveMyReportMutation = useMutation({
+    mutationFn: ({ id, myReport }: { id: string; myReport: string }) =>
+      updateDailyReportReport(token!, id, { myReport }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-daily-report-report'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-daily-report-logs'] });
+      toastSuccess('Report saved');
+      setReportModalOpen(false);
+      setCheckoutReportId(null);
+    },
+    onError: (err) => toastApiError(err, 'Failed to save report'),
+  });
+
   const isClockedIn = !!session;
   const canUseApp = !requiresClockIn || isClockedIn;
 
@@ -227,6 +241,8 @@ export function DailyReportSessionProvider({ children }: { children: ReactNode }
         }}
         report={checkoutReport}
         canApprove={role === 'admin' || role === 'auditor'}
+        onSaveMyReport={(id, myReport) => saveMyReportMutation.mutate({ id, myReport })}
+        isSaving={saveMyReportMutation.isPending}
       />
     </DailyReportSessionContext.Provider>
   );

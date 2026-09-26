@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FaPaperPlane } from "react-icons/fa";
 import { IoImageOutline } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 import ModalHeader from "./ChatModalHeader";
 
 interface Message {
@@ -34,6 +35,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
   onSendMessage,
   onLogChatStatus,
 }) => {
+  const navigate = useNavigate();
   const [newMessage, setNewMessage] = useState("");
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [chatMessages, setChatMessages] = useState<Message[]>(messages);
@@ -80,6 +82,11 @@ const ChatModal: React.FC<ChatModalProps> = ({
           onLogChat={() => onLogChatStatus("Logged")}
           onSendRate={() => console.log("Send Rate Clicked")}
           onOpenNotes={() => console.log("Open Notes Clicked")}
+          onUserViewed={() => {
+            onClose();
+            const q = customer.username || customer.name || '';
+            if (q) navigate(`/chats?q=${encodeURIComponent(q)}`);
+          }}
         />
 
         {/* Chat Body */}

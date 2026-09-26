@@ -51,6 +51,7 @@ interface TransactionDetailsModalProps {
     billFeePercent?: number | null;
     billFeeLabel?: string | null;
     providerAmountNgn?: number | null;
+    createdAt?: string | null;
   };
 }
 
@@ -108,9 +109,28 @@ function formatAssetAmount(amount: number | string | null | undefined, currency?
   if (!Number.isFinite(n)) return `${amount}${cur ? ` ${cur}` : ''}`;
   if (cur === 'NGN') return `₦${formatNairaAmount(n)}`;
   if (cur === 'USD') return `$${n}`;
-  // crypto units — no fake $ prefix
   const formatted = Math.abs(n) >= 1 ? n.toLocaleString(undefined, { maximumFractionDigits: 8 }) : String(n);
   return cur ? `${formatted} ${cur}` : formatted;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function printReceiptRows(rows: { label: string; value: string }[]): string {
+  return rows
+    .filter((r) => r.value)
+    .map(
+      (r) =>
+        `<tr><td style="padding:8px 0;color:#555;">${escapeHtml(r.label)}</td><td style="padding:8px 0;text-align:right;font-weight:500;">${escapeHtml(
+          r.value
+        )}</td></tr>`
+    )
+    .join('');
 }
 
 const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
@@ -135,7 +155,6 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
   const fromLabel = formatAssetAmount(sourceAmt, sourceCur);
   const toLabel = formatAssetAmount(targetAmt, targetCur);
 
-  // Primary crypto amount (asset) + NGN leg when present — old receipt style
   let cryptoAssetLabel: string | null = null;
   let cryptoNairaLabel: string | null = null;
   if (isCrypto) {
@@ -157,9 +176,6 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             : null;
     } else {
       cryptoAssetLabel = formatAssetAmount(sourceAmt ?? transactionData.dollarAmount, sourceCur || transactionData.category);
-      if (targetAmt != null && targetCur) {
-        // convert/swap also shows To below
-      }
       if (transactionData.nairaAmount && Number(transactionData.nairaAmount) > 0) {
         cryptoNairaLabel = `₦${formatNairaAmount(transactionData.nairaAmount)}`;
       }
@@ -173,10 +189,80 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
     transactionData.giftCardProvider ||
     '';
 
+  const walletCreditLabel =
+    isGiftCard &&
+    transactionData.nairaType === 'GIFT_CARD_SELL' &&
+    transactionData.targetAmount != null &&
+    Number(transactionData.targetAmount) > 0
+      ? `₦${formatNairaAmount(transactionData.targetAmount)}`
+      : null;
+
+  const feeLabel =
+    isBillPayment && (transactionData.billFeeNgn ?? 0) > 0
+      ? `₦${formatNairaAmount(transactionData.billFeeNgn ?? 0)}${
+          transactionData.billFeePercent != null ? ` (${transactionData.billFeePercent}%)` : ''
+        }`
+      : transactionData.profit != null && Number(transactionData.profit) > 0
+        ? String(transactionData.profit)
+        : null;
+
+  const handlePrint = () => {
+    const dateStr = transactionData.createdAt
+      ? new Date(transactionData.createdAt).toLocaleString()
+      : new Date().toLocaleString();
+    const amountPrimary =
+      (isCrypto && (cryptoAssetLabel || cryptoNairaLabel)) ||
+      (isBillPayment && `₦${formatNairaAmount(transactionData.nairaAmount)}`) ||
+      (isNaira && `₦${formatNairaAmount(transactionData.nairaAmount)}`) ||
+      (isGiftCard &&
+        (Number(transactionData.nairaAmount) > 0
+          ? `₦${formatNairaAmount(transactionData.nairaAmount)}`
+          : `$${transactionData.dollarAmount}`)) ||
+      `$${transactionData.dollarAmount}`;
+
+    const rows = [
+      { label: 'Amount', value: String(amountPrimary || '') },
+      ...(feeLabel ? [{ label: 'Fees / Profit', value: feeLabel }] : []),
+      ...(walletCreditLabel ? [{ label: 'Wallet credited', value: walletCreditLabel }] : []),
+      ...(transactionData.customerName
+        ? [{ label: 'Customer', value: transactionData.customerName }]
+        : []),
+      { label: 'Date', value: dateStr },
+      { label: 'Status', value: String(transactionData.status || '') },
+      { label: 'Transaction ID', value: String(transactionData.transactionId || '') },
+      ...(provider ? [{ label: 'Provider', value: provider }] : []),
+      ...(transactionData.serviceType
+        ? [{ label: 'Department', value: transactionData.serviceType }]
+        : []),
+    ];
+
+    const html = `<!DOCTYPE html><html><head><title>Receipt</title>
+      <style>
+        body{font-family:system-ui,-apple-system,sans-serif;padding:24px;color:#111;max-width:420px;margin:0 auto;}
+        h1{font-size:18px;margin:0 0 4px;}
+        .sub{color:#666;font-size:13px;margin-bottom:20px;}
+        table{width:100%;border-collapse:collapse;}
+        @media print{body{padding:0;}}
+      </style></head><body>
+      <h1>Terescrow Receipt</h1>
+      <p class="sub">Transaction receipt</p>
+      <table>${printReceiptRows(rows)}</table>
+      <script>window.onload=function(){window.print();}</script>
+      </body></html>`;
+
+    const w = window.open('', '_blank', 'width=480,height=640');
+    if (!w) {
+      window.print();
+      return;
+    }
+    w.document.write(html);
+    w.document.close();
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 overflow-y-scroll pt-32 pb-10">
-      <div className="bg-white rounded-lg shadow-lg w-[600px] p-6 relative ">
-        <div className="flex items-center justify-between">
+      <div className="bg-white rounded-lg shadow-lg w-[600px] p-6 relative print:shadow-none print:w-full">
+        <div className="flex items-center justify-between no-print">
           <h2 className="text-xl font-bold text-gray-800 text-center w-full">
             Full Transaction Details
           </h2>
@@ -188,11 +274,21 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
           </button>
         </div>
 
+        <div className="flex justify-center my-4 gap-3 no-print">
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="px-4 py-2 bg-[#147341] text-white text-sm font-medium rounded-lg hover:bg-[#0d5a2e]"
+          >
+            Print
+          </button>
+        </div>
+
         <div className="flex justify-center my-6">
           <sc.Icon className={`${sc.iconColor} text-6xl`} />
         </div>
 
-        <div className="border border-gray-200 rounded-lg">
+        <div className="border border-gray-200 rounded-lg" id="transaction-receipt-print">
           {isCrypto && (
             <>
               {fromLabel && <Row label="From" value={fromLabel} />}
@@ -295,13 +391,8 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
               {transactionData.nairaChannel && (
                 <Row label="Wallet payout" value={transactionData.nairaChannel} />
               )}
-              {transactionData.nairaType === 'GIFT_CARD_SELL' &&
-                transactionData.targetAmount != null &&
-                Number(transactionData.targetAmount) > 0 && (
-                <Row
-                  label="Wallet credited"
-                  value={`₦${formatNairaAmount(transactionData.targetAmount)}`}
-                />
+              {walletCreditLabel && (
+                <Row label="Wallet credited" value={walletCreditLabel} />
               )}
               {transactionData.nairaReference && (
                 <Row

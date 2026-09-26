@@ -205,15 +205,26 @@ const DailyReportPage: React.FC = () => {
     checkOut();
   };
 
-  const handleApprove = (id: string) => {
-    updateReportMutation.mutate({ id, status: 'approved' });
+  const handleApprove = (id: string, auditorsReport: string) => {
+    updateReportMutation.mutate({ id, status: 'approved', auditorsReport });
     setReportDetailsOpen(false);
     setSelectedReportId(null);
   };
-  const handleDisapprove = (id: string) => {
-    updateReportMutation.mutate({ id, status: 'disapproved' });
+  const handleDisapprove = (id: string, auditorsReport: string) => {
+    updateReportMutation.mutate({ id, status: 'disapproved', auditorsReport });
     setReportDetailsOpen(false);
     setSelectedReportId(null);
+  };
+  const handleSaveMyReport = (id: string, myReport: string) => {
+    updateReportMutation.mutate(
+      { id, myReport },
+      {
+        onSuccess: () => {
+          setReportDetailsOpen(false);
+          setSelectedReportId(null);
+        },
+      }
+    );
   };
 
   return (
@@ -441,6 +452,8 @@ const DailyReportPage: React.FC = () => {
         canApprove={isAuditorOrAdmin}
         onApprove={handleApprove}
         onDisapprove={handleDisapprove}
+        onSaveMyReport={handleSaveMyReport}
+        isSaving={updateReportMutation.isPending}
       />
       <ShiftSettingsModal
         isOpen={shiftSettingsOpen}

@@ -30,7 +30,8 @@ interface TransactionsTableProps {
 const PendingChatsTable: React.FC<TransactionsTableProps> = ({
   data,
   isTeamCommunition = true,
-  activeFilterInTeam = 'Customer'
+  activeFilterInTeam = 'Customer',
+  onUserViewed,
 }) => {
   const [activeMenu, setActiveMenu] = useState<number | null>(null)
   const [activeChatId, setActiveChatId] = useState<number | null>(null); // Track the active chat ID
@@ -81,6 +82,7 @@ const PendingChatsTable: React.FC<TransactionsTableProps> = ({
   }
   if (activeFilterInTeam === 'Customer') {
     return (
+      <>
       <div className="mt-6 bg-white rounded-lg shadow-md">
         <table className="min-w-full table-fixed text-left text-sm text-gray-700">
           <thead className="bg-gray-100 text-gray-600 uppercase text-xs">
@@ -98,7 +100,11 @@ const PendingChatsTable: React.FC<TransactionsTableProps> = ({
           <tbody>
             {data?.map((item) => (
               // {console.log(item)}
-              <tr key={item.id} className="border-t hover:bg-gray-50 relative">
+              <tr
+                key={item.id}
+                className="border-t hover:bg-gray-50 relative cursor-pointer"
+                onClick={() => handleeyeclick(item.id, item as unknown as AgentToCustomerChatData)}
+              >
                 <td className="py-3 ps-5">
                   <div className="bg-gray- text-4xl rounded-full inline-flex mx-auto">
                     <img src={getImageUrl(item.customer.profilePicture || "")} alt="" />
@@ -145,7 +151,7 @@ const PendingChatsTable: React.FC<TransactionsTableProps> = ({
                     </span>
                   </td>
                 )}
-                <td className="py-3 px-4 relative">
+                <td className="py-3 px-4 relative" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-center items-center space-x-5">
                     {/* Button to Open Chat */}
                     <button
@@ -166,6 +172,52 @@ const PendingChatsTable: React.FC<TransactionsTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {isTeamCommunition && isChatOpen && (
+        <div className="fixed inset-0 bg-gray-900/50 flex justify-center items-center z-[100] p-4">
+          <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-xl shadow-xl relative overflow-y-auto">
+            <button
+              type="button"
+              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10"
+              onClick={() => setIsChatOpen(false)}
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            {userData?.role !== 'agent' ? (
+              currentItem ? (
+                <AdminChatApplication
+                  data={currentItem}
+                  id={activeChatId || 0}
+                  onClose={() => setIsChatOpen(false)}
+                  isAdmin={true}
+                  onUserViewed={(customerId) => {
+                    setIsChatOpen(false);
+                    onUserViewed?.(customerId);
+                  }}
+                />
+              ) : (
+                <div className="p-6 text-center">Loading chat data...</div>
+              )
+            ) : currentItem ? (
+              <ChatApplication
+                data={currentItem}
+                id={activeChatId || 0}
+                onClose={() => setIsChatOpen(false)}
+                onUserViewed={(customerId) => {
+                  setIsChatOpen(false);
+                  onUserViewed?.(customerId);
+                }}
+              />
+            ) : (
+              <div className="p-6 text-center">Loading chat data...</div>
+            )}
+          </div>
+        </div>
+      )}
+      </>
     )
   }
 
