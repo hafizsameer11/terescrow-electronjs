@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getAccountActivities } from '@renderer/api/queries/adminqueries'
 import { useAuth } from '@renderer/context/authContext'
@@ -26,6 +26,44 @@ function isPaginatedPayload(data: unknown): data is PaginatedActivityPayload {
   )
 }
 
+/** Normalize ApiResponse / v1 array / v2 paginated shapes into a row list. */
+function extractActivityRows(response: unknown): { rows: Activity[]; totalPages: number } {
+  if (!response || typeof response !== 'object') return { rows: [], totalPages: 1 }
+  const root = response as Record<string, unknown>
+  // axios body: { status, message, data: ... }
+  const payload = 'data' in root ? root.data : response
+
+  if (Array.isArray(payload)) {
+    return { rows: payload as Activity[], totalPages: 1 }
+  }
+  if (isPaginatedPayload(payload)) {
+    return {
+      rows: payload.data,
+      totalPages: Math.max(1, Number(payload.totalPages) || 1),
+    }
+  }
+  // Rare double-wrap: { data: { data: [...] } }
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    Array.isArray((payload as { data?: unknown }).data)
+  ) {
+    const inner = (payload as PaginatedActivityPayload).data
+    const totalPages = Number((payload as PaginatedActivityPayload).totalPages) || 1
+    return { rows: inner, totalPages: Math.max(1, totalPages) }
+  }
+  return { rows: [], totalPages: 1 }
+}
+
+function formatActivityDate(createdAt: unknown): string {
+  if (createdAt == null) return '—'
+  const s = String(createdAt)
+  if (s.includes('T')) return s.split('T')[0]
+  const d = new Date(s)
+  if (Number.isNaN(d.getTime())) return s || '—'
+  return d.toISOString().slice(0, 10)
+}
+
 interface TableProps {
   data?: Activity[]
   userId?: string
@@ -37,22 +75,22 @@ const ActivityTable: React.FC<TableProps> = ({ data: staticData, userId, itemsPe
   const [page, setPage] = useState(1)
   const [accumulated, setAccumulated] = useState<Activity[]>([])
 
-  const { data: activityResponse, isLoading, isFetching } = useQuery({
+  const { data: activityResponse, isLoading, isFetching, isError } = useQuery({
     queryKey: ['accountActivityData', userId, page, itemsPerPage],
     queryFn: () => getAccountActivities({ token: token!, id: userId!, page, limit: itemsPerPage }),
     enabled: !!token && !!userId,
   })
 
-  const payload = activityResponse?.data
-  const pageRows: Activity[] = userId
-    ? isPaginatedPayload(payload)
-      ? payload.data
-      : Array.isArray(payload)
-        ? payload
-        : []
-    : []
-
-  const totalPages = userId && isPaginatedPayload(payload) ? payload.totalPages : 1
+  const extracted = useMemo(
+    () => (userId ? extractActivityRows(activityResponse) : { rows: [], totalPages: 1 }),
+    [userId, activityResponse]
+  )
+  const pageRows = extracted.rows
+  const totalPages = extracted.totalPages
+  const pageRowKey = useMemo(
+    () => pageRows.map((r) => `${r.id}:${r.createdAt}`).join('|'),
+    [pageRows]
+  )
 
   useEffect(() => {
     if (!userId) return
@@ -65,7 +103,9 @@ const ActivityTable: React.FC<TableProps> = ({ data: staticData, userId, itemsPe
         return [...prev, ...next]
       })
     }
-  }, [userId, page, pageRows])
+    // pageRowKey tracks content without unstable array identity
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, page, pageRowKey])
 
   useEffect(() => {
     setPage(1)
@@ -80,9 +120,17 @@ const ActivityTable: React.FC<TableProps> = ({ data: staticData, userId, itemsPe
     staticPage * itemsPerPage
   )
 
-  const displayData = userId ? accumulated : staticSlice
+  // If the activity API fails or returns empty, fall back to rows passed from customer details
+  const displayData =
+    userId
+      ? accumulated.length > 0
+        ? accumulated
+        : !isLoading && staticList.length > 0
+          ? staticList.slice(0, itemsPerPage)
+          : accumulated
+      : staticSlice
 
-  if (userId && isLoading && page === 1) {
+  if (userId && isLoading && page === 1 && staticList.length === 0) {
     return <p className="px-4 py-6 text-gray-500 text-sm">Loading activities…</p>
   }
 
@@ -99,21 +147,21 @@ const ActivityTable: React.FC<TableProps> = ({ data: staticData, userId, itemsPe
         <tbody>
           {displayData.map((activity) => (
             <tr key={activity.id} className="border-b hover:bg-gray-100">
-              <td className="py-4 px-4">{activity.description}</td>
-              <td className="py-4 px-4 text-right">{activity.createdAt.split('T')[0]}</td>
+              <td className="py-4 px-4">{activity.description || '—'}</td>
+              <td className="py-4 px-4 text-right">{formatActivityDate(activity.createdAt)}</td>
             </tr>
           ))}
           {displayData.length === 0 && (
             <tr>
               <td colSpan={2} className="py-6 px-4 text-center text-gray-500 text-sm">
-                No activities found
+                {isError ? 'Could not load activities.' : 'No activities found'}
               </td>
             </tr>
           )}
         </tbody>
       </table>
 
-      {userId && page < totalPages && (
+      {userId && page < totalPages && accumulated.length > 0 && (
         <div className="flex justify-center px-4 py-4">
           <button
             type="button"

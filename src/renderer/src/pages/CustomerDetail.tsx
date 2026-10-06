@@ -81,8 +81,18 @@ const CustomerDetails: React.FC = () => {
   const customer: Customer | undefined = data?.data;
   const customerIp = (customer as any)?.ipAddress ?? '—';
   const customerTier = (customer as any)?.tier ?? 'Tier 1';
-  const nairaBalanceRaw = (customer as any)?.nairaBalance ?? 0;
-  const nairaBalance = `N${formatNairaAmount(nairaBalanceRaw)}`;
+  const nairaBalanceRaw = Number((customer as any)?.nairaBalance ?? 0);
+  const nairaSafe =
+    Number.isFinite(nairaBalanceRaw) && nairaBalanceRaw !== 0 && !Object.is(nairaBalanceRaw, -0)
+      ? Math.round(nairaBalanceRaw * 100) / 100
+      : 0;
+  const hasNairaWallet =
+    (customer as any)?.hasNairaWallet === true ||
+    (Array.isArray((customer as any)?.fiatWallets) && (customer as any).fiatWallets.length > 0);
+  const nairaBalance =
+    !hasNairaWallet && nairaSafe === 0
+      ? 'No wallet'
+      : `₦${formatNairaAmount(nairaSafe)}`;
   const cryptoBalanceUsd = (customer as any)?.cryptoBalance ?? 0;
   const cryptoBalance = `$${Number(cryptoBalanceUsd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const cryptoAssets: CryptoAsset[] = ((customer as any)?.cryptoAssets ?? []).map(
@@ -93,6 +103,9 @@ const CustomerDetails: React.FC = () => {
       usdEquivalent: a.usdEquivalent,
     })
   );
+  const detailActivities = Array.isArray((customer as any)?.AccountActivity)
+    ? (customer as any).AccountActivity
+    : [];
   const {
     data: notDetailsData,
     isLoading: isNotesLoading,
@@ -352,7 +365,7 @@ const CustomerDetails: React.FC = () => {
         <ContactRow icon={<MdLocationOn />} label="Country" value={customer?.country || "Nigeria"} />
       </div>
       <div className="mt-11 shadow-md rounded-lg overflow-hidden">
-        <ActivityTable userId={id} itemsPerPage={6} />
+        <ActivityTable userId={id} data={detailActivities} itemsPerPage={6} />
       </div>
       {/* Modals */}
       <KYCDetailsModal

@@ -27,8 +27,22 @@ export function formatNairaAmount(value: string | number | null | undefined): st
   const s0 = String(value).trim()
   if (s0 === '—' || s0 === '-') return '—'
   const cleaned = s0.replace(/,/g, '').replace(/[₦\s]/g, '').replace(/^N/i, '')
-  if (cleaned === '') return '0'
+  if (
+    cleaned === '' ||
+    cleaned === '-' ||
+    cleaned === '-0' ||
+    cleaned === '-0.0' ||
+    cleaned === '-0.00' ||
+    /^-0(\.0+)?$/.test(cleaned)
+  ) {
+    return '0'
+  }
   const n = parseFloat(cleaned)
   if (Number.isNaN(n)) return s0
-  return Math.round(n).toLocaleString('en-US')
+  const rounded = Math.round(n)
+  // Avoid signed zero from float dust (Math.round(-0.1) === -0)
+  if (!Number.isFinite(rounded) || rounded === 0 || Object.is(rounded, -0)) {
+    return '0'
+  }
+  return rounded.toLocaleString('en-US')
 }
