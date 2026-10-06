@@ -2,10 +2,26 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSubCategories } from '@renderer/api/queries/commonqueries';
 import { useAuth } from '@renderer/context/authContext';
-import { createCardTransaction, createCryptoTransaction, changeChatStatus, ChatStatus } from '@renderer/api/queries/agent.mutations';
+import { createCardTransaction, createCryptoTransaction } from '@renderer/api/queries/agent.mutations';
 import { ApiError } from '@renderer/api/customApiCall';
 
-const NewTransaction = ({ type, department, category, subcategories, chatId }) => {
+const NewTransaction = ({
+  type,
+  department,
+  category,
+  subcategories,
+  chatId,
+  onCompleted,
+  onClose,
+}: {
+  type: string;
+  department: any;
+  category: any;
+  subcategories?: string[];
+  chatId: string;
+  onCompleted?: () => void;
+  onClose?: () => void;
+}) => {
   const [modalVisibility, setModalVisible] = useState(true);
   const { token } = useAuth();
   const queryClient = useQueryClient();
@@ -29,6 +45,19 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
 
   const closeModal = () => {
     setModalVisible(false);
+    onClose?.();
+  };
+
+  const finishLogged = () => {
+    queryClient.invalidateQueries({ queryKey: ['customer-chat-details'] });
+    queryClient.invalidateQueries({ queryKey: ['chatDetails'] });
+    queryClient.invalidateQueries({ queryKey: ['chats'] });
+    queryClient.invalidateQueries({ queryKey: ['all-chats-with-customer'] });
+    queryClient.invalidateQueries({ queryKey: ['chat-markup-profit'] });
+    queryClient.invalidateQueries({ queryKey: ['chatStats'] });
+    queryClient.invalidateQueries({ queryKey: ['markup-profit-overview'] });
+    onCompleted?.();
+    setModalVisible(false);
   };
 
   const { data: subcategoriesData } = useQuery({
@@ -37,24 +66,13 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
     enabled: !!department?.id && !!category?.id,
   });
 
-  const { mutate: changeStatus } = useMutation({
-    mutationFn: (data) => changeChatStatus(data, token),
-    onSuccess: (data) => {
-      alert(data.message);
-    },
-    onError: (error: ApiError) => {
-      alert(error.message);
-    },
-  });
-
   const { mutate: cryptoTransaction, isLoading: isCryptoTransactionPending } = useMutation({
     mutationKey: ['create-crypto-transaction'],
     mutationFn: createCryptoTransaction,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['customer-chat-details'] });
       alert(data?.message || 'Transaction Completed successfully');
-      changeStatus({ chatId, setStatus: ChatStatus.successful });
-      closeModal();
+      // Create API marks chat Successful after the txn is saved
+      finishLogged();
     },
     onError: (error: ApiError) => {
       alert(error?.message || 'Failed to create transaction');
@@ -65,7 +83,6 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
     mutationKey: ['create-card-transaction'],
     mutationFn: createCardTransaction,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['customer-chat-details'] });
       if (formData.creditWallet) {
         const credited = formData.walletCreditAmount || formData.amountNaira;
         alert(
@@ -74,8 +91,8 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
       } else {
         alert(data?.message || 'Transaction Completed successfully');
       }
-      changeStatus({ chatId, setStatus: ChatStatus.successful });
-      closeModal();
+      // Create API marks chat Successful after the txn is saved
+      finishLogged();
     },
     onError: (error: ApiError) => {
       alert(error?.message || 'Failed to create transaction');
@@ -130,6 +147,12 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
       profit: parseFloat(profit),
     };
 
+    const profitNgn = parseFloat(String(profit));
+    if (!Number.isFinite(profitNgn) || profitNgn < 0) {
+      alert('Enter profit in Naira (₦). This is what shows under Gift Card Profit.');
+      return;
+    }
+
     if (type === 'giftCard') {
       if (!cardType || !cardNumber) {
         alert('Please provide card type and card number.');
@@ -145,6 +168,7 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
       cardTransaction({
         data: {
           ...commonData,
+          profit: profitNgn,
           cardType,
           cardNumber,
           departmentId: department?.id,
@@ -167,6 +191,7 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
       cryptoTransaction({
         data: {
           ...commonData,
+          profit: profitNgn,
           cryptoAmount: parseFloat(cryptoAmount),
           fromAddress,
           toAddress,
@@ -181,9 +206,9 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
   return (
     <>
       {modalVisibility && (
-        <div className="absolute w-full h-full right-[100%] flex items-center rounded-lg justify-center z-50">
-          <div className="bg-white overflow-y-scroll h-[100%] rounded-lg shadow-lg w-11/12 max-w-lg overflow-hidden relative">
-            <div className="p-4 border-b flex justify-between items-center">
+        <div className="absolute inset-0 z-[60] flex items-stretch justify-center bg-black/30 rounded-lg">
+          <div className="bg-white overflow-y-auto h-full w-full max-w-lg shadow-lg relative">
+            <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10">
               <h2 className="text-lg font-bold flex-1 text-center">New Transaction</h2>
               <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
@@ -213,8 +238,19 @@ const NewTransaction = ({ type, department, category, subcategories, chatId }) =
                 ))}
               </select>
 
-              <label className="block text-gray-700">Profit</label>
-              <input type="number" value={formData.profit} onChange={(e) => handleInputChange('profit', e.target.value)} className="w-full p-2 border rounded-lg mb-4" />
+              <label className="block text-gray-700">Profit (₦)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.profit}
+                onChange={(e) => handleInputChange('profit', e.target.value)}
+                className="w-full p-2 border rounded-lg mb-1"
+                placeholder="Required — shows under Gift Card Profit"
+              />
+              <p className="text-xs text-gray-500 mb-4">
+                Enter the Naira profit for this sale. Amount above is the customer payout, not profit.
+              </p>
 
               <label className="block text-gray-700">Amount (USD)</label>
               <input type="number" value={formData.amount} onChange={(e) => handleInputChange('amount', e.target.value)} className="w-full p-2 border rounded-lg mb-4" />

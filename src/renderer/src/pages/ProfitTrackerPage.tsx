@@ -299,7 +299,15 @@ const ProfitTrackerPage: React.FC = () => {
                         )}
                       </td>
                       <td className="py-2.5 px-4 capitalize">{t.side}</td>
-                      <td className="py-2.5 px-4">{fmtNgn(t.actualAmountNgn)}</td>
+                      <td className="py-2.5 px-4">
+                        <div>{fmtNgn(t.actualAmountNgn)}</div>
+                        {t.sourceCurrency && t.targetCurrency ? (
+                          <div className="text-xs text-gray-400">
+                            {String(t.sourceAmount || '')} {t.sourceCurrency} →{' '}
+                            {t.targetCurrency}
+                          </div>
+                        ) : null}
+                      </td>
                       <td className="py-2.5 px-4">{fmtNgn(t.userAmountNgn)}</td>
                       <td className="py-2.5 px-4 font-semibold text-[#147341]">{fmtNgn(t.adminMarkupNgn)}</td>
                       <td className="py-2.5 px-4">{t.markupPercent}%</td>

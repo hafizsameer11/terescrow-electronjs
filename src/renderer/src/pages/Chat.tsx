@@ -18,7 +18,7 @@ import {
   type ShiftType,
 } from '@renderer/api/admin/dailyReport';
 import { useDailyReportSession } from '@renderer/context/dailyReportSessionContext';
-import { getProfitTrackerStats } from '@renderer/api/admin/profitTracker';
+import { getMarkupProfitOverview } from '@renderer/api/admin/profitTracker';
 import { listBushaCustomerWallets } from '@renderer/api/admin/busha';
 import { getReferralsSummary } from '@renderer/api/admin/referrals';
 import CheckInModal from '@renderer/components/modal/CheckInModal';
@@ -27,14 +27,13 @@ import ChatTable from '@renderer/components/ChatTable';
 import type { AgentToCustomerChatData } from '@renderer/api/queries/datainterfaces';
 import { getImageUrl, addThousandSeparator } from '@renderer/api/helper';
 import { apiDateParams, toDateString, toApiInclusiveEnd } from '@renderer/utils/dateRange';
-import { bucketChatProfitsFromLedger } from '@renderer/utils/chatFinancials';
 
 const PAGE_SIZE = 50;
 /** Live hub refresh — light enough for admin, fresh enough for the client. */
 const HUB_POLL_MS = 15_000;
 
 const TIME_WINDOW_OPTIONS: { label: string; value: StatsTimeWindow }[] = [
-  { label: 'All', value: 'all' },
+  { label: 'Today', value: 'all' },
   { label: 'Last 12 hours', value: 'last12hrs' },
   { label: 'Day 8am–8pm', value: 'dayShift' },
   { label: 'Night 8pm–8am', value: 'nightShift' },
@@ -80,9 +79,27 @@ function chatRowToAgentData(row: ChatRow): AgentToCustomerChatData {
       : null,
     recentMessageTimestamp: row.recentMessage?.createdAt ?? null,
     chatStatus: row.chatStatus ?? 'pending',
-    department: { id: 0, title: '', Type: '', niche: '' },
+    department: row.department
+      ? {
+          id: numId(row.department.id),
+          title: row.department.title ?? '',
+          Type: row.department.Type ?? '',
+          niche: row.department.niche ?? '',
+        }
+      : { id: 0, title: '', Type: '', niche: '' },
+    category: row.category
+      ? {
+          id: numId(row.category.id),
+          title: row.category.title ?? '',
+        }
+      : undefined,
     messagesCount: 0,
-    transactions: [],
+    transactionsCount: row.transactionsCount ?? 0,
+    transactions: (row.transactions || []).map((t) => ({
+      id: numId(t.id),
+      amount: t.amount ?? undefined,
+      amountNaira: t.amountNaira ?? undefined,
+    })),
     agent: {
       id: numId(a?.id),
       username: a?.username ?? '',
@@ -114,7 +131,6 @@ const Chat = () => {
   const [timeWindow, setTimeWindow] = useState<StatsTimeWindow>('all');
 
   const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
-  const todayIso = toDateString(new Date());
   const [filters, setFilters] = useState<UIFilters>({
     status: 'All',
     type: 'All',
@@ -122,8 +138,8 @@ const Chat = () => {
     search: '',
     transactionType: 'All',
     category: 'All',
-    startDate: todayIso,
-    endDate: todayIso,
+    startDate: '',
+    endDate: '',
   });
 
   const [page, setPage] = useState(1);
@@ -146,47 +162,33 @@ const Chat = () => {
     }
   }, [searchParams]);
 
-  const hubDateParams = useMemo(() => {
-    const { startDate, endDate } = apiDateParams({
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      dateRange: filters.dateRange,
-      dateRangePresetActive,
-    });
-    return {
-      start: startDate || undefined,
-      end: endDate ? toApiInclusiveEnd(endDate) : undefined,
-    };
-  }, [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]);
+  // Summary cards stay "this work day" (today, or since clock-in). Chat history
+  // dates are independent — empty until the agent applies a filter.
+  const freshWorkParams = useMemo(() => {
+    const today = toDateString(new Date());
+    let start: string = today;
+    const end = toApiInclusiveEnd(today);
+    if (isClockedIn && session?.checkInTime) {
+      const checkInIso = toCheckInIso(session.checkInTime);
+      if (checkInIso.slice(0, 10) === today) {
+        start = checkInIso;
+      }
+    }
+    return { start, end };
+  }, [isClockedIn, session?.checkInTime]);
 
-  // Align summary with chat list dates. Clock-in only floors start when the
-  // selected range is the same calendar day as check-in (keeps "since clock-in"
-  // for today without zeroing historical ranges like yesterday).
   const statsQueryParams = useMemo(() => {
     if (timeWindow !== 'all') {
       return { timeWindow } as const;
     }
-    let start = hubDateParams.start;
-    const end = hubDateParams.end;
-    if (isClockedIn && session?.checkInTime && start) {
-      const checkInIso = toCheckInIso(session.checkInTime);
-      const checkInDay = checkInIso.slice(0, 10);
-      const startDay = start.includes('T') ? start.slice(0, 10) : start;
-      if (startDay === checkInDay && new Date(checkInIso) > new Date(start)) {
-        start = checkInIso;
-      }
-    }
-    return { start, end } as const;
-  }, [timeWindow, isClockedIn, session?.checkInTime, hubDateParams.start, hubDateParams.end]);
+    return { start: freshWorkParams.start, end: freshWorkParams.end } as const;
+  }, [timeWindow, freshWorkParams.start, freshWorkParams.end]);
 
   const sinceClockIn =
     timeWindow === 'all' &&
     !!isClockedIn &&
     !!session?.checkInTime &&
-    !!hubDateParams.start &&
-    (hubDateParams.start.includes('T')
-      ? hubDateParams.start.slice(0, 10)
-      : hubDateParams.start) === toCheckInIso(session.checkInTime).slice(0, 10);
+    freshWorkParams.start === toCheckInIso(session.checkInTime);
 
   const { data: chatStatsData } = useQuery({
     queryKey: ['chatStats', token, statsQueryParams],
@@ -214,21 +216,16 @@ const Chat = () => {
   });
 
   const profitDateParams = useMemo(() => {
-    const { startDate, endDate } = apiDateParams({
-      startDate: filters.startDate,
-      endDate: filters.endDate,
-      dateRange: filters.dateRange,
-      dateRangePresetActive,
-    });
+    // Same work-day window as Chat Summary (keep clock-in ISO for markup overview)
     return {
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
+      startDate: freshWorkParams.start,
+      endDate: freshWorkParams.end,
     };
-  }, [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]);
+  }, [freshWorkParams.start, freshWorkParams.end]);
 
-  const { data: profitStats } = useQuery({
-    queryKey: ['chat-profit-stats', token, profitDateParams],
-    queryFn: () => getProfitTrackerStats(token!, profitDateParams),
+  const { data: markupProfit } = useQuery({
+    queryKey: ['chat-markup-profit', token, profitDateParams],
+    queryFn: () => getMarkupProfitOverview(token!, profitDateParams),
     enabled: !!token,
     refetchInterval: HUB_POLL_MS,
   });
@@ -313,12 +310,17 @@ const Chat = () => {
   const stats = chatStatsData?.data;
 
   const profitBuckets = useMemo(() => {
-    const byType = (profitStats?.byTransactionType as Array<{ transactionType?: string; totalProfit?: string }>) ?? [];
-    return bucketChatProfitsFromLedger(byType);
-  }, [profitStats]);
+    const s = markupProfit?.summary;
+    return {
+      crypto: Number(s?.cryptoMarkupNgn ?? 0),
+      giftCard: Number(s?.giftCardSellProfitNgn ?? 0),
+      billPayment: Number(s?.billPaymentFeeNgn ?? 0),
+      earn: 0,
+    };
+  }, [markupProfit]);
 
   const referralPaidOut = Number(referralSummary?.amountPaidOut ?? 0);
-  const earnNgn = profitBuckets.earn !== 0 ? profitBuckets.earn : -referralPaidOut;
+  const earnNgn = -referralPaidOut;
   const earnNegative = earnNgn < 0;
 
   const bushaCustomersDisplay = useMemo(() => {
@@ -500,15 +502,7 @@ const Chat = () => {
               hubLayout
               disableInternalPagination
               onUserViewed={(customerId) => {
-                const row = tableRows.find((r) => r.customer.id === customerId);
-                const q =
-                  row?.customer.username ||
-                  [row?.customer.firstname, row?.customer.lastname].filter(Boolean).join(' ') ||
-                  String(customerId);
-                setSearchInput(q);
-                setFilters((prev) => ({ ...prev, search: q }));
-                setPage(1);
-                navigate(`/chats?q=${encodeURIComponent(q)}`, { replace: true });
+                navigate(`/transaction-details/${customerId}`);
               }}
             />
 

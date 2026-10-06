@@ -139,10 +139,10 @@ const ChatHeader: React.FC<HeaderProps> = ({
           {/* Avatar and Name */}
           <button
             type="button"
-            className="flex items-center space-x-3 text-left hover:opacity-80 focus:outline-none rounded-lg"
+            className="flex items-center space-x-3 text-left hover:opacity-80 focus:outline-none cursor-pointer"
             onClick={onUserViewed}
             disabled={!onUserViewed}
-            title={onUserViewed ? 'View customer chat history' : undefined}
+            title={onUserViewed ? 'View customer transaction history' : undefined}
           >
             <img src={avatar} alt="User Avatar" className="w-10 h-10 rounded-full" />
             <div>

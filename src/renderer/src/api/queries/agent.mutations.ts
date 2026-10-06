@@ -29,7 +29,7 @@ export const createCardTransaction = async ({
   return await apiCall(API_ENDPOINT.AGENT.CreateCardTransaction, 'POST', data, token)
 }
 export const changeChatStatus = async (
-  data: { chatId: string; setStatus: ChatStatus },
+  data: { chatId: string; setStatus: ChatStatus; reason?: string },
   token: string
 ): Promise<ApiResponse> => {
   return apiCall(API_ENDPOINT.AGENT.ChangeChatStatus, 'POST', data, token)

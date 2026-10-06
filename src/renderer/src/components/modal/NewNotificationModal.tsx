@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import React, { useState, useEffect, useRef } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createNotification } from '@renderer/api/queries/adminqueries';
 import { useAuth } from '@renderer/context/authContext';
+import {
+  toastError,
+  toastLoading,
+  toastSuccess,
+  toastUpdateError,
+  toastUpdateSuccess,
+} from '@renderer/utils/toast';
+import { ApiError } from '@renderer/api/customApiCall';
 import CustomerListModal from './CustomerListModal';
+import type { Id } from 'react-toastify';
 
 interface NewNotificationModalProps {
   isOpen: boolean;
@@ -37,14 +46,49 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const { token } = useAuth();
+  const queryClient = useQueryClient();
+  const sendingToastId = useRef<Id | null>(null);
 
-  const { mutate } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: async (formData: FormData) => {
-      return await createNotification({ token, data: formData });
+      return await createNotification({ token, data: formData as any });
     },
-    onSuccess: () => {
-      alert('Notification sent successfully!');
+    onSuccess: (res) => {
+      const d = res?.data;
+      const recipients = Number(d?.recipients ?? 0);
+      const inApp = Number(d?.inAppCreated ?? recipients);
+      const delivered = Number(d?.pushDelivered ?? 0);
+      const failed = Number(d?.pushFailed ?? 0);
+      const summary =
+        res?.message ||
+        (recipients
+          ? `Notification sent successfully. ${inApp} in-app, ${delivered} push delivered${
+              failed ? `, ${failed} push missed` : ''
+            }.`
+          : 'Notification sent successfully.');
+      if (sendingToastId.current != null) {
+        toastUpdateSuccess(sendingToastId.current, summary);
+        sendingToastId.current = null;
+      } else {
+        toastSuccess(summary);
+      }
+      void queryClient.invalidateQueries({ queryKey: ['customernotifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['teamnotifications'] });
       onClose();
+    },
+    onError: (err: unknown) => {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+            ? err.message
+            : 'Failed to send notification';
+      if (sendingToastId.current != null) {
+        toastUpdateError(sendingToastId.current, message);
+        sendingToastId.current = null;
+      } else {
+        toastError(message);
+      }
     },
   });
 
@@ -68,8 +112,13 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
   };
 
   const handleSubmit = () => {
+    if (isPending) return;
     if (!title.trim() || !message.trim()) {
       setErrors({ title: !title.trim() ? 'Title is required.' : undefined, message: !message.trim() ? 'Message is required.' : undefined });
+      return;
+    }
+    if (isSpecific && selectedUserIds.length === 0) {
+      setErrors({ message: 'Select at least one recipient.' });
       return;
     }
 
@@ -83,6 +132,9 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
     }
     if (image) formData.append('image', image);
 
+    sendingToastId.current = toastLoading(
+      'Sending notification… this can take a moment for large audiences.'
+    );
     mutate(formData);
   };
 
@@ -163,8 +215,16 @@ const NewNotificationModal: React.FC<NewNotificationModalProps> = ({
 
         {/* Submit Button */}
         <div className="mt-6">
-          <button onClick={handleSubmit} className="w-full bg-green-700 text-white rounded-lg px-4 py-3">
-            {actionType === 'add' ? 'Send Notification' : 'Update Notification'}
+          <button
+            onClick={handleSubmit}
+            disabled={isPending}
+            className="w-full bg-green-700 text-white rounded-lg px-4 py-3 disabled:opacity-60"
+          >
+            {isPending
+              ? 'Sending…'
+              : actionType === 'add'
+                ? 'Send Notification'
+                : 'Update Notification'}
           </button>
         </div>
       </div>

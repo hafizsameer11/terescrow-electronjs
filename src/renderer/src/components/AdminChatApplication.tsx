@@ -46,17 +46,35 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
   const { token } = useAuth();
   const navigate = useNavigate();
   const [dataa, setData] = useState<any>(data)
-  const [currentStatus, setCurrentStatus] = useState('Pending')
+  const [currentStatus, setCurrentStatus] = useState(() =>
+    String(data?.chatStatus || '').toLowerCase() === 'successful' ? 'Successful' : 'Pending'
+  )
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
   const [lightboxZoom, setLightboxZoom] = useState(1)
   const [selectMode, setSelectMode] = useState(false)
   const [selectedImageUrls, setSelectedImageUrls] = useState<Set<string>>(new Set())
+  const [showLogTransaction, setShowLogTransaction] = useState(() => {
+    const status = String(data?.chatStatus || '').toLowerCase()
+    const count = Number((data as { transactionsCount?: number } | undefined)?.transactionsCount ?? 0)
+    return status === 'successful' && count === 0
+  })
+  const [logFormOpen, setLogFormOpen] = useState(false)
   const [notification, setNotification] = useState<{
     message: string
     backgroundColor: string
     textColor: string
     borderColor: string
-  } | null>(null)
+  } | null>(() => {
+    if (String(data?.chatStatus || '').toLowerCase() === 'successful') {
+      return {
+        message: 'This trade was completed ',
+        backgroundColor: 'bg-green-100',
+        textColor: 'text-green-800',
+        borderColor: 'border-green-300',
+      }
+    }
+    return null
+  })
 
 
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -72,9 +90,30 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
   useEffect(() => {
     console.log('Chat details:', chatsData?.data);
     setNotsification();
-  }, [chatsData]);
+  }, [chatsData, data]);
   const setNotsification = () => {
-    if (data.chatStatus === 'successful') {
+    const status = String(
+      chatsData?.data?.chatDetails?.status ||
+        data?.chatStatus ||
+        data?.chatDetails?.status ||
+        ''
+    ).toLowerCase()
+
+    // Prefer real DB count — list `transactions` can be fake amount rows from rates/messages
+    const detailsCount = (chatsData?.data as { transactionsCount?: number } | undefined)
+      ?.transactionsCount
+    const listCount = (data as { transactionsCount?: number } | undefined)?.transactionsCount
+    const realTxFromDetails = (
+      (chatsData?.data as { transactions?: Array<{ id?: number }> } | undefined)?.transactions || []
+    ).filter((t) => Number(t.id) > 0).length
+    const txCount =
+      typeof detailsCount === 'number'
+        ? detailsCount
+        : typeof listCount === 'number'
+          ? listCount
+          : realTxFromDetails
+
+    if (status === 'successful') {
       setNotification({
         message: 'This trade was completed ',
         backgroundColor: 'bg-green-100',
@@ -82,7 +121,10 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
         borderColor: 'border-green-300'
       })
       setCurrentStatus('Successful')
-    } else if (data.chatStatus === 'declined') {
+      // Older successful chats with no logged sale — allow admin backfill
+      setShowLogTransaction(txCount === 0)
+      if (txCount > 0) setLogFormOpen(false)
+    } else if (status === 'declined') {
       setNotification({
         message: `This trade was declined `,
         backgroundColor: 'bg-red-100',
@@ -90,16 +132,43 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
         borderColor: 'border-red-300'
       })
       setCurrentStatus('declined')
-    } else if (data.chatStatus === 'pending') {
+      setShowLogTransaction(false)
+      setLogFormOpen(false)
+    } else if (status === 'unsucessful' || status === 'unsuccessful') {
       setNotification({
-        message: 'This trade was unsuccessful',
-        backgroundColor: 'bg-pink-100',
-        textColor: 'text-pink-800',
-        borderColor: 'border-pink-300'
+        message: 'Abandoned Trade.',
+        backgroundColor: 'bg-gray-100',
+        textColor: 'text-gray-500',
+        borderColor: 'border-gray-500'
       })
-      setCurrentStatus('pending')
+      setCurrentStatus('Failed')
+      setShowLogTransaction(false)
+      setLogFormOpen(false)
+    } else if (status === 'pending' || status === 'processing') {
+      setNotification(null)
+      setCurrentStatus('Pending')
+      setShowLogTransaction(false)
+      setLogFormOpen(false)
     }
   }
+
+  const handleTransactionLogged = () => {
+    setShowLogTransaction(false)
+    setLogFormOpen(false)
+    setCurrentStatus('Successful')
+    setNotification({
+      message: 'Transaction logged. This trade is now Successful.',
+      backgroundColor: 'bg-green-100',
+      textColor: 'text-green-800',
+      borderColor: 'border-green-300',
+    })
+  }
+
+  const logDepartment =
+    chatsData?.data?.chatDetails?.department || data?.department || null
+  const logCategory =
+    chatsData?.data?.chatDetails?.category || (data as { category?: any })?.category || null
+  const canOpenLogForm = !!(logDepartment?.id && logCategory?.id)
 
   const openLightbox = (url: string) => {
     setLightboxUrl(url)
@@ -166,26 +235,37 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
 
   const handleCustomerHeaderClick = () => {
     const customerId = data?.customer?.id
-    const q =
-      data?.customer?.username ||
-      [data?.customer?.firstname, data?.customer?.lastname].filter(Boolean).join(' ') ||
-      ''
     onClose()
-    if (customerId != null) onUserViewed?.(Number(customerId))
-    if (q) navigate(`/chats?q=${encodeURIComponent(q)}`)
+    if (customerId != null) {
+      onUserViewed?.(Number(customerId))
+      navigate(`/transaction-details/${customerId}`)
+    }
   }
 
+  if (!data?.customer) {
+    return (
+      <div className="fixed top-4 right-4 bottom-4 w-full md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col z-[210] p-6">
+        <p className="text-sm text-gray-600">Unable to open chat — customer data missing.</p>
+        <button type="button" className="mt-4 text-green-700 underline" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    )
+  }
+
+  const agentId = data?.agent?.id
+
   return (
-    <div className="fixed inset-y-0 right-0 w-full m-4 md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col z-50">
+    <div className="fixed top-4 right-4 bottom-4 w-full md:w-[35%] max-w-xl bg-white shadow-lg rounded-lg flex flex-col z-[210] overflow-hidden">
       <AdminChatHeader
-        avatar={getImageUrl(data.customer ?. profilePicture)}
-        name={data.customer.firstname}
-        username={data.customer.username}
+        avatar={getImageUrl(data.customer?.profilePicture)}
+        name={data.customer?.firstname || 'Customer'}
+        username={data.customer?.username || ''}
         onClose={onClose}
         onUserViewed={handleCustomerHeaderClick}
       />
 
-      <div className="px-4 py-2 border-b flex items-center justify-between gap-2">
+      <div className="px-4 py-2 border-b flex items-center justify-between gap-2 shrink-0">
         <button
           type="button"
           onClick={() => {
@@ -202,26 +282,47 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
         >
           {selectMode ? 'Done selecting' : 'Select'}
         </button>
+        {showLogTransaction ? (
+          <button
+            type="button"
+            className="text-sm px-3 py-1.5 rounded-md bg-green-700 text-white font-semibold hover:bg-green-800"
+            onClick={() => {
+              if (!canOpenLogForm) {
+                alert('Loading chat details… try again in a second.')
+                return
+              }
+              setLogFormOpen(true)
+            }}
+          >
+            Log Transaction
+          </button>
+        ) : null}
         {selectMode && (
           <span className="text-xs text-gray-500">Click images to select, or Ctrl/Cmd+click anytime</span>
         )}
       </div>
 
-      {/* Chat Messages */}
-      {chatsData?.data &&
+      {showLogTransaction && (
+        <div className="shrink-0 px-4 py-2 bg-amber-50 border-b border-amber-200 text-sm text-amber-950">
+          Successful chat with no logged sale (amount —). Click <strong>Log Transaction</strong> to backfill.
+        </div>
+      )}
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Chat Messages */}
+      {chatsData?.data ? (
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
           {chatsData.data.messages.map((message) => {
             const text = typeof message.message === 'string' ? message.message.trim() : ''
             const imageUrl = message.image ? getImageUrl(message.image) : ''
             const isSelected = imageUrl ? selectedImageUrls.has(imageUrl) : false
+            const isAgentMsg = agentId != null && message.senderId === agentId
             return (
             <div
               key={message.id}
-              className={`flex ${message.senderId === data.agent.id ? 'justify-end' : 'justify-start'} mb-2`}
+              className={`flex ${isAgentMsg ? 'justify-end' : 'justify-start'} mb-2`}
             >
               <div
-                className={`max-w-xs px-4 py-2 rounded-lg ${message.senderId === data.agent.id ? 'bg-green-100 text-gray-800' : 'bg-gray-100 text-gray-800'
+                className={`max-w-xs px-4 py-2 rounded-lg ${isAgentMsg ? 'bg-green-100 text-gray-800' : 'bg-gray-100 text-gray-800'
                   }`}
               >
                 {message.image && (
@@ -264,18 +365,33 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
           })}
           <div ref={chatEndRef} />
         </div>
-
-      }
+      ) : (
+        <div className="flex-1 flex items-center justify-center text-sm text-gray-500">Loading chat…</div>
+      )}
 
       {/* Notification Banner */}
-   
+      {notification && (
+        <div className="px-4 py-2 shrink-0">
+          <NotificationBanner
+            message={notification.message}
+            backgroundColor={notification.backgroundColor}
+            textColor={notification.textColor}
+            borderColor={notification.borderColor}
+          />
+        </div>
+      )}
 
-
-
-
-
-      {/* NewTrans Modal */}
-      {/* {currentStatus === 'Successful' && <NewTransaction />} */}
+      {logFormOpen && canOpenLogForm && (
+        <NewTransaction
+          type={logDepartment?.niche || 'giftCard'}
+          department={logDepartment}
+          category={logCategory}
+          subcategories={['BTC']}
+          chatId={id.toString()}
+          onCompleted={handleTransactionLogged}
+          onClose={() => setLogFormOpen(false)}
+        />
+      )}
 
       {selectedImageUrls.size > 0 && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[180] flex items-center gap-3 px-4 py-2 rounded-lg shadow-lg bg-gray-900 text-white">

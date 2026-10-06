@@ -41,15 +41,16 @@ const ChatConfirmModal: React.FC<ChatConfirmModalProps> = ({ onClose, onConfirm 
               />
             </svg>
           </div>
-          <h2 className="text-xl font-semibold text-gray-800">Complete transaction?</h2>
+          <h2 className="text-xl font-semibold text-gray-800">Log transaction to complete?</h2>
           <p className="text-sm text-gray-600 text-center">
-            Are you sure you want to confirm this gift card transaction?
+            You must log the sale amounts next. The chat becomes Successful only after the
+            transaction is recorded. Wallet credit stays optional.
           </p>
           <button
             onClick={onConfirm}
             className="w-full py-2 text-white bg-green-700 rounded-lg hover:bg-green-800 focus:outline-none"
           >
-            Yes, confirm
+            Continue to log transaction
           </button>
           <button
             onClick={onClose}

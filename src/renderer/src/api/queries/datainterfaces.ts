@@ -324,6 +324,17 @@ export interface NotificationsResponse {
   data: Notification[]
 }
 
+export interface CreateNotificationResponse {
+  status: string
+  message: string
+  data: Notification & {
+    recipients?: number
+    inAppCreated?: number
+    pushDelivered?: number
+    pushFailed?: number
+  }
+}
+
 export interface createAgentResponse {
   status: string
   message: string
@@ -371,11 +382,17 @@ export interface AgentToCustomerChatData {
     Type: string
     niche: string
   }
+  category?: {
+    id: number
+    title: string
+  }
   messagesCount: number
+  /** Real DB transaction count (not display amount rows from rates/messages). */
+  transactionsCount?: number
   transactions?: {
     id: number
-    amount: number
-    amountNaira: number
+    amount?: number
+    amountNaira?: number
   }[]
   agent: {
     id: number

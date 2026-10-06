@@ -43,10 +43,10 @@ const ModalHeader: React.FC<HeaderProps> = ({
         </button>
         <button
           type="button"
-          className="flex items-center gap-2 text-left hover:opacity-80 focus:outline-none"
+          className="flex items-center gap-2 text-left hover:opacity-80 focus:outline-none cursor-pointer"
           onClick={onUserViewed}
           disabled={!onUserViewed}
-          title={onUserViewed ? 'View customer chat history' : undefined}
+          title={onUserViewed ? 'View customer transaction history' : undefined}
         >
           <img
             src={customer.avatar}

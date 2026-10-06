@@ -123,9 +123,12 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
   const [teamModal, setTeamModal] = useState(false)
   // const [teamchat, setTeamChat] = useState<AgentToAgentChatData | null>(null)
   const handleeyeclick = (id: number, item: AgentToCustomerChatData) => {
-    console.log(id)
+    if (!item?.customer) {
+      console.error('Cannot open chat: missing customer on row', id, item)
+      return
+    }
     setCurrentItem(item)
-    setActiveChatId(id)
+    setActiveChatId(id || item.id)
     setIsChatOpen(true)
   }
   const handlesecondEyeClick = (id: number, item: AgentToAgentChatData) => {
@@ -187,46 +190,30 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
 
   if (activeFilterInTeam === 'Customer') {
     const chatModal =
-      isTeamCommunition && isChatOpen ? (
-        <div className="fixed inset-0 bg-gray-900/50 flex justify-center items-center z-[100] p-4">
-          <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-xl shadow-xl relative overflow-y-auto">
-            <button
-              type="button"
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10"
-              onClick={() => setIsChatOpen(false)}
-              aria-label="Close"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+      isChatOpen && currentItem ? (
+        <div className="fixed inset-0 z-[200] bg-black/40" onClick={() => setIsChatOpen(false)}>
+          <div onClick={(e) => e.stopPropagation()}>
             {userData?.role !== 'agent' ? (
-              currentItem ? (
-                <AdminChatApplication
-                  data={currentItem}
-                  id={activeChatId || 0}
-                  onClose={() => setIsChatOpen(false)}
-                  isAdmin={true}
-                  onUserViewed={(customerId) => {
-                    setIsChatOpen(false);
-                    onUserViewed?.(customerId);
-                  }}
-                />
-              ) : (
-                <div className="p-6 text-center">Loading chat data...</div>
-              )
-            ) : currentItem ? (
-              <ChatApplication
+              <AdminChatApplication
                 data={currentItem}
-                id={activeChatId || 0}
+                id={activeChatId || currentItem.id || 0}
                 onClose={() => setIsChatOpen(false)}
+                isAdmin={true}
                 onUserViewed={(customerId) => {
                   setIsChatOpen(false);
                   onUserViewed?.(customerId);
                 }}
               />
             ) : (
-              <div className="p-6 text-center">Loading chat data...</div>
+              <ChatApplication
+                data={currentItem}
+                id={activeChatId || currentItem.id || 0}
+                onClose={() => setIsChatOpen(false)}
+                onUserViewed={(customerId) => {
+                  setIsChatOpen(false);
+                  onUserViewed?.(customerId);
+                }}
+              />
             )}
           </div>
         </div>
@@ -275,16 +262,27 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                   typeof item.recentMessage?.message === 'string' && item.recentMessage.message.trim()
                     ? item.recentMessage.message.trim()
                     : 'Sent an image';
-                const amt = item?.transactions?.[0]?.amount;
-                const ngn = item?.transactions?.[0]?.amountNaira;
-                const amtUsd =
-                  amt != null && amt !== ''
-                    ? typeof amt === 'number'
-                      ? `$${amt}`
-                      : String(amt).startsWith('$')
-                        ? String(amt)
-                        : `$${amt}`
+                const amtRaw = item?.transactions?.[0]?.amount;
+                const ngnRaw = item?.transactions?.[0]?.amountNaira;
+                const amtNum =
+                  amtRaw != null && amtRaw !== '' && Number.isFinite(Number(amtRaw))
+                    ? Number(amtRaw)
+                    : null;
+                const ngnNum =
+                  ngnRaw != null && ngnRaw !== '' && Number.isFinite(Number(ngnRaw))
+                    ? Number(ngnRaw)
+                    : null;
+                const hasUsd = amtNum != null && amtNum > 0;
+                const hasNgn = ngnNum != null && ngnNum > 0;
+                const amtPrimary = hasNgn
+                  ? `₦${formatNairaAmount(ngnNum)}`
+                  : hasUsd
+                    ? `$${amtNum}`
                     : '—';
+                const amtSecondary =
+                  hasNgn && hasUsd ? (
+                    <span className="text-sm text-gray-400">${amtNum}</span>
+                  ) : null;
                 const initial =
                   (item.customer.country && item.customer.country.length >= 2
                     ? item.customer.country.slice(0, 1)
@@ -351,13 +349,13 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                     </td>
                     {activeFilterInTeam === 'Customer' && (
                       <td className="py-3 px-4 align-top">
-                        <span className="block font-semibold text-gray-900">{amtUsd}</span>
-                        <span className="text-sm text-gray-400">NGN {formatNairaAmount(ngn ?? 0)}</span>
+                        <span className="block font-semibold text-gray-900">{amtPrimary}</span>
+                        {amtSecondary}
                       </td>
                     )}
                     {activeFilterInTeam === 'Customer' && (
                       <td className="py-3 px-4 text-gray-800">
-                        {item.agent.firstname} {item.agent.lastname}
+                        {item.agent?.firstname || '—'} {item.agent?.lastname || ''}
                       </td>
                     )}
                     <td className="py-3 px-4 text-gray-600 whitespace-nowrap">
@@ -422,6 +420,19 @@ const ChatTable: React.FC<TransactionsTableProps> = ({
                               >
                                 Open chat
                               </button>
+                              {item.chatStatus === 'successful' &&
+                              (item.transactionsCount ?? 0) === 0 ? (
+                                <button
+                                  type="button"
+                                  className="block w-full text-left px-3 py-2 text-sm font-medium text-green-800 hover:bg-green-50"
+                                  onClick={() => {
+                                    handleeyeclick(item.id, item);
+                                    setActiveMenu(null);
+                                  }}
+                                >
+                                  Log Transaction
+                                </button>
+                              ) : null}
                               <button
                                 type="button"
                                 className="block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"

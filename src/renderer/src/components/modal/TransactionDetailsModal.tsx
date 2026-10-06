@@ -368,6 +368,17 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             <>
               <Row label="Amount" value={`₦${formatNairaAmount(transactionData.nairaAmount)}`} />
               <Row label="Transaction Type" value={nairaTypeLabel} />
+              <Row
+                label="Wallet source"
+                value={
+                  transactionData.subCategory ||
+                  (String(transactionData.nairaType || '').toUpperCase() === 'REFERRAL_WITHDRAW'
+                    ? 'Referral wallet'
+                    : String(transactionData.nairaType || '').toUpperCase().includes('WITHDRAW')
+                      ? 'Naira wallet'
+                      : undefined)
+                }
+              />
               <Row label="Channel" value={transactionData.nairaChannel || undefined} />
               <Row
                 label="Reference"

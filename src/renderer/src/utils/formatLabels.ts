@@ -41,7 +41,10 @@ export function formatNairaType(type: string | null | undefined): string {
   if (!type) return '—';
   const t = type.toLowerCase();
   if (t === 'deposit' || t === 'credit') return 'Deposit';
-  if (t === 'withdrawal' || t === 'debit') return 'Withdrawal';
+  if (t === 'referral_withdraw' || t === 'referral_withdrawal' || t === 'referral withdraw') {
+    return 'Referral withdrawal';
+  }
+  if (t === 'withdraw' || t === 'withdrawal' || t === 'debit') return 'Wallet withdrawal';
   if (t === 'transfer') return 'Transfer';
   return humanizeKey(type);
 }

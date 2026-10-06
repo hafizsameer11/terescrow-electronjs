@@ -65,7 +65,8 @@ export type ChatRow = {
   } | null;
   recentMessage?: { id: string; message?: string; createdAt?: string } | null;
   unreadCount?: number;
-  transactionsCount?: number; // backend should return count (not full array)
+  transactionsCount?: number;
+  transactions?: Array<{ id?: number | string; amount?: number | null; amountNaira?: number | null }>;
 };
 
 export type PaginatedChatsResponse = {

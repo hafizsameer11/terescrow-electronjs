@@ -1,4 +1,4 @@
-import { toast } from 'react-toastify';
+import { Id, toast } from 'react-toastify';
 import { ApiError } from '@renderer/api/customApiCall';
 
 export function toastSuccess(message: string) {
@@ -7,6 +7,28 @@ export function toastSuccess(message: string) {
 
 export function toastError(message: string) {
   toast.error(message);
+}
+
+export function toastLoading(message: string): Id {
+  return toast.loading(message);
+}
+
+export function toastUpdateSuccess(id: Id, message: string) {
+  toast.update(id, {
+    render: message,
+    type: 'success',
+    isLoading: false,
+    autoClose: 6000,
+  });
+}
+
+export function toastUpdateError(id: Id, message: string) {
+  toast.update(id, {
+    render: message,
+    type: 'error',
+    isLoading: false,
+    autoClose: 6000,
+  });
 }
 
 export function toastApiError(err: unknown, fallback = 'Request failed') {

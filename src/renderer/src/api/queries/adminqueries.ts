@@ -1,5 +1,4 @@
 // import { number, string } from 'yup'
-import { NotificationResponse } from 'electron'
 import { API_ENDPOINT } from '../config'
 import { apiCall } from '../customApiCall'
 import {
@@ -14,6 +13,7 @@ import {
   Banner,
   Category,
   CategroiesResponse,
+  CreateNotificationResponse,
   createAgentResponse,
   CreateBannerResponse,
   CreateCategoryResponse,
@@ -332,7 +332,7 @@ export const createNotification = async ({
 }: {
   token: string
   data: Notification
-}): Promise<NotificationResponse> => {
+}): Promise<CreateNotificationResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.CreateNotification}`, 'POST', data, token)
 }
 export const getNotification = async ({
@@ -350,7 +350,7 @@ export const editNotification = async ({
   token: string
   data: Notification
   id: string
-}): Promise<NotificationResponse> => {
+}): Promise<CreateNotificationResponse> => {
   return await apiCall(`${API_ENDPOINT.OPERATIONS.UpdateNotification}/${id}`, 'POST', data, token)
 }
 export const deleteNotification = async ({
@@ -359,7 +359,7 @@ export const deleteNotification = async ({
 }: {
   token: string
   id: string
-}): Promise<NotificationResponse> => {
+}): Promise<CreateNotificationResponse> => {
   return await apiCall(
     `${API_ENDPOINT.OPERATIONS.DeleteNotification}/${id}`,
     'DELETE',

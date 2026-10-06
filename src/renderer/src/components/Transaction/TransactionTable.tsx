@@ -13,6 +13,7 @@ import {
   isRevokedOrFakeCryptoTxStatus,
 } from '@renderer/utils/fakeDeposit';
 import { toastError, toastSuccess } from '@renderer/utils/toast';
+import { formatNairaType } from '@renderer/utils/formatLabels';
 export interface Country {
   id: number;
   title?: string;
@@ -226,7 +227,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
       return transaction.category?.title || 'Gift Card';
     }
     if (n === 'naira') {
-      return transaction.nairaType || transaction.category?.title || 'Naira';
+      return formatNairaType(transaction.nairaType || transaction.category?.title);
     }
     return transaction.category?.title ?? '';
   };

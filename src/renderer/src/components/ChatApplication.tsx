@@ -57,6 +57,8 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
   } | null>(null);
   const [currentStatus, setCurrentStatus] = useState('Pending');
   const [isInputVisible, setIsInputVisible] = useState(true);
+  const [showLogTransaction, setShowLogTransaction] = useState(false);
+  const [logFormOpen, setLogFormOpen] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const openLightbox = (url: string) => {
@@ -124,13 +126,11 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
 
   const handleCustomerHeaderClick = () => {
     const customerId = data?.customer?.id;
-    const q =
-      data?.customer?.username ||
-      [data?.customer?.firstname, data?.customer?.lastname].filter(Boolean).join(' ') ||
-      '';
     onClose();
-    if (customerId != null) onUserViewed?.(Number(customerId));
-    if (q) navigate(`/chats?q=${encodeURIComponent(q)}`);
+    if (customerId != null) {
+      onUserViewed?.(Number(customerId));
+      navigate(`/transaction-details/${customerId}`);
+    }
   };
 
   // Fetch chat details
@@ -185,8 +185,16 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
           textColor: 'text-green-800',
           borderColor: 'border-green-300',
         });
-        setIsInputVisible(false)
-        // setCurrentStatus('Successful');
+        setIsInputVisible(false);
+        setCurrentStatus('Successful');
+        const detailsCount = (chatsData?.data as { transactionsCount?: number })?.transactionsCount;
+        const realTx = (
+          (chatsData?.data as { transactions?: Array<{ id?: number }> })?.transactions || []
+        ).filter((t) => Number(t.id) > 0).length;
+        const txCount = typeof detailsCount === 'number' ? detailsCount : realTx;
+        // Older successful chats with no logged sale — allow backfill
+        setShowLogTransaction(txCount === 0);
+        if (txCount > 0) setLogFormOpen(false);
       } else if (chatsData?.data.chatDetails.status == 'declined') {
         setNotification({
           message: `This Trade was declined. Reason : Invalid,unactivated or code has already been redeemed.`,
@@ -195,7 +203,9 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
           borderColor: 'border-red-300',
         });
         setCurrentStatus('Failed');
-        setIsInputVisible(false)
+        setIsInputVisible(false);
+        setShowLogTransaction(false);
+        setLogFormOpen(false);
       }
       else if (chatsData?.data.chatDetails.status == 'unsucessful') {
         setNotification({
@@ -206,13 +216,22 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         });
 
         setCurrentStatus('Failed');
-        setIsInputVisible(false)
+        setIsInputVisible(false);
+        setShowLogTransaction(false);
+        setLogFormOpen(false);
       }
       else if (chatsData?.data.chatDetails.status === 'pending') {
         // ✅ CLEAR old notification when chat is pending
         setNotification(null);
         setCurrentStatus('Pending');
         setIsInputVisible(true);
+        setShowLogTransaction(false);
+      }
+      else if (chatsData?.data.chatDetails.status === 'processing') {
+        setNotification(null);
+        setCurrentStatus('Pending');
+        setIsInputVisible(true);
+        setShowLogTransaction(false);
       }
     }
   }, [chatsData, id]);
@@ -258,7 +277,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
   };
 
   const { mutate: changeStatus, isPending: changeStatusPending } = useMutation({
-    mutationFn: (data: { chatId: string; setStatus: ChatStatus }) =>
+    mutationFn: (data: { chatId: string; setStatus: ChatStatus; reason?: string }) =>
       changeChatStatus(data, token),
     mutationKey: ['change-chat-status'],
     onSuccess: (data: ApiResponse) => {
@@ -269,19 +288,23 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
     },
   });
   const handleStatusChange = (status: string, reason?: string) => {
+    if (status === 'Successful') {
+      // Do not mark successful yet — agent must log the transaction first
+      setShowLogTransaction(true);
+      setLogFormOpen(true);
+      setNotification({
+        message: 'Log the transaction to mark this chat Successful. Wallet credit is optional.',
+        backgroundColor: 'bg-amber-100',
+        textColor: 'text-amber-900',
+        borderColor: 'border-amber-300',
+      });
+      return;
+    }
+
     setIsInputVisible(false);
 
-    if (status === 'Successful') {
-      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.successful }, token);
-      setNotification({
-        message: 'This trade was completed by you.',
-        backgroundColor: 'bg-green-100',
-        textColor: 'text-green-800',
-        borderColor: 'border-green-300',
-      });
-      setCurrentStatus('Successful');
-    } else if (status === 'Failed' && reason) {
-      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.declined }, token);
+    if (status === 'Failed' && reason) {
+      changeStatus({ chatId: id.toString(), setStatus: ChatStatus.declined, reason });
       setNotification({
         message: `This Trade was declined. Reason : ${reason}`,
         backgroundColor: 'bg-red-100',
@@ -289,8 +312,9 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         borderColor: 'border-red-300',
       });
       setCurrentStatus('Failed');
+      setShowLogTransaction(false);
     } else if (status === 'unsucessful') {
-      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.unsuccessful }, token);
+      changeStatus({ chatId: id.toString(), setStatus: ChatStatus.unsuccessful });
       setNotification({
         message: 'Abandoned Trade.',
         backgroundColor: 'bg-gray-100',
@@ -299,8 +323,9 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
       });
 
       setCurrentStatus('unsucessful');
+      setShowLogTransaction(false);
     } else if (status === 'Pending') {
-      changeChatStatus({ chatId: id.toString(), setStatus: ChatStatus.pending }, token);
+      changeStatus({ chatId: id.toString(), setStatus: ChatStatus.pending });
       setNotification({
         message: 'This trade is now marked as pending. Reopen the chat.',
         backgroundColor: 'bg-yellow-100',
@@ -308,7 +333,22 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
         borderColor: 'border-yellow-300',
       });
       setCurrentStatus('Pending');
+      setIsInputVisible(true);
+      setShowLogTransaction(false);
     }
+  };
+
+  const handleTransactionLogged = () => {
+    setShowLogTransaction(false);
+    setLogFormOpen(false);
+    setCurrentStatus('Successful');
+    setIsInputVisible(false);
+    setNotification({
+      message: 'Transaction logged. This trade is now Successful.',
+      backgroundColor: 'bg-green-100',
+      textColor: 'text-green-800',
+      borderColor: 'border-green-300',
+    });
   };
 
   useEffect(() => {
@@ -376,7 +416,7 @@ window.electron.ipcRenderer.send('copy-image-from-buffer', new Uint8Array(arrayB
 
   return (
     <div className='bg-black bg-opacity-30 w-full h-full  inset-0 flex items-center justify-center '>
-      <div className="fixed inset-y-0 right-0 w-full m-4 md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col ">
+      <div className="fixed inset-y-0 right-0 w-full m-4 md:w-[35%] bg-white shadow-lg rounded-lg flex flex-col relative overflow-hidden">
         <ChatHeader
           avatar={getImageUrl(data?.customer?.profilePicture) || 'https://via.placeholder.com/40'}
           name={`${data?.customer?.firstname} - ${data?.customer?.country}`}
@@ -599,20 +639,47 @@ window.electron.ipcRenderer.send('copy-image-from-buffer', new Uint8Array(arrayB
           </div>
         )}
 
-        {/* NewTrans Modal */}
-        {currentStatus === 'Successful' && (
-          <>
-            <div className="px-4 py-2 bg-amber-50 border-t border-amber-200 text-sm text-amber-900">
-              Log the sell, then check Pay customer to credit their wallet.
+        {/* Log transaction required for Successful (and backfill older successful with no txn) */}
+        {showLogTransaction && (
+          <div className="shrink-0 border-t border-amber-200 bg-amber-50 px-4 py-3 space-y-2">
+            <p className="text-sm text-amber-950 font-medium">
+              {currentStatus === 'Successful'
+                ? 'No sale logged for this Successful chat. Amount shows as — until you log it.'
+                : 'Log the sell to mark this chat Successful. Wallet credit is optional.'}
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                className="flex-1 py-2.5 rounded-lg bg-green-700 text-white text-sm font-semibold hover:bg-green-800"
+                onClick={() => setLogFormOpen(true)}
+              >
+                Log Transaction
+              </button>
+              {currentStatus === 'Successful' ? (
+                <button
+                  type="button"
+                  className="shrink-0 px-3 text-xs text-amber-900 underline"
+                  onClick={() => setShowLogTransaction(false)}
+                >
+                  Dismiss
+                </button>
+              ) : null}
             </div>
-            <NewTransaction
-              type={chatsData?.data.chatDetails.department.niche}
-              department={chatsData?.data.chatDetails.department}
-              category={chatsData?.data.chatDetails.category}
-              subcategories={['BTC']}
-              chatId={id.toString()}
-            />
-          </>
+          </div>
+        )}
+        {logFormOpen && chatsData?.data?.chatDetails && (
+          <NewTransaction
+            type={chatsData?.data.chatDetails.department.niche}
+            department={chatsData?.data.chatDetails.department}
+            category={chatsData?.data.chatDetails.category}
+            subcategories={['BTC']}
+            chatId={id.toString()}
+            onCompleted={handleTransactionLogged}
+            onClose={() => {
+              setLogFormOpen(false);
+              if (currentStatus !== 'Successful') setShowLogTransaction(false);
+            }}
+          />
         )}
       </div>
 

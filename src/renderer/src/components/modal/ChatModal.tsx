@@ -84,8 +84,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
           onOpenNotes={() => console.log("Open Notes Clicked")}
           onUserViewed={() => {
             onClose();
-            const q = customer.username || customer.name || '';
-            if (q) navigate(`/chats?q=${encodeURIComponent(q)}`);
+            if (customer.id != null) navigate(`/transaction-details/${customer.id}`);
           }}
         />
 
