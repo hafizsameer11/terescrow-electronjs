@@ -10,8 +10,9 @@ import CryptoRatesSettings from '@renderer/components/rates/CryptoRatesSettings'
 import BushaMarkupSettings from '@renderer/components/rates/BushaMarkupSettings';
 import BushaCoinFeeSettings from '@renderer/components/rates/BushaCoinFeeSettings';
 import BushaFeeLedgerPanel from '@renderer/components/rates/BushaFeeLedgerPanel';
+import ObiexMarkupSettings from '@renderer/components/rates/ObiexMarkupSettings';
 import { GIFT_CARD_TRANSACTION_TYPES } from '@renderer/types/cryptoRates';
-import { getBushaStatus } from '@renderer/api/admin';
+import { getBushaStatus, getObiexStatus } from '@renderer/api/admin';
 
 type RatesPageTab = 'crypto' | 'gift-card' | 'history';
 
@@ -46,7 +47,15 @@ const RatesHistory: React.FC = () => {
     staleTime: 60_000,
     retry: false,
   });
+  const obiexStatusQuery = useQuery({
+    queryKey: ['obiexStatus'],
+    queryFn: () => getObiexStatus(token!),
+    enabled: !!token && canManageRates,
+    staleTime: 60_000,
+    retry: false,
+  });
   const bushaActive = !!bushaStatusQuery.data?.settings?.isActive && !!bushaStatusQuery.data?.busha?.configured;
+  const obiexActive = !!obiexStatusQuery.data?.settings?.isActive && !!obiexStatusQuery.data?.configured;
 
   const { data: ratesData, isLoading, isError, error } = useQuery({
     queryKey: ['ratesData'],
@@ -83,7 +92,15 @@ const RatesHistory: React.FC = () => {
     <div className="p-6 w-full">
       <h1 className="text-[40px] font-semibold text-gray-800 mb-4">Rates</h1>
 
-      {bushaActive ? (
+      {obiexActive ? (
+        <div className="mb-6 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
+          <p className="font-semibold">Obiex is active — set flat buy/sell fees and % markup below.</p>
+          <p className="mt-1 text-sky-900/90">
+            Net admin profit/loss (after provider fees) is recorded on each trade. Gift card rates still use the Gift
+            card tab.
+          </p>
+        </div>
+      ) : bushaActive ? (
         <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
           <p className="font-semibold">Busha is active — live crypto buy/sell rates come from Busha.</p>
           <p className="mt-1 text-emerald-900/90">
@@ -93,10 +110,9 @@ const RatesHistory: React.FC = () => {
         </div>
       ) : (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          <p className="font-semibold">Busha crypto trading is the only crypto rate module.</p>
+          <p className="font-semibold">Configure Obiex or Busha for crypto rates.</p>
           <p className="mt-1 text-amber-900/90">
-            Enable and configure Busha under <strong>Busha Test</strong> / settings. Legacy Tatum buy/sell rate tiers
-            are no longer used for crypto.
+            Enable Obiex or Busha under their settings. Flat Obiex buy/sell fees are available when Obiex is connected.
           </p>
         </div>
       )}
@@ -110,7 +126,7 @@ const RatesHistory: React.FC = () => {
               activeTab === 'crypto' ? 'text-white bg-green-700' : 'text-gray-800 border border-gray-300'
             }`}
           >
-            Busha markup
+            Crypto fees
           </button>
           <button
             type="button"
@@ -135,6 +151,7 @@ const RatesHistory: React.FC = () => {
 
       {activeTab === 'crypto' && canManageRates && token ? (
         <>
+          <ObiexMarkupSettings token={token} />
           <BushaMarkupSettings token={token} />
           <BushaCoinFeeSettings token={token} />
           <BushaFeeLedgerPanel token={token} />

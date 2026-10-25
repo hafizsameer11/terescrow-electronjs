@@ -57,6 +57,7 @@ const API_ENDPOINT = {
     bushaCustomer: (id: string) => API_ADMIN_BASE + '/busha/customers/' + encodeURIComponent(id),
     bushaCustomerKyc: (id: string) => API_ADMIN_BASE + '/busha/customers/' + encodeURIComponent(id) + '/kyc',
     bushaCustomerVerify: (id: string) => API_ADMIN_BASE + '/busha/customers/' + encodeURIComponent(id) + '/verify',
+    obiex: API_ADMIN_BASE + '/obiex',
     dailyReportLogs: API_ADMIN_BASE + '/daily-report/logs',
     dailyReportReport: (reportId: string) => API_ADMIN_BASE + '/daily-report/reports/' + reportId,
     dailyReportSummary: API_ADMIN_BASE + '/daily-report/summary',

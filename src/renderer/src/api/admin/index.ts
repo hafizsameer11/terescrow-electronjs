@@ -12,3 +12,4 @@ export * from './cryptoRates';
 export * from './profitTracker';
 export * from './merchants';
 export * from './busha';
+export * from './obiex';
