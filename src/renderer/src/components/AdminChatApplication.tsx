@@ -2,15 +2,17 @@ import React, { useState, useEffect, useRef } from 'react'
 import ChatHeader from './ChatHeader'
 import NotificationBanner from './NotificationBanner'
 import NewTransaction from './NewTransaction'
+import FreezeFeatureModal from './modal/FreezeFeatureModal'
 import { AiOutlineSend, AiOutlinePicture } from 'react-icons/ai'; // Importing icons from react-icons
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { getAgentToCustomerChatDetails } from '@renderer/api/queries/admin.chat.queries';
+import { freezeCustomerFeature } from '@renderer/api/admin/customers';
 import AdminChatHeader from './AdminChatHeader';
 import { getImageUrl } from '@renderer/api/helper';
 import { useAuth } from '@renderer/context/authContext';
 import { useNavigate } from 'react-router-dom';
 import { IoClose } from 'react-icons/io5';
-import { toastSuccess, toastError } from '@renderer/utils/toast';
+import { toastSuccess, toastError, toastApiError } from '@renderer/utils/toast';
 interface Message {
   id: number
   text: string
@@ -59,6 +61,8 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
     return status === 'successful' && count === 0
   })
   const [logFormOpen, setLogFormOpen] = useState(false)
+  const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false)
+  const customerIdForFreeze = data?.customer?.id != null ? Number(data.customer.id) : null
   const [notification, setNotification] = useState<{
     message: string
     backgroundColor: string
@@ -84,6 +88,19 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
     queryFn: () => getAgentToCustomerChatDetails({ token, chatId: id.toString() }),
     enabled: !!token,
   });
+
+  const freezeMutation = useMutation({
+    mutationFn: (feature: string) => {
+      if (!customerIdForFreeze || !token) throw new Error('Customer not loaded')
+      return freezeCustomerFeature(token, customerIdForFreeze, { feature })
+    },
+    onSuccess: (result) => {
+      setIsFreezeModalOpen(false)
+      toastSuccess(result.message || 'Feature frozen')
+    },
+    onError: (err) => toastApiError(err, 'Failed to freeze feature.'),
+  })
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
@@ -266,37 +283,49 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
       />
 
       <div className="px-4 py-2 border-b flex items-center justify-between gap-2 shrink-0">
-        <button
-          type="button"
-          onClick={() => {
-            setSelectMode((m) => {
-              if (m) clearImageSelection()
-              return !m
-            })
-          }}
-          className={`text-sm px-3 py-1 rounded-md border ${
-            selectMode
-              ? 'bg-green-700 text-white border-green-800'
-              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-          }`}
-        >
-          {selectMode ? 'Done selecting' : 'Select'}
-        </button>
-        {showLogTransaction ? (
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
-            className="text-sm px-3 py-1.5 rounded-md bg-green-700 text-white font-semibold hover:bg-green-800"
             onClick={() => {
-              if (!canOpenLogForm) {
-                alert('Loading chat details… try again in a second.')
-                return
-              }
-              setLogFormOpen(true)
+              setSelectMode((m) => {
+                if (m) clearImageSelection()
+                return !m
+              })
             }}
+            className={`text-sm px-3 py-1 rounded-md border ${
+              selectMode
+                ? 'bg-green-700 text-white border-green-800'
+                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+            }`}
           >
-            Log Transaction
+            {selectMode ? 'Done selecting' : 'Select'}
           </button>
-        ) : null}
+          {customerIdForFreeze ? (
+            <button
+              type="button"
+              onClick={() => setIsFreezeModalOpen(true)}
+              className="text-sm px-3 py-1 rounded-md border border-red-300 text-red-700 bg-red-50 hover:bg-red-100"
+              title="Freeze a customer feature immediately"
+            >
+              Freeze feature
+            </button>
+          ) : null}
+          {showLogTransaction ? (
+            <button
+              type="button"
+              className="text-sm px-3 py-1.5 rounded-md bg-green-700 text-white font-semibold hover:bg-green-800"
+              onClick={() => {
+                if (!canOpenLogForm) {
+                  alert('Loading chat details… try again in a second.')
+                  return
+                }
+                setLogFormOpen(true)
+              }}
+            >
+              Log Transaction
+            </button>
+          ) : null}
+        </div>
         {selectMode && (
           <span className="text-xs text-gray-500">Click images to select, or Ctrl/Cmd+click anytime</span>
         )}
@@ -388,6 +417,7 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
           category={logCategory}
           subcategories={['BTC']}
           chatId={id.toString()}
+          customerCountry={data?.customer?.country}
           onCompleted={handleTransactionLogged}
           onClose={() => setLogFormOpen(false)}
         />
@@ -441,6 +471,16 @@ const AdminChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, i
           />
         </div>
       )}
+
+      {customerIdForFreeze ? (
+        <FreezeFeatureModal
+          isOpen={isFreezeModalOpen}
+          onClose={() => !freezeMutation.isPending && setIsFreezeModalOpen(false)}
+          customerId={customerIdForFreeze}
+          onProceed={(feature) => freezeMutation.mutate(feature)}
+          isSubmitting={freezeMutation.isPending}
+        />
+      ) : null}
     </div>
   )
 }

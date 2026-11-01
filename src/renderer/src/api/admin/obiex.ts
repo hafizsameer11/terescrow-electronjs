@@ -28,6 +28,10 @@ export type ObiexStatus = {
     sellMarkupPercent?: number | null;
     buyFlatFeeNgn?: number | null;
     sellFlatFeeNgn?: number | null;
+    sellMarkupPercentGhs?: number | null;
+    sellFlatFeeGhs?: number | null;
+    withdrawMarkupPercentGhs?: number | null;
+    withdrawFlatFeeGhs?: number | null;
     collectionsTarget?: string | null;
   } | null;
   masterBalances?: unknown[];
@@ -49,6 +53,10 @@ export async function saveObiexSettings(
     sellMarkupPercent?: number;
     buyFlatFeeNgn?: number;
     sellFlatFeeNgn?: number;
+    sellMarkupPercentGhs?: number;
+    sellFlatFeeGhs?: number;
+    withdrawMarkupPercentGhs?: number;
+    withdrawFlatFeeGhs?: number;
     collectionsTarget?: string;
   }
 ) {

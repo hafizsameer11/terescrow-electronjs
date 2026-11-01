@@ -3,17 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import ChatHeader from './ChatHeader';
 import NotificationBanner from './NotificationBanner';
 import NewTransaction from './NewTransaction';
+import FreezeFeatureModal from './modal/FreezeFeatureModal';
 import { AiOutlineSend, AiOutlinePicture, AiOutlineMessage } from 'react-icons/ai';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getAgentToCustomerChatDetails } from '@renderer/api/queries/admin.chat.queries';
 import { changeChatStatus, ChatStatus, sendMessageToCustomer } from '@renderer/api/queries/agent.mutations';
+import { freezeCustomerFeature } from '@renderer/api/admin/customers';
 import { useAuth } from '@renderer/context/authContext';
 import { getImageUrl } from '@renderer/api/helper';
 import { AgentToCustomerChatData, ApiResponse } from '@renderer/api/queries/datainterfaces';
 import { ApiError } from '@renderer/api/customApiCall';
 import { IoClose } from 'react-icons/io5';
 import { getAllQuickReplies } from '@renderer/api/queries/agent.queries';
-import { toastSuccess, toastError } from '@renderer/utils/toast';
+import { toastSuccess, toastError, toastApiError } from '@renderer/utils/toast';
 
 export interface IResMessage {
   id: number;
@@ -59,7 +61,9 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
   const [isInputVisible, setIsInputVisible] = useState(true);
   const [showLogTransaction, setShowLogTransaction] = useState(false);
   const [logFormOpen, setLogFormOpen] = useState(false);
+  const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const customerIdForFreeze = data?.customer?.id != null ? Number(data.customer.id) : null;
 
   const openLightbox = (url: string) => {
     setLightboxUrl(url);
@@ -146,6 +150,19 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
     queryFn: () => getAllQuickReplies(token),
     enabled: !!token
   });
+
+  const freezeMutation = useMutation({
+    mutationFn: (feature: string) => {
+      if (!customerIdForFreeze || !token) throw new Error('Customer not loaded');
+      return freezeCustomerFeature(token, customerIdForFreeze, { feature });
+    },
+    onSuccess: (result) => {
+      setIsFreezeModalOpen(false);
+      toastSuccess(result.message || 'Feature frozen');
+    },
+    onError: (err) => toastApiError(err, 'Failed to freeze feature.'),
+  });
+
   // Mutation for sending messages
   const { mutate: postMessage } = useMutation({
     mutationFn: (formData: FormData) => sendMessageToCustomer(formData, token),
@@ -429,22 +446,34 @@ window.electron.ipcRenderer.send('copy-image-from-buffer', new Uint8Array(arrayB
         />
 
         <div className="px-4 py-2 border-b flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setSelectMode((m) => {
-                if (m) clearImageSelection();
-                return !m;
-              });
-            }}
-            className={`text-sm px-3 py-1 rounded-md border ${
-              selectMode
-                ? 'bg-green-700 text-white border-green-800'
-                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            {selectMode ? 'Done selecting' : 'Select'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectMode((m) => {
+                  if (m) clearImageSelection();
+                  return !m;
+                });
+              }}
+              className={`text-sm px-3 py-1 rounded-md border ${
+                selectMode
+                  ? 'bg-green-700 text-white border-green-800'
+                  : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {selectMode ? 'Done selecting' : 'Select'}
+            </button>
+            {customerIdForFreeze ? (
+              <button
+                type="button"
+                onClick={() => setIsFreezeModalOpen(true)}
+                className="text-sm px-3 py-1 rounded-md border border-red-300 text-red-700 bg-red-50 hover:bg-red-100"
+                title="Freeze a customer feature immediately"
+              >
+                Freeze feature
+              </button>
+            ) : null}
+          </div>
           {selectMode && (
             <span className="text-xs text-gray-500">Click images to select, or Ctrl/Cmd+click anytime</span>
           )}
@@ -674,6 +703,7 @@ window.electron.ipcRenderer.send('copy-image-from-buffer', new Uint8Array(arrayB
             category={chatsData?.data.chatDetails.category}
             subcategories={['BTC']}
             chatId={id.toString()}
+            customerCountry={data?.customer?.country}
             onCompleted={handleTransactionLogged}
             onClose={() => {
               setLogFormOpen(false);
@@ -731,6 +761,16 @@ window.electron.ipcRenderer.send('copy-image-from-buffer', new Uint8Array(arrayB
           />
         </div>
       )}
+
+      {customerIdForFreeze ? (
+        <FreezeFeatureModal
+          isOpen={isFreezeModalOpen}
+          onClose={() => !freezeMutation.isPending && setIsFreezeModalOpen(false)}
+          customerId={customerIdForFreeze}
+          onProceed={(feature) => freezeMutation.mutate(feature)}
+          isSubmitting={freezeMutation.isPending}
+        />
+      ) : null}
     </div>
   );
 };

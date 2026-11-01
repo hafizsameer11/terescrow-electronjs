@@ -51,6 +51,7 @@ interface TransactionDetailsModalProps {
     billFeePercent?: number | null;
     billFeeLabel?: string | null;
     providerAmountNgn?: number | null;
+    billProviderCommissionNgn?: number | null;
     createdAt?: string | null;
   };
 }
@@ -198,9 +199,11 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
       : null;
 
   const feeLabel =
-    isBillPayment && (transactionData.billFeeNgn ?? 0) > 0
-      ? `₦${formatNairaAmount(transactionData.billFeeNgn ?? 0)}${
-          transactionData.billFeePercent != null ? ` (${transactionData.billFeePercent}%)` : ''
+    isBillPayment && (transactionData.profit != null && Number(transactionData.profit) > 0)
+      ? `₦${formatNairaAmount(transactionData.profit)}${
+          (transactionData.billFeeNgn ?? 0) > 0 || (transactionData.billProviderCommissionNgn ?? 0) > 0
+            ? ` (fee ₦${formatNairaAmount(transactionData.billFeeNgn ?? 0)} + commission ₦${formatNairaAmount(transactionData.billProviderCommissionNgn ?? 0)})`
+            : ''
         }`
       : transactionData.profit != null && Number(transactionData.profit) > 0
         ? String(transactionData.profit)
@@ -341,13 +344,25 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
               {(transactionData.billFeeNgn ?? 0) > 0 && (
                 <Row
                   label={
-                    transactionData.billFeeLabel === 'profit' ? 'Profit' : 'Merchant fee'
+                    transactionData.billFeeLabel === 'profit' ? 'Merchant profit' : 'Merchant fee'
                   }
                   value={`₦${formatNairaAmount(transactionData.billFeeNgn ?? 0)}${
                     transactionData.billFeePercent != null
                       ? ` (${transactionData.billFeePercent}%)`
                       : ''
                   }`}
+                />
+              )}
+              {(transactionData.billProviderCommissionNgn ?? 0) > 0 && (
+                <Row
+                  label="StroWallet commission"
+                  value={`₦${formatNairaAmount(transactionData.billProviderCommissionNgn ?? 0)}`}
+                />
+              )}
+              {(transactionData.profit != null && Number(transactionData.profit) > 0) && (
+                <Row
+                  label="Total bill profit"
+                  value={`₦${formatNairaAmount(transactionData.profit)}`}
                 />
               )}
               <Row label="Total charged" value={`₦${formatNairaAmount(transactionData.nairaAmount)}`} />
@@ -440,13 +455,6 @@ const TransactionDetailsModal: React.FC<TransactionDetailsModalProps> = ({
             mono
             copyable={transactionData.transactionId}
           />
-
-          {(isBillPayment) && transactionData.profit != null && Number(transactionData.profit) > 0 && !(transactionData.billFeeNgn) && (
-            <Row
-              label={transactionData.billFeeLabel === 'profit' ? 'Profit' : 'Merchant fee'}
-              value={`₦${formatNairaAmount(transactionData.profit)}`}
-            />
-          )}
 
           {!isCrypto && !isBillPayment && transactionData.profit != null && (
             <Row label="Profit" value={transactionData.profit} />

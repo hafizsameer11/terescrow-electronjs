@@ -38,6 +38,8 @@ import ReferralsPage from './pages/ReferralsPage';
 import SupportPage from './pages/SupportPage';
 import ProfitTrackerPage from './pages/ProfitTrackerPage';
 import BushaTestPage from './pages/BushaTestPage';
+import FinancialDepositPage from './pages/FinancialDepositPage';
+import FinancialWithdrawPage from './pages/FinancialWithdrawPage';
 
 function App(): JSX.Element {
   const location = useLocation();
@@ -85,6 +87,8 @@ function App(): JSX.Element {
       <Route path="/transactions/bill-payments" element={<Transaction defaultTransactionType="billPayments" />} />
       <Route path="/transactions/naira" element={<Transaction defaultTransactionType="naira" />} />
       <Route path="/user-balances" element={<UserBalancesPage />} />
+      <Route path="/financials/deposit" element={<FinancialDepositPage />} />
+      <Route path="/financials/withdraw" element={<FinancialWithdrawPage />} />
       <Route path="/profit-tracker" element={<ProfitTrackerPage />} />
       <Route path="/daily-report" element={<DailyReportPage />} />
       <Route path="/support" element={<SupportPage />} />

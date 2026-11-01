@@ -13,6 +13,10 @@ const ObiexMarkupSettings: React.FC<Props> = ({ token }) => {
   const [sellMarkup, setSellMarkup] = useState('0');
   const [buyFlatFee, setBuyFlatFee] = useState('0');
   const [sellFlatFee, setSellFlatFee] = useState('0');
+  const [sellMarkupGhs, setSellMarkupGhs] = useState('0');
+  const [sellFlatFeeGhs, setSellFlatFeeGhs] = useState('0');
+  const [withdrawMarkupGhs, setWithdrawMarkupGhs] = useState('0');
+  const [withdrawFlatFeeGhs, setWithdrawFlatFeeGhs] = useState('0');
 
   const statusQuery = useQuery({
     queryKey: ['obiexStatus'],
@@ -32,11 +36,19 @@ const ObiexMarkupSettings: React.FC<Props> = ({ token }) => {
     setSellMarkup(String(s.sellMarkupPercent ?? 0));
     setBuyFlatFee(String(s.buyFlatFeeNgn ?? 0));
     setSellFlatFee(String(s.sellFlatFeeNgn ?? 0));
+    setSellMarkupGhs(String(s.sellMarkupPercentGhs ?? 0));
+    setSellFlatFeeGhs(String(s.sellFlatFeeGhs ?? 0));
+    setWithdrawMarkupGhs(String(s.withdrawMarkupPercentGhs ?? 0));
+    setWithdrawFlatFeeGhs(String(s.withdrawFlatFeeGhs ?? 0));
   }, [
     statusQuery.data?.settings?.buyMarkupPercent,
     statusQuery.data?.settings?.sellMarkupPercent,
     statusQuery.data?.settings?.buyFlatFeeNgn,
     statusQuery.data?.settings?.sellFlatFeeNgn,
+    statusQuery.data?.settings?.sellMarkupPercentGhs,
+    statusQuery.data?.settings?.sellFlatFeeGhs,
+    statusQuery.data?.settings?.withdrawMarkupPercentGhs,
+    statusQuery.data?.settings?.withdrawFlatFeeGhs,
   ]);
 
   const saveMutation = useMutation({
@@ -46,6 +58,10 @@ const ObiexMarkupSettings: React.FC<Props> = ({ token }) => {
         sellMarkupPercent: parseFloat(sellMarkup) || 0,
         buyFlatFeeNgn: Math.max(0, parseFloat(buyFlatFee) || 0),
         sellFlatFeeNgn: Math.max(0, parseFloat(sellFlatFee) || 0),
+        sellMarkupPercentGhs: parseFloat(sellMarkupGhs) || 0,
+        sellFlatFeeGhs: Math.max(0, parseFloat(sellFlatFeeGhs) || 0),
+        withdrawMarkupPercentGhs: parseFloat(withdrawMarkupGhs) || 0,
+        withdrawFlatFeeGhs: Math.max(0, parseFloat(withdrawFlatFeeGhs) || 0),
       }),
     onSuccess: () => {
       toastSuccess('Obiex fees saved.');
@@ -139,6 +155,57 @@ const ObiexMarkupSettings: React.FC<Props> = ({ token }) => {
             onChange={(e) => setSellMarkup(e.target.value)}
             className="w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
           />
+        </div>
+      </div>
+
+      <div className="px-5 pb-2 border-t border-sky-100 pt-5">
+        <h3 className="text-base font-semibold text-gray-900 mb-1">Ghana (GHS) fees</h3>
+        <p className="text-xs text-gray-500 mb-4">
+          Sell crypto → GHS and GHS bank / MoMo withdrawals (Obiex payout).
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Sell markup % (GHS)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={sellMarkupGhs}
+              onChange={(e) => setSellMarkupGhs(e.target.value)}
+              className="w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Sell flat fee (GHS)</label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={sellFlatFeeGhs}
+              onChange={(e) => setSellFlatFeeGhs(e.target.value)}
+              className="w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Withdraw markup % (GHS)</label>
+            <input
+              type="number"
+              step="0.01"
+              value={withdrawMarkupGhs}
+              onChange={(e) => setWithdrawMarkupGhs(e.target.value)}
+              className="w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-800 mb-1">Withdraw flat fee (GHS)</label>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={withdrawFlatFeeGhs}
+              onChange={(e) => setWithdrawFlatFeeGhs(e.target.value)}
+              className="w-full max-w-xs border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-sky-600 focus:border-sky-600"
+            />
+          </div>
         </div>
       </div>
 

@@ -60,6 +60,7 @@ export interface Transaction {
     adminMarkupNgn?: number;
   } | null;
   billFeeNgn?: number | null;
+  billProviderCommissionNgn?: number | null;
   billFeePercent?: number | null;
   billFeeLabel?: string | null;
   providerAmountNgn?: number | null;
@@ -412,6 +413,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
             billFeePercent: selectedTransaction.billFeePercent ?? null,
             billFeeLabel: selectedTransaction.billFeeLabel ?? null,
             providerAmountNgn: selectedTransaction.providerAmountNgn ?? null,
+            billProviderCommissionNgn: selectedTransaction.billProviderCommissionNgn ?? null,
           }}
         />
       )}

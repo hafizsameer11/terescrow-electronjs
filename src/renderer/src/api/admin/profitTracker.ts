@@ -155,7 +155,12 @@ export type MarkupProfitOverview = {
     sellMarkupNgn: number;
     tradesWithMarkup: number;
     billPaymentFeeNgn: number;
+    billPaymentMerchantFeeNgn?: number;
+    billProviderCommissionNgn?: number;
     billPaymentsWithFee: number;
+    billPaymentsWithMerchantFee?: number;
+    billPaymentsWithCommission?: number;
+    billPaymentProvider?: string;
     giftCardSellProfitNgn?: number;
     giftCardSellsWithProfit?: number;
     totalProfitNgn: number;

@@ -37,9 +37,17 @@ function Field({ label, value, copyLabel, mono }: FieldProps) {
   );
 }
 
-const PalmPayFundingAccountCard: React.FC = () => {
-  const { accountNumber, bankName, accountName } = PALMPAY_FUNDING_ACCOUNT;
+type Props = {
+  accountNumber?: string;
+  bankName?: string;
+  accountName?: string;
+};
 
+const PalmPayFundingAccountCard: React.FC<Props> = ({
+  accountNumber = PALMPAY_FUNDING_ACCOUNT.accountNumber,
+  bankName = PALMPAY_FUNDING_ACCOUNT.bankName,
+  accountName = PALMPAY_FUNDING_ACCOUNT.accountName,
+}) => {
   return (
     <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-4">

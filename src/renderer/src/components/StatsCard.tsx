@@ -1,9 +1,6 @@
-// import { title } from 'process';
 import React from 'react'
 import { FaArrowUp, FaArrowDown } from 'react-icons/fa'
 
-// interface StatsCardProps:{
-//   title:string,
 interface StatsCardProps {
   title: string
   value: string | number | undefined
@@ -13,27 +10,37 @@ interface StatsCardProps {
 }
 
 const StatsCard: React.FC<StatsCardProps> = ({ title, value, change, isPositive = true }) => {
+  const showChange = change != null && String(change).trim() !== ''
+
   return (
-    <div className="p-6 bg-white rounded-xl  flex flex-col justify-between space-y-4 relative  border-[0.5px] border-[#9C9C9C]">
-      {/* Title */}
-      <span className="text-[14px] text-gray-400">{title}</span>
-
-      {/* Value */}
-      <span className="text-sm lg:text-[24px] xl:text-[24px] font-medium text-[#000000CC]">{value}</span>
-
-      {/* Percentage Change */}
-      <div
-        className={`absolute top-0 right-4 flex items-center space-x-1 text-sm font-light ${
-          isPositive ? 'text-[#147341]' : 'text-red-500'
-        } border border-[#9C9C9C] rounded-full px-2 py-1`}
-      >
-        {isPositive ? (
-          <FaArrowUp style={{ fontSize: 8 }} />
-        ) : (
-          <FaArrowDown style={{ fontSize: 8 }} />
-        )}
-        {change !== '' && <span className='text-[10px]'>{change}</span>}
+    <div className="p-4 sm:p-5 bg-white rounded-xl flex flex-col justify-between gap-3 min-w-0 border-[0.5px] border-[#9C9C9C]">
+      {/* Title + change badge — flex so long labels never overlap the pill */}
+      <div className="flex items-start justify-between gap-2 min-w-0">
+        <span
+          className="text-[13px] sm:text-[14px] text-gray-400 leading-snug min-w-0 flex-1 break-words"
+          title={title}
+        >
+          {title}
+        </span>
+        {showChange ? (
+          <div
+            className={`shrink-0 flex items-center gap-1 text-sm font-light ${
+              isPositive ? 'text-[#147341]' : 'text-red-500'
+            } border border-[#9C9C9C] rounded-full px-2 py-0.5`}
+          >
+            {isPositive ? (
+              <FaArrowUp style={{ fontSize: 8 }} />
+            ) : (
+              <FaArrowDown style={{ fontSize: 8 }} />
+            )}
+            <span className="text-[10px] whitespace-nowrap">{change}</span>
+          </div>
+        ) : null}
       </div>
+
+      <span className="text-lg sm:text-xl xl:text-2xl font-medium text-[#000000CC] tabular-nums leading-tight break-all">
+        {value}
+      </span>
     </div>
   )
 }

@@ -158,8 +158,8 @@ const ProfitTrackerPage: React.FC = () => {
           <div>
             <h1 className="text-[36px] font-normal text-gray-800 leading-tight">Profit Tracker</h1>
             <p className="text-sm text-gray-600 max-w-2xl mt-1">
-              Tracks admin markup on Busha buy/sell trades, gift card sell profit, and merchant fee on bill
-              payments — plus the full profit ledger and config rules.
+              Tracks crypto markup, gift card sell profit, and StroWallet bill profit (merchant fee +
+              provider commission) — plus the full profit ledger and config rules.
             </p>
           </div>
         </div>
@@ -243,9 +243,17 @@ const ProfitTrackerPage: React.FC = () => {
                 </p>
               </div>
               <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
-                <p className="text-xs uppercase text-orange-700 font-medium">Bill payment fees</p>
+                <p className="text-xs uppercase text-orange-700 font-medium">
+                  StroWallet bill profit
+                </p>
                 <p className="text-2xl font-semibold text-orange-900">{fmtNgn(summary.billPaymentFeeNgn)}</p>
-                <p className="text-xs text-orange-700/80 mt-1">{summary.billPaymentsWithFee} payments</p>
+                <p className="text-xs text-orange-700/80 mt-1">
+                  Fee {fmtNgn(summary.billPaymentMerchantFeeNgn ?? 0)} · Commission{' '}
+                  {fmtNgn(summary.billProviderCommissionNgn ?? 0)}
+                </p>
+                <p className="text-xs text-orange-700/80 mt-0.5">
+                  {summary.billPaymentsWithFee} StroWallet payments
+                </p>
               </div>
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
                 <p className="text-xs uppercase text-blue-700 font-medium">Trades with markup</p>
@@ -501,10 +509,10 @@ const ProfitTrackerPage: React.FC = () => {
 
             <div className="bg-white rounded-xl border border-orange-200 shadow-sm overflow-hidden">
               <div className="px-5 py-4 border-b border-orange-100 bg-orange-50/50">
-                <h2 className="font-semibold text-gray-900">Bill payment fee</h2>
+                <h2 className="font-semibold text-gray-900">StroWallet bill payment fee</h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Extra % charged on top of the provider bill amount. Labeled as merchant fee or profit in
-                  receipts.
+                  Extra % on StroWallet bill amounts only. Combined with StroWallet provider commission in
+                  profit totals.
                 </p>
               </div>
               <div className="p-5 space-y-4">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FiChevronDown } from 'react-icons/fi';
-import { FaPaperPlane } from 'react-icons/fa';
+import { FaArrowDown, FaMoneyBillWave } from 'react-icons/fa';
 import { HiArrowsUpDown, HiArrowDownTray } from 'react-icons/hi2';
 import chatsIcon from '@renderer/assets/images/chats.svg';
 import { formatNairaAmount } from '@renderer/api/helper';
@@ -94,6 +94,8 @@ type Props = {
     earnNegative: boolean;
   };
   onQuickAction: (href: string) => void;
+  /** Admin-only Deposit / Withdraw treasury actions. */
+  isAdmin?: boolean;
 };
 
 const ChatsHubSummaryCards: React.FC<Props> = ({
@@ -110,11 +112,17 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
   onBalanceViewChange,
   profits,
   onQuickAction,
+  isAdmin = false,
 }) => {
   const formatProfit = (n: number) => `N${formatNairaAmount(n)}`;
 
   const quickActions = [
-    { label: 'Wallets', icon: FaPaperPlane, href: '/user-balances' },
+    ...(isAdmin
+      ? [
+          { label: 'Deposit', icon: FaArrowDown, href: '/financials/deposit' },
+          { label: 'Withdraw', icon: FaMoneyBillWave, href: '/financials/withdraw' },
+        ]
+      : []),
     { label: 'Crypto', icon: HiArrowsUpDown, href: '/transactions/crypto' },
     { label: 'Busha', icon: HiArrowDownTray, href: '/busha-test' },
   ] as const;
@@ -242,7 +250,7 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
             items={[
               { label: 'Crypto Profit', value: formatProfit(profits.crypto) },
               { label: 'Gift Card Profit', value: formatProfit(profits.giftCard) },
-              { label: 'Bill Payment Profit', value: formatProfit(profits.billPayment) },
+              { label: 'StroWallet Bill Profit', value: formatProfit(profits.billPayment) },
               {
                 label: 'Earn',
                 value: (

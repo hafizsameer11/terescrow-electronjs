@@ -461,6 +461,7 @@ const Chat = () => {
             earnNegative,
           }}
           onQuickAction={(href) => navigate(href)}
+          isAdmin={userData?.role === 'admin'}
         />
 
         <ChatFilters

@@ -34,6 +34,12 @@ export type MerchantTopupLog = {
   initiatedBy?: { id: number; firstname: string; lastname: string; email: string } | null;
 };
 
+export type PalmPayFundingAccount = {
+  accountNumber: string;
+  bankName: string;
+  accountName: string;
+};
+
 export type MerchantsOverview = {
   palmpay: {
     id: string;
@@ -45,6 +51,7 @@ export type MerchantsOverview = {
     baseUrl?: string;
     balance: PalmPayMerchantBalance | null;
     balanceError?: string | null;
+    fundingAccount?: PalmPayFundingAccount | null;
   };
   strowallet: {
     id: string;
@@ -150,5 +157,39 @@ export async function verifyPalmpayBankAccount(
   payload: { bankCode: string; accountNumber: string }
 ): Promise<{ accountName?: string; isValid: boolean; errorMessage?: string }> {
   const res = await apiCall(API_ENDPOINT.ADMIN.merchantsPalmpayVerifyAccount, 'POST', payload, token);
+  return unwrap(res);
+}
+
+export async function getPalmPayFundingAccount(
+  token: string
+): Promise<{ fundingAccount: PalmPayFundingAccount }> {
+  const res = await apiCall(API_ENDPOINT.ADMIN.merchantsPalmpayFundingAccount, 'GET', undefined, token);
+  return unwrap(res);
+}
+
+export async function withdrawPalmPayProfit(
+  token: string,
+  payload: {
+    amount: number;
+    bankCode: string;
+    accountNumber: string;
+    accountName: string;
+    bankName?: string;
+  }
+): Promise<MerchantTopupLog & { merchantBalanceCheckedNgn?: number; feeBufferNgn?: number }> {
+  const res = await apiCall(API_ENDPOINT.ADMIN.merchantsPalmpayProfitWithdraw, 'POST', payload, token);
+  return unwrap(res);
+}
+
+export async function listPalmPayProfitWithdrawals(
+  token: string,
+  limit = 50
+): Promise<{ withdrawals: MerchantTopupLog[] }> {
+  const res = await apiCall(
+    `${API_ENDPOINT.ADMIN.merchantsPalmpayProfitWithdrawals}?limit=${limit}`,
+    'GET',
+    undefined,
+    token
+  );
   return unwrap(res);
 }

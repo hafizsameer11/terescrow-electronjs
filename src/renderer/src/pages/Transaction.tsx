@@ -169,7 +169,7 @@ const Transactions: React.FC<TransactionsProps> = ({
             isPositive={statsData?.giftCardTransactions?.change === 'positive'}
           />
           <StatsCard
-            title="Bills (StroWallet/PalmPay)"
+            title="Bills"
             value={`N${addThousandSeparator(statsData?.billPaymentTransactions?._sum?.amountNaira ?? 0)}`}
             change={`${statsData?.billPaymentTransactions?.percentage ?? 0}%`}
             isPositive={statsData?.billPaymentTransactions?.change === 'positive'}

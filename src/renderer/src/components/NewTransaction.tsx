@@ -5,12 +5,20 @@ import { useAuth } from '@renderer/context/authContext';
 import { createCardTransaction, createCryptoTransaction } from '@renderer/api/queries/agent.mutations';
 import { ApiError } from '@renderer/api/customApiCall';
 
+const isGhanaCountry = (country?: string | null) => {
+  const c = String(country || '')
+    .trim()
+    .toLowerCase();
+  return c === 'ghana' || c === 'gh' || c.startsWith('ghana');
+};
+
 const NewTransaction = ({
   type,
   department,
   category,
   subcategories,
   chatId,
+  customerCountry,
   onCompleted,
   onClose,
 }: {
@@ -19,12 +27,16 @@ const NewTransaction = ({
   category: any;
   subcategories?: string[];
   chatId: string;
+  customerCountry?: string | null;
   onCompleted?: () => void;
   onClose?: () => void;
 }) => {
   const [modalVisibility, setModalVisible] = useState(true);
   const { token } = useAuth();
   const queryClient = useQueryClient();
+  const ghanaCustomer = isGhanaCountry(customerCountry);
+  const fiatLabel = ghanaCustomer ? 'GHS' : 'Naira';
+  const fiatSymbol = ghanaCustomer ? 'GH₵' : '₦';
 
   const [formData, setFormData] = useState({
     department: department || '', // Non-editable
@@ -86,7 +98,7 @@ const NewTransaction = ({
       if (formData.creditWallet) {
         const credited = formData.walletCreditAmount || formData.amountNaira;
         alert(
-          `${data?.message || 'Transaction Completed successfully'}\n\nCustomer Naira wallet was credited with ₦${credited}.`
+          `${data?.message || 'Transaction Completed successfully'}\n\nCustomer ${fiatLabel} wallet was credited with ${fiatSymbol}${credited}.`
         );
       } else {
         alert(data?.message || 'Transaction Completed successfully');
@@ -290,16 +302,20 @@ const NewTransaction = ({
                       />
                       <span>
                         <span className="block font-medium text-gray-800">
-                          Pay customer (credit Naira wallet)
+                          Pay customer (credit {fiatLabel} wallet)
                         </span>
                         <span className="block text-sm text-gray-600">
-                          Optional. Credits the customer&apos;s in-app Naira wallet. If they are on the old app (no wallet), this will be blocked — complete the sale without wallet credit instead.
+                          {ghanaCustomer
+                            ? 'Optional. Credits the customer’s in-app GHS (Cedis) wallet.'
+                            : 'Optional. Credits the customer’s in-app Naira wallet. If they are on the old app (no wallet), this will be blocked — complete the sale without wallet credit instead.'}
                         </span>
                       </span>
                     </label>
                     {formData.creditWallet && (
                       <div className="mt-3">
-                        <label className="block text-gray-700 text-sm">Wallet credit amount (₦)</label>
+                        <label className="block text-gray-700 text-sm">
+                          Wallet credit amount ({fiatSymbol})
+                        </label>
                         <input
                           type="number"
                           min="0"
