@@ -31,7 +31,7 @@ const CustomerDetails: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [walletWidgetTab, setWalletWidgetTab] = useState<'naira' | 'crypto'>('naira');
+  const [walletWidgetTab, setWalletWidgetTab] = useState<'fiat' | 'crypto'>('fiat');
   const [isFrozenFeaturesModalOpen, setIsFrozenFeaturesModalOpen] = useState(false);
   const [isFreezeModalOpen, setIsFreezeModalOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -81,18 +81,28 @@ const CustomerDetails: React.FC = () => {
   const customer: Customer | undefined = data?.data;
   const customerIp = (customer as any)?.ipAddress ?? '—';
   const customerTier = (customer as any)?.tier ?? 'Tier 1';
-  const nairaBalanceRaw = Number((customer as any)?.nairaBalance ?? 0);
-  const nairaSafe =
-    Number.isFinite(nairaBalanceRaw) && nairaBalanceRaw !== 0 && !Object.is(nairaBalanceRaw, -0)
-      ? Math.round(nairaBalanceRaw * 100) / 100
+  const fiatCurrency = String(
+    (customer as any)?.fiatCurrency ||
+      (String(customer?.country || '').toLowerCase().includes('ghana') ? 'GHS' : 'NGN')
+  ).toUpperCase() as 'NGN' | 'GHS';
+  const isGhsCustomer = fiatCurrency === 'GHS';
+  const fiatBalanceRaw = Number(
+    (customer as any)?.fiatBalance ?? (customer as any)?.nairaBalance ?? 0
+  );
+  const fiatSafe =
+    Number.isFinite(fiatBalanceRaw) && fiatBalanceRaw !== 0 && !Object.is(fiatBalanceRaw, -0)
+      ? Math.round(fiatBalanceRaw * 100) / 100
       : 0;
-  const hasNairaWallet =
+  const hasFiatWallet =
+    (customer as any)?.hasFiatWallet === true ||
     (customer as any)?.hasNairaWallet === true ||
     (Array.isArray((customer as any)?.fiatWallets) && (customer as any).fiatWallets.length > 0);
-  const nairaBalance =
-    !hasNairaWallet && nairaSafe === 0
+  const fiatBalanceLabel =
+    !hasFiatWallet && fiatSafe === 0
       ? 'No wallet'
-      : `₦${formatNairaAmount(nairaSafe)}`;
+      : isGhsCustomer
+        ? `GH₵${formatNairaAmount(fiatSafe)}`
+        : `₦${formatNairaAmount(fiatSafe)}`;
   const cryptoBalanceUsd = (customer as any)?.cryptoBalance ?? 0;
   const cryptoBalance = `$${Number(cryptoBalanceUsd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const cryptoAssets: CryptoAsset[] = ((customer as any)?.cryptoAssets ?? []).map(
@@ -273,10 +283,10 @@ const CustomerDetails: React.FC = () => {
           <div className="flex rounded border border-gray-200 overflow-hidden mb-3">
             <button
               type="button"
-              onClick={() => setWalletWidgetTab('naira')}
-              className={`flex-1 py-1.5 text-xs font-medium ${walletWidgetTab === 'naira' ? 'bg-[#147341] text-white' : 'text-gray-600'}`}
+              onClick={() => setWalletWidgetTab('fiat')}
+              className={`flex-1 py-1.5 text-xs font-medium ${walletWidgetTab === 'fiat' ? 'bg-[#147341] text-white' : 'text-gray-600'}`}
             >
-              Naira Wallet
+              {isGhsCustomer ? 'Ghana Wallet' : 'Naira Wallet'}
             </button>
             <button
               type="button"
@@ -287,7 +297,7 @@ const CustomerDetails: React.FC = () => {
             </button>
           </div>
           <p className="text-lg font-bold text-gray-800 mb-3">
-            {walletWidgetTab === 'naira' ? nairaBalance : cryptoBalance}
+            {walletWidgetTab === 'fiat' ? fiatBalanceLabel : cryptoBalance}
           </p>
           <div className="flex gap-2 mt-auto">
             {kycData.bvn && (
@@ -407,9 +417,10 @@ const CustomerDetails: React.FC = () => {
       <WalletModal
         isOpen={isWalletModalOpen}
         onClose={() => setIsWalletModalOpen(false)}
-        nairaBalance={nairaBalance}
+        nairaBalance={fiatBalanceLabel}
         cryptoBalance={cryptoBalance}
         cryptoAssets={cryptoAssets}
+        fiatCurrency={fiatCurrency}
       />
       <FrozenFeaturesModal
         isOpen={isFrozenFeaturesModalOpen}

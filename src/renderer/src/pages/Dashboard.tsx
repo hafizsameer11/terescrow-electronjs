@@ -143,10 +143,10 @@ const Dashboard: React.FC = () => {
           change={`${dashboardStats?.data.totalOutflow.percentage ?? '0'}%`}
         />
         <StatsCard
-          title="Provider Volume (NGN)"
-          value={`₦${addThousandSeparator(dashboardStats?.data.totalRevenue.current) || '0'}`}
-          isPositive={dashboardStats?.data.totalRevenue.change === 'positive'}
-          change={`${dashboardStats?.data.totalRevenue.percentage ?? '0'}%`}
+          title="Total Profit"
+          value={`₦${addThousandSeparator(dashboardStats?.data.totalProfit?.current ?? dashboardStats?.data.totalRevenue?.current) || '0'}`}
+          isPositive={(dashboardStats?.data.totalProfit?.change ?? dashboardStats?.data.totalRevenue?.change) === 'positive'}
+          change={`${dashboardStats?.data.totalProfit?.percentage ?? dashboardStats?.data.totalRevenue?.percentage ?? '0'}%`}
         />
         <StatsCard
           title="Today's Customers"

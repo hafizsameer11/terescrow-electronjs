@@ -13,6 +13,8 @@ interface WalletModalProps {
   nairaBalance?: string;
   cryptoBalance?: string;
   cryptoAssets?: CryptoAsset[];
+  /** Fiat currency for the customer — GHS for Ghana, NGN otherwise */
+  fiatCurrency?: 'NGN' | 'GHS' | string;
 }
 
 const WalletModal: React.FC<WalletModalProps> = ({
@@ -21,9 +23,12 @@ const WalletModal: React.FC<WalletModalProps> = ({
   nairaBalance = 'N0',
   cryptoBalance = '$0',
   cryptoAssets = [],
+  fiatCurrency = 'NGN',
 }) => {
-  const [walletTab, setWalletTab] = useState<'naira' | 'crypto'>('naira');
+  const [walletTab, setWalletTab] = useState<'fiat' | 'crypto'>('fiat');
   const [showCryptoAssets, setShowCryptoAssets] = useState(false);
+  const isGhs = String(fiatCurrency || 'NGN').toUpperCase() === 'GHS';
+  const fiatLabel = isGhs ? 'Ghana Wallet (GHS)' : 'Naira Wallet';
 
   if (!isOpen) return null;
 
@@ -50,10 +55,10 @@ const WalletModal: React.FC<WalletModalProps> = ({
         <div className="flex rounded-lg border border-gray-200 overflow-hidden mb-4">
           <button
             type="button"
-            onClick={() => setWalletTab('naira')}
-            className={`flex-1 py-2.5 text-sm font-medium ${walletTab === 'naira' ? 'bg-[#147341] text-white' : 'bg-gray-100 text-gray-700'}`}
+            onClick={() => setWalletTab('fiat')}
+            className={`flex-1 py-2.5 text-sm font-medium ${walletTab === 'fiat' ? 'bg-[#147341] text-white' : 'bg-gray-100 text-gray-700'}`}
           >
-            Naira Wallet
+            {fiatLabel}
           </button>
           <button
             type="button"
@@ -64,7 +69,7 @@ const WalletModal: React.FC<WalletModalProps> = ({
           </button>
         </div>
 
-        {walletTab === 'naira' && (
+        {walletTab === 'fiat' && (
           <div className="bg-[#147341] text-white rounded-lg p-6 text-center">
             <p className="text-2xl font-bold">{nairaBalance}</p>
           </div>

@@ -78,6 +78,11 @@ export interface AdminDashboardStatsResponse {
       change: 'positive' | 'negative'
       percentage: number
     }
+    totalProfit?: {
+      current: number
+      change: 'positive' | 'negative'
+      percentage: number
+    }
   }
 }
 
