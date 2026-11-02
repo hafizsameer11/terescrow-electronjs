@@ -11,16 +11,23 @@ import TransactionsTable from '@renderer/components/Transaction/TransactionTable
 import TransactionsFilter from '@renderer/components/TransactionsFilter';
 import { useAuth } from '@renderer/context/authContext';
 import { addThousandSeparator } from '@renderer/api/helper';
-import { apiDateParams } from '@renderer/utils/dateRange';
+import { apiDateParams, dateRangeToStartEnd, toDateString } from '@renderer/utils/dateRange';
 import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
 import ListFetchingIndicator from '@renderer/components/ListFetchingIndicator';
 
 const TIME_WINDOW_OPTIONS: { label: string; value: StatsTimeWindow }[] = [
-  { label: 'All', value: 'all' },
+  { label: 'Custom / dates', value: 'all' },
   { label: 'Last 12 hours', value: 'last12hrs' },
   { label: 'Day 8am–8pm', value: 'dayShift' },
   { label: 'Night 8pm–8am', value: 'nightShift' },
 ];
+
+function defaultOneMonthRange() {
+  const end = new Date();
+  const start = new Date();
+  start.setDate(end.getDate() - 30);
+  return { startDate: toDateString(start), endDate: toDateString(end) };
+}
 
 const Dashboard: React.FC = () => {
   const { token } = useAuth();
@@ -34,13 +41,16 @@ const Dashboard: React.FC = () => {
 
   const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
   const [timeWindow, setTimeWindow] = useState<StatsTimeWindow>('all');
-  const [filters, setFilters] = useState({
-    status: 'All',
-    type: 'All',
-    dateRange: 'All',
-    startDate: '',
-    endDate: '',
-    search: '',
+  const [filters, setFilters] = useState(() => {
+    const { startDate, endDate } = defaultOneMonthRange();
+    return {
+      status: 'All',
+      type: 'All',
+      dateRange: 'Last 30 days',
+      startDate,
+      endDate,
+      search: '',
+    };
   });
 
   const { startDate, endDate } = useMemo(
@@ -48,6 +58,8 @@ const Dashboard: React.FC = () => {
     [filters.startDate, filters.endDate, filters.dateRange, dateRangePresetActive]
   );
   const debouncedSearch = useDebouncedValue(filters.search.trim(), 400);
+
+  const useShiftWindow = timeWindow !== 'all' && !filters.startDate && !filters.endDate;
 
   const { data: txData, isLoading, isError, error, isFetching } = useQuery({
     queryKey: ['dashboard-transactions', token, filters.status, filters.type, debouncedSearch, startDate, endDate],
@@ -68,10 +80,22 @@ const Dashboard: React.FC = () => {
 
   const initialTxLoad = isLoading && !txData;
 
-  const { data: dashboardStats } = useQuery({
-    queryKey: ['dashboardStats', timeWindow],
-    queryFn: () => getDashBoardStats({ token: token!, timeWindow }),
+  const { data: dashboardStats, isFetching: statsFetching } = useQuery({
+    queryKey: [
+      'dashboardStats',
+      useShiftWindow ? timeWindow : 'dates',
+      useShiftWindow ? null : startDate,
+      useShiftWindow ? null : endDate,
+    ],
+    queryFn: () =>
+      getDashBoardStats({
+        token: token!,
+        timeWindow: useShiftWindow ? timeWindow : 'all',
+        startDate: useShiftWindow ? undefined : startDate,
+        endDate: useShiftWindow ? undefined : endDate,
+      }),
     enabled: !!token,
+    placeholderData: keepPreviousData,
   });
 
   const transactions = txData?.transactions ?? [];
@@ -86,7 +110,23 @@ const Dashboard: React.FC = () => {
             <label className="block text-sm text-gray-700 mb-1">Time window</label>
             <select
               value={timeWindow}
-              onChange={(e) => setTimeWindow(e.target.value as StatsTimeWindow)}
+              onChange={(e) => {
+                const next = e.target.value as StatsTimeWindow;
+                setTimeWindow(next);
+                // Shift presets clear calendar dates so the window applies
+                if (next !== 'all') {
+                  setFilters((prev) => ({ ...prev, startDate: '', endDate: '', dateRange: 'All' }));
+                  setDateRangePresetActive(false);
+                } else if (!filters.startDate && !filters.endDate) {
+                  const { startDate: s, endDate: ed } = defaultOneMonthRange();
+                  setFilters((prev) => ({
+                    ...prev,
+                    startDate: s,
+                    endDate: ed,
+                    dateRange: 'Last 30 days',
+                  }));
+                }
+              }}
               className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800 min-w-[160px]"
               aria-label="Stats time window"
             >
@@ -102,9 +142,10 @@ const Dashboard: React.FC = () => {
             <input
               type="date"
               value={filters.startDate}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, startDate: e.target.value }))
-              }
+              onChange={(e) => {
+                setTimeWindow('all');
+                setFilters((prev) => ({ ...prev, startDate: e.target.value, dateRange: 'All' }));
+              }}
               className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
             />
           </div>
@@ -113,12 +154,16 @@ const Dashboard: React.FC = () => {
             <input
               type="date"
               value={filters.endDate}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, endDate: e.target.value }))
-              }
+              onChange={(e) => {
+                setTimeWindow('all');
+                setFilters((prev) => ({ ...prev, endDate: e.target.value, dateRange: 'All' }));
+              }}
               className="px-3 py-2 rounded-lg border border-gray-300 text-gray-800"
             />
           </div>
+          {statsFetching && (
+            <span className="text-sm text-gray-500 pb-2">Updating…</span>
+          )}
         </div>
       </div>
 
@@ -149,7 +194,7 @@ const Dashboard: React.FC = () => {
           change={`${dashboardStats?.data.totalProfit?.percentage ?? dashboardStats?.data.totalRevenue?.percentage ?? '0'}%`}
         />
         <StatsCard
-          title="Today's Customers"
+          title="New Customers"
           value={`${dashboardStats?.data.todayCustomers?.count ?? dashboardStats?.data.totalUsers?.count ?? '0'}`}
           isPositive={(dashboardStats?.data.todayCustomers?.change ?? dashboardStats?.data.totalUsers.change) === 'positive'}
           change={`${dashboardStats?.data.todayCustomers?.percentage ?? dashboardStats?.data.totalUsers.percentage ?? '0'}%`}
@@ -181,7 +226,18 @@ const Dashboard: React.FC = () => {
         <TransactionsFilter
           filters={filters}
           onChange={(updatedFilters) => {
-            if (updatedFilters.dateRange !== undefined) setDateRangePresetActive(true);
+            if (updatedFilters.dateRange !== undefined) {
+              setDateRangePresetActive(true);
+              setTimeWindow('all');
+              const preset = dateRangeToStartEnd(updatedFilters.dateRange);
+              setFilters((prev) => ({
+                ...prev,
+                ...updatedFilters,
+                startDate: preset.startDate || '',
+                endDate: preset.endDate || '',
+              }));
+              return;
+            }
             setFilters((prev) => ({ ...prev, ...updatedFilters }));
           }}
         />

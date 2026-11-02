@@ -216,12 +216,23 @@ export const getCustomerStats = async ({
 export const getDashBoardStats = async ({
   token,
   timeWindow,
+  startDate,
+  endDate,
 }: {
   token: string;
   timeWindow?: StatsTimeWindow;
+  startDate?: string;
+  endDate?: string;
 }): Promise<AdminDashboardStatsResponse> => {
   const params = new URLSearchParams();
-  if (timeWindow && timeWindow !== 'all') params.set('timeWindow', timeWindow);
+  const start = startDate?.trim();
+  const end = endDate?.trim();
+  // Explicit calendar dates take priority over shift/timeWindow presets
+  if (start) params.set('start', start);
+  if (end) params.set('end', end);
+  if (!start && !end && timeWindow && timeWindow !== 'all') {
+    params.set('timeWindow', timeWindow);
+  }
   const q = params.toString();
   return await apiCall(
     `${API_ENDPOINT.OPERATIONS.GetDashboardStats}${q ? `?${q}` : ''}`,

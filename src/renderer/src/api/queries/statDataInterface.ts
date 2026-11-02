@@ -83,6 +83,11 @@ export interface AdminDashboardStatsResponse {
       change: 'positive' | 'negative'
       percentage: number
     }
+    todayCustomers?: {
+      count: number
+      change: 'positive' | 'negative'
+      percentage: number
+    }
   }
 }
 
