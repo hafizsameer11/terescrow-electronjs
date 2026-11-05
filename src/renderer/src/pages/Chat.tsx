@@ -465,7 +465,7 @@ const Chat = () => {
               hubLayout
               disableInternalPagination
               onUserViewed={(customerId) => {
-                navigate(`/transaction-details/${customerId}`);
+                navigate(`/customer-chats/${customerId}`);
               }}
             />
 

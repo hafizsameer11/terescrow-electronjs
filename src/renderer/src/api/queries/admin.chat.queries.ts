@@ -114,6 +114,7 @@ type Filters = {
   type?: string;
   category?: string;
   q?: string;
+  customerId?: string | number;
   start?: string; // YYYY-MM-DD
   end?: string;   // YYYY-MM-DD
 };

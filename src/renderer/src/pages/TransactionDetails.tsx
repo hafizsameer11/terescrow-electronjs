@@ -2,12 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { apiDateParams } from '@renderer/utils/dateRange';
 import { useDebouncedValue } from '@renderer/utils/useDebouncedValue';
 import ListFetchingIndicator from '@renderer/components/ListFetchingIndicator';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
   getAdminTransactionsByCustomer,
   type TransactionNiche,
 } from '@renderer/api/admin/transactions';
+import CustomerProfileTabs from '@renderer/components/CustomerProfileTabs';
 import StatsCard from '@renderer/components/StatsCard';
 import TransactionsFilter from '@renderer/components/TransactionsFilter';
 import TransactionsTable from '@renderer/components/Transaction/TransactionTable';
@@ -33,9 +34,7 @@ const TRANSACTION_TYPE_TABS: { id: TransactionTypeTab; label: string }[] = [
 
 const TransactionDetails: React.FC = () => {
   const { customerId } = useParams<{ customerId: string }>();
-  const navigate = useNavigate();
   const { token } = useAuth();
-  const [activeTab, setActiveTab] = useState<'details' | 'transactions'>('transactions');
   const [transactionTypeTab, setTransactionTypeTab] = useState<TransactionTypeTab>('all');
   const [page, setPage] = useState(1);
 
@@ -83,37 +82,9 @@ const TransactionDetails: React.FC = () => {
   const pendingCount = transactions.filter((t: any) => t.status === 'pending').length;
   const successfulCount = transactions.filter((t: any) => t.status === 'successful').length;
 
-  const handleTabChange = (tab: 'details' | 'transactions') => {
-    setActiveTab(tab);
-    if (tab === 'details') {
-      navigate(`/customers/${customerId}`);
-    } else {
-      navigate(`/transaction-details/${customerId}`);
-    }
-  };
-
   return (
     <div className="w-full">
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => handleTabChange('details')}
-          className={`px-4 py-2 rounded-md shadow-sm ${activeTab === 'details'
-              ? 'bg-[#147341] text-white'
-              : 'text-gray-700 border border-gray-200'
-            }`}
-        >
-          Customer details and activities
-        </button>
-        <button
-          onClick={() => handleTabChange('transactions')}
-          className={`ml-4 px-4 py-2 rounded-md shadow-sm ${activeTab === 'transactions'
-              ? 'bg-[#147341] text-white'
-              : 'text-gray-700 border border-gray-200'
-            }`}
-        >
-          Transaction activities and balance
-        </button>
-      </div>
+      {customerId && <CustomerProfileTabs customerId={customerId} activeTab="transactions" />}
 
       {initialTxLoad ? (
         <p className="text-gray-600">Loading transactions...</p>

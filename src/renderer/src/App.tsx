@@ -16,6 +16,7 @@ import Departments from './pages/Departments';
 import Notifications from './pages/Notifications';
 import AgentsPage from './pages/AgentsPage';
 import CustomerDetails from './pages/CustomerDetail';
+import CustomerChats from './pages/CustomerChats';
 import TransactionDetails from './pages/TransactionDetails';
 import DetailsDepartment from './components/DetailsDepartment';
 import UsersPage from './pages/UsersPage';
@@ -68,6 +69,7 @@ function App(): JSX.Element {
       <Route path="/department-agent" element={<AgentsPage />} />
       <Route path="/department-details/:id" element={<AgentsPage />} />
       <Route path="/transaction-details/:customerId" element={<TransactionDetails />} />
+      <Route path="/customer-chats/:customerId" element={<CustomerChats />} />
       <Route path="/details-department/:id" element={<DetailsDepartment />} />
       <Route path="/usersall" element={<UsersPage />} />
       <Route path="/services" element={<Services />} />

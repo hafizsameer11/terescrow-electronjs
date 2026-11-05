@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { MdOutlineDescription, MdChatBubbleOutline, MdEdit, MdLock, MdBlock } from "react-icons/md";
 import { MdEmail, MdPhone, MdPerson, MdLocationOn } from "react-icons/md";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import ContactRow from "@renderer/components/ContactRow";
+import CustomerProfileTabs from "@renderer/components/CustomerProfileTabs";
 import KYCDetailsModal from "@renderer/components/modal/KYCDetailsModal";
 import NotesHistoryModal from "@renderer/components/modal/NotesHistoryModal";
 import EditProfileModal from "@renderer/components/modal/EditProfileModal";
@@ -38,11 +39,9 @@ const CustomerDetails: React.FC = () => {
   const [frozenFeatures, setFrozenFeatures] = useState<string[]>([]);
   const [unfreezingFeature, setUnfreezingFeature] = useState<string | null>(null);
   const { token } = useAuth();
-  const [activeTab, setActiveTab] = useState<"details" | "transactions">("details");
   const [kycData, setKYCData] = useState<KycStateTwo>({} as KycStateTwo);
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const { mutate: addNote } = useMutation({
     mutationKey: ['add-note'],
     mutationFn: (data: {
@@ -165,10 +164,6 @@ const CustomerDetails: React.FC = () => {
       toastApiError(err, 'Failed to unfreeze feature.');
     },
   });
-  const handleTabChange = (tab: "details" | "transactions") => {
-    setActiveTab(tab);
-    navigate(tab === "details" ? `/customers/${id}` : `/transaction-details/${id}`);
-  };
   const { mutate: updateKyc, isPending: isKYCUpdatePending } = useMutation({
     mutationKey: ['update-kyc-status'], // Unique mutation key
     mutationFn: async ({
@@ -237,27 +232,7 @@ const CustomerDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => handleTabChange("details")}
-          className={`px-4 py-2 rounded-md shadow-sm ${activeTab === "details"
-            ? "bg-[#147341] text-white"
-            : "text-gray-700 border border-gray-200"
-            }`}
-        >
-          Customer details and activities
-        </button>
-        <button
-          onClick={() => handleTabChange("transactions")}
-          className={`ml-4 px-4 py-2 rounded-md shadow-sm ${activeTab === "transactions"
-            ? "bg-[#147341] text-white"
-            : "text-gray-700 border border-gray-200"
-            }`}
-        >
-          Transaction activites and balance
-        </button>
-      </div>
+      {id && <CustomerProfileTabs customerId={id} activeTab="details" />}
 
       {/* Profile Section with wallet widget */}
       <div className="bg-[#147341] text-white rounded-lg p-4 flex items-stretch justify-between mb-6 gap-4">

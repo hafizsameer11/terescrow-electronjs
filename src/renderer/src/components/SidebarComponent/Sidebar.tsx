@@ -56,7 +56,9 @@ export const Sidebar = () => {
 
   useEffect(() => {
     const path = location.pathname;
-    const id = pathToIdMap[path] || (path.startsWith('/customers') ? 'customers' : path.startsWith('/transaction-details') ? 'crypto-txns' : null);
+    const id = pathToIdMap[path]
+      || (path.startsWith('/customers') || path.startsWith('/customer-chats') ? 'customers' : null)
+      || (path.startsWith('/transaction-details') ? 'crypto-txns' : null);
     if (id) setActiveItem(id);
   }, [location.pathname]);
   const [isModalOpen, setIsModalOpen] = useState(false);

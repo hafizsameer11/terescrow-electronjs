@@ -133,7 +133,7 @@ const ChatApplication: React.FC<ChatApplicationProps> = ({ onClose, data, id, is
     onClose();
     if (customerId != null) {
       onUserViewed?.(Number(customerId));
-      navigate(`/transaction-details/${customerId}`);
+      navigate(`/customer-chats/${customerId}`);
     }
   };
 
