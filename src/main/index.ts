@@ -4,6 +4,13 @@ import fs from 'fs'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import {
+  clearStaffSigningMaterial,
+  pathWithQueryFromUrl,
+  setStaffSigningMaterial,
+  signStaffRequest,
+  type StaffSigningMaterial,
+} from './staffHmac'
 
 const execFileAsync = promisify(execFile)
 const iconPath = {
@@ -91,6 +98,30 @@ app.whenReady().then(() => {
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
+
+  // Session-bound staff HMAC — key stays in main memory only (never disk/localStorage).
+  ipcMain.handle('staff-hmac-set', (_event, payload: StaffSigningMaterial) => {
+    setStaffSigningMaterial(payload || null)
+    return { ok: true }
+  })
+  ipcMain.handle('staff-hmac-clear', () => {
+    clearStaffSigningMaterial()
+    return { ok: true }
+  })
+  ipcMain.handle(
+    'staff-hmac-sign',
+    (
+      _event,
+      payload: { method: string; url: string; rawBody?: string }
+    ) => {
+      const pathWithQuery = pathWithQueryFromUrl(String(payload?.url || ''))
+      return signStaffRequest({
+        method: String(payload?.method || 'GET'),
+        pathWithQuery,
+        rawBody: typeof payload?.rawBody === 'string' ? payload.rawBody : '',
+      })
+    }
+  )
 
   ipcMain.on('log:error', (_event, payload: { message?: string; stack?: string; context?: string }) => {
     try {

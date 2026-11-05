@@ -18,6 +18,16 @@ contextBridge.exposeInMainWorld('electron', {
     removeListener: (channel: string, listener: (...args: any[]) => void) =>
       ipcRenderer.removeListener(channel, listener)
   },
+  staffHmac: {
+    set: (payload: {
+      requestSigningKey: string
+      requestSigningKid: string
+      requestSigningExpiresAt: string
+    }) => ipcRenderer.invoke('staff-hmac-set', payload),
+    clear: () => ipcRenderer.invoke('staff-hmac-clear'),
+    sign: (payload: { method: string; url: string; rawBody?: string }) =>
+      ipcRenderer.invoke('staff-hmac-sign', payload) as Promise<Record<string, string> | null>,
+  },
   clipboard: {
     writeImageFromArrayBuffer: (data: ArrayBuffer) => {
       const buffer = Buffer.from(data) // ✅ Buffer allowed in preload

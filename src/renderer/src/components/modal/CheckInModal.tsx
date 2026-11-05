@@ -134,6 +134,11 @@ const CheckInModal: React.FC<CheckInModalProps> = ({
             <button
               type="button"
               onClick={() => {
+                try {
+                  void window.electron?.staffHmac?.clear?.();
+                } catch {
+                  // ignore
+                }
                 dispatch({ type: 'LOGOUT' });
                 navigate('/', { replace: true });
               }}

@@ -1,7 +1,6 @@
 import React from 'react';
-import { FiChevronDown } from 'react-icons/fi';
 import { FaArrowDown, FaMoneyBillWave } from 'react-icons/fa';
-import { HiArrowsUpDown, HiArrowDownTray } from 'react-icons/hi2';
+import { HiArrowsUpDown } from 'react-icons/hi2';
 import chatsIcon from '@renderer/assets/images/chats.svg';
 import { formatNairaAmount } from '@renderer/api/helper';
 
@@ -64,8 +63,6 @@ function StatsRow({
   );
 }
 
-type BalanceView = 'customers' | 'trades';
-
 type Props = {
   chatStats: {
     totalChats?: number;
@@ -77,54 +74,30 @@ type Props = {
   };
   /** When true, labels note that counts are since the agent's clock-in. */
   sinceClockIn?: boolean;
-  balanceView: BalanceView;
-  balanceMenuOpen: boolean;
-  balanceLabel: string;
-  balanceValue: string;
-  bushaCustomersDisplay: string;
-  bushaTradesDisplay: string;
-  onBalanceMenuToggle: () => void;
-  onBalanceMenuClose: () => void;
-  onBalanceViewChange: (view: BalanceView) => void;
+  /** Session / work-window total profit (crypto + gift + bill). */
+  totalProfitNgn: number;
   profits: {
     crypto: number;
     giftCard: number;
     billPayment: number;
     earn: number;
-    earnNegative: boolean;
   };
   onQuickAction: (href: string) => void;
-  /** Admin-only Deposit / Withdraw treasury actions. */
-  isAdmin?: boolean;
 };
 
 const ChatsHubSummaryCards: React.FC<Props> = ({
   chatStats,
   sinceClockIn = false,
-  balanceView,
-  balanceMenuOpen,
-  balanceLabel,
-  balanceValue,
-  bushaCustomersDisplay,
-  bushaTradesDisplay,
-  onBalanceMenuToggle,
-  onBalanceMenuClose,
-  onBalanceViewChange,
+  totalProfitNgn,
   profits,
   onQuickAction,
-  isAdmin = false,
 }) => {
   const formatProfit = (n: number) => `N${formatNairaAmount(n)}`;
 
   const quickActions = [
-    ...(isAdmin
-      ? [
-          { label: 'Deposit', icon: FaArrowDown, href: '/financials/deposit' },
-          { label: 'Withdraw', icon: FaMoneyBillWave, href: '/financials/withdraw' },
-        ]
-      : []),
+    { label: 'Deposit', icon: FaArrowDown, href: '/financials/deposit' },
+    { label: 'Withdraw', icon: FaMoneyBillWave, href: '/financials/withdraw' },
     { label: 'Crypto', icon: HiArrowsUpDown, href: '/transactions/crypto' },
-    { label: 'Busha', icon: HiArrowDownTray, href: '/busha-test' },
   ] as const;
 
   const headerTitle = 'text-[15px] font-semibold text-gray-900 leading-tight';
@@ -132,7 +105,7 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1.14fr_1fr] gap-4 items-stretch">
-      {/* Chat Summary — slightly wider; same height as Financials */}
+      {/* Chat Summary — left */}
       <div
         className="rounded-xl overflow-hidden w-full h-full flex flex-col min-h-0"
         style={{ backgroundColor: MINT_BG, border: `1px solid ${MINT_BORDER}` }}
@@ -149,12 +122,15 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
               </p>
             </div>
           </div>
-          <div className="shrink-0 rounded-md border border-gray-400/60 bg-white/40 px-2.5 py-1.5 text-center min-w-[96px]">
+          <div className="shrink-0 rounded-md border border-gray-400/60 bg-white/40 px-2.5 py-1.5 text-center min-w-[110px]">
             <p className="text-[10px] text-gray-600 leading-tight">
-              {sinceClockIn ? 'Total Transactions (Since clock-in)' : 'Total Transactions'}
+              {sinceClockIn ? 'Total Profit (Since clock-in)' : 'Total Profit'}
             </p>
-            <p className="text-[15px] font-bold text-gray-900 mt-0.5 tabular-nums leading-none">
-              {chatStats.totalTransactions ?? '—'}
+            <p
+              className="text-[15px] font-bold mt-0.5 tabular-nums leading-none"
+              style={{ color: GREEN }}
+            >
+              {formatProfit(totalProfitNgn)}
             </p>
           </div>
         </div>
@@ -174,72 +150,16 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
             ]}
           />
         </div>
-        {/* Align bottom with Financials action row */}
         <div className="flex-1 min-h-[58px]" aria-hidden />
       </div>
 
-      {/* Financials — narrower column; action row pinned to bottom */}
+      {/* Financials — right */}
       <div className="rounded-xl bg-white border border-gray-200 overflow-hidden w-full h-full flex flex-col min-h-0">
-        <div className={`flex items-start justify-between gap-2 ${PX} ${HEADER}`}>
-          <div className="flex items-start gap-2.5 min-w-0 flex-1">
-            <ChatsCardIcon />
-            <div className="min-w-0">
-              <h2 className={headerTitle}>Financials</h2>
-              <p className={headerSub}>View quick stats for your financials.</p>
-            </div>
-          </div>
-
-          <div className="relative shrink-0 z-10">
-            <button
-              type="button"
-              onClick={onBalanceMenuToggle}
-              className="flex items-start gap-1.5 px-2.5 py-1.5 rounded-md border border-gray-300 bg-white text-left hover:border-gray-400 w-[132px]"
-            >
-              <FiChevronDown
-                className={`w-3.5 h-3.5 text-gray-500 shrink-0 mt-px transition-transform ${balanceMenuOpen ? 'rotate-180' : ''}`}
-              />
-              <span className="min-w-0 flex-1 overflow-hidden">
-                <span className="block text-[10px] text-gray-500 leading-tight truncate">{balanceLabel}</span>
-                <span
-                  className="block text-[13px] font-bold text-right leading-tight truncate mt-0.5"
-                  style={{ color: GREEN }}
-                >
-                  {balanceValue}
-                </span>
-              </span>
-            </button>
-            {balanceMenuOpen ? (
-              <>
-                <button
-                  type="button"
-                  className="fixed inset-0 z-10 cursor-default"
-                  aria-label="Close balance menu"
-                  onClick={onBalanceMenuClose}
-                />
-                <div className="absolute right-0 mt-1 w-[180px] rounded-md border border-gray-200 bg-white shadow-lg z-20 py-0.5">
-                  <button
-                    type="button"
-                    onClick={() => onBalanceViewChange('customers')}
-                    className={`w-full px-2.5 py-2 text-left hover:bg-gray-50 ${balanceView === 'customers' ? 'bg-emerald-50/80' : ''}`}
-                  >
-                    <span className="block text-[10px] text-gray-500">Busha customers</span>
-                    <span className="block text-[12px] font-bold text-right truncate" style={{ color: GREEN }}>
-                      {bushaCustomersDisplay}
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onBalanceViewChange('trades')}
-                    className={`w-full px-2.5 py-2 text-left hover:bg-gray-50 border-t border-gray-100 ${balanceView === 'trades' ? 'bg-emerald-50/80' : ''}`}
-                  >
-                    <span className="block text-[10px] text-gray-500">Busha trades</span>
-                    <span className="block text-[12px] font-bold text-right truncate" style={{ color: GREEN }}>
-                      {bushaTradesDisplay}
-                    </span>
-                  </button>
-                </div>
-              </>
-            ) : null}
+        <div className={`flex items-start gap-2.5 ${PX} ${HEADER}`}>
+          <ChatsCardIcon />
+          <div className="min-w-0">
+            <h2 className={headerTitle}>Financials</h2>
+            <p className={headerSub}>View quick stats for your financials.</p>
           </div>
         </div>
 
@@ -254,10 +174,7 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
               {
                 label: 'Earn',
                 value: (
-                  <span className={profits.earnNegative ? 'text-red-500' : 'text-gray-900'}>
-                    {profits.earnNegative ? '-' : ''}
-                    {formatProfit(Math.abs(profits.earn))}
-                  </span>
+                  <span className="text-red-600">-{formatProfit(Math.abs(profits.earn))}</span>
                 ),
               },
             ]}

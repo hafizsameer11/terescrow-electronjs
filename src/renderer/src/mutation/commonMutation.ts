@@ -19,6 +19,10 @@ interface ILoginResponse {
     profilePicture: string | null
     email: string
     role: UserRoles
+    /** Session-bound HMAC key (once). Kept in Electron main — strip before React state. */
+    requestSigningKey?: string
+    requestSigningKid?: string
+    requestSigningExpiresAt?: string
   }
   token: string
 }

@@ -37,7 +37,6 @@ import DailyReportPage from './pages/DailyReportPage';
 import ReferralsPage from './pages/ReferralsPage';
 import SupportPage from './pages/SupportPage';
 import ProfitTrackerPage from './pages/ProfitTrackerPage';
-import BushaTestPage from './pages/BushaTestPage';
 import FinancialDepositPage from './pages/FinancialDepositPage';
 import FinancialWithdrawPage from './pages/FinancialWithdrawPage';
 
@@ -93,7 +92,7 @@ function App(): JSX.Element {
       <Route path="/daily-report" element={<DailyReportPage />} />
       <Route path="/support" element={<SupportPage />} />
       <Route path="/referrals" element={<ReferralsPage />} />
-      <Route path="/busha-test" element={<BushaTestPage />} />
+      <Route path="/busha-test" element={<Navigate to="/user-balances" replace />} />
       <Route path="/kyc" element={<Kyc />} />
       {/* Removed legacy Tatum surfaces — redirect bookmarks */}
       <Route path="/log" element={<Navigate to="/dashboard" replace />} />

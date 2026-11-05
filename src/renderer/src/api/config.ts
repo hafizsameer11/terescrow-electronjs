@@ -56,6 +56,8 @@ const API_ENDPOINT = {
     merchantsPalmpayFundingAccount: API_ADMIN_BASE + '/merchants/palmpay/funding-account',
     merchantsPalmpayProfitWithdraw: API_ADMIN_BASE + '/merchants/palmpay/profit-withdraw',
     merchantsPalmpayProfitWithdrawals: API_ADMIN_BASE + '/merchants/palmpay/profit-withdrawals',
+    merchantsPalmpayProfitWithdrawDestination:
+      API_ADMIN_BASE + '/merchants/palmpay/profit-withdraw-destination',
     busha: API_ADMIN_BASE + '/busha',
     bushaCustomer: (id: string) => API_ADMIN_BASE + '/busha/customers/' + encodeURIComponent(id),
     bushaCustomerKyc: (id: string) => API_ADMIN_BASE + '/busha/customers/' + encodeURIComponent(id) + '/kyc',

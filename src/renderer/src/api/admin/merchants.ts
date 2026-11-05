@@ -162,20 +162,60 @@ export async function verifyPalmpayBankAccount(
 
 export async function getPalmPayFundingAccount(
   token: string
-): Promise<{ fundingAccount: PalmPayFundingAccount }> {
+): Promise<{ fundingAccount: PalmPayFundingAccount; availableBalanceNgn?: number | null }> {
   const res = await apiCall(API_ENDPOINT.ADMIN.merchantsPalmpayFundingAccount, 'GET', undefined, token);
   return unwrap(res);
 }
 
-export async function withdrawPalmPayProfit(
+export type ProfitWithdrawDestination = {
+  bankCode: string | null;
+  bankName: string | null;
+  accountNumber: string | null;
+  accountName: string | null;
+  verifiedAt: string | null;
+  updatedById: number | null;
+  updatedAt: string | null;
+  configured: boolean;
+};
+
+export async function getProfitWithdrawDestination(
+  token: string
+): Promise<{
+  destination: ProfitWithdrawDestination;
+  availableBalanceNgn: number | null;
+}> {
+  const res = await apiCall(
+    API_ENDPOINT.ADMIN.merchantsPalmpayProfitWithdrawDestination,
+    'GET',
+    undefined,
+    token
+  );
+  return unwrap(res);
+}
+
+/** Admin-only: PalmPay-verify then save shared destination. */
+export async function saveProfitWithdrawDestination(
   token: string,
   payload: {
-    amount: number;
     bankCode: string;
     accountNumber: string;
-    accountName: string;
+    accountName?: string;
     bankName?: string;
   }
+): Promise<{ destination: ProfitWithdrawDestination }> {
+  const res = await apiCall(
+    API_ENDPOINT.ADMIN.merchantsPalmpayProfitWithdrawDestination,
+    'PUT',
+    payload,
+    token
+  );
+  return unwrap(res);
+}
+
+/** Staff: withdraw into the admin-saved destination (amount only). */
+export async function withdrawPalmPayProfit(
+  token: string,
+  payload: { amount: number }
 ): Promise<MerchantTopupLog & { merchantBalanceCheckedNgn?: number; feeBufferNgn?: number }> {
   const res = await apiCall(API_ENDPOINT.ADMIN.merchantsPalmpayProfitWithdraw, 'POST', payload, token);
   return unwrap(res);

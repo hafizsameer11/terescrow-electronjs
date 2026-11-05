@@ -7,12 +7,9 @@ import { useQuery } from '@tanstack/react-query';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CryptoRatesSettings from '@renderer/components/rates/CryptoRatesSettings';
-import BushaMarkupSettings from '@renderer/components/rates/BushaMarkupSettings';
-import BushaCoinFeeSettings from '@renderer/components/rates/BushaCoinFeeSettings';
-import BushaFeeLedgerPanel from '@renderer/components/rates/BushaFeeLedgerPanel';
 import ObiexMarkupSettings from '@renderer/components/rates/ObiexMarkupSettings';
 import { GIFT_CARD_TRANSACTION_TYPES } from '@renderer/types/cryptoRates';
-import { getBushaStatus, getObiexStatus } from '@renderer/api/admin';
+import { getObiexStatus } from '@renderer/api/admin';
 
 type RatesPageTab = 'crypto' | 'gift-card' | 'history';
 
@@ -40,13 +37,6 @@ const RatesHistory: React.FC = () => {
     else navigate('/rates?tab=history');
   };
 
-  const bushaStatusQuery = useQuery({
-    queryKey: ['bushaStatus'],
-    queryFn: () => getBushaStatus(token!),
-    enabled: !!token && canManageRates,
-    staleTime: 60_000,
-    retry: false,
-  });
   const obiexStatusQuery = useQuery({
     queryKey: ['obiexStatus'],
     queryFn: () => getObiexStatus(token!),
@@ -54,7 +44,6 @@ const RatesHistory: React.FC = () => {
     staleTime: 60_000,
     retry: false,
   });
-  const bushaActive = !!bushaStatusQuery.data?.settings?.isActive && !!bushaStatusQuery.data?.busha?.configured;
   const obiexActive = !!obiexStatusQuery.data?.settings?.isActive && !!obiexStatusQuery.data?.configured;
 
   const { data: ratesData, isLoading, isError, error } = useQuery({
@@ -94,25 +83,16 @@ const RatesHistory: React.FC = () => {
 
       {obiexActive ? (
         <div className="mb-6 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950">
-          <p className="font-semibold">Obiex is active — set flat buy/sell fees and % markup below.</p>
+          <p className="font-semibold">Obiex is active — set USD buy/sell tiers, swap &amp; receive fees below.</p>
           <p className="mt-1 text-sky-900/90">
-            Net admin profit/loss (after provider fees) is recorded on each trade. Gift card rates still use the Gift
-            card tab.
-          </p>
-        </div>
-      ) : bushaActive ? (
-        <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-          <p className="font-semibold">Busha is active — live crypto buy/sell rates come from Busha.</p>
-          <p className="mt-1 text-emerald-900/90">
-            Set platform <strong>Buy markup %</strong> and <strong>Sell markup %</strong> below. Gift card buy rates
-            (Pagocard) still use the Gift card tab.
+            Gift card buy rates still use the Gift card tab.
           </p>
         </div>
       ) : (
         <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-          <p className="font-semibold">Configure Obiex or Busha for crypto rates.</p>
+          <p className="font-semibold">Configure Obiex for crypto rates.</p>
           <p className="mt-1 text-amber-900/90">
-            Enable Obiex or Busha under their settings. Flat Obiex buy/sell fees are available when Obiex is connected.
+            Enable Obiex under settings. Tier markup and swap/receive fees appear when Obiex is connected.
           </p>
         </div>
       )}
@@ -150,12 +130,7 @@ const RatesHistory: React.FC = () => {
       )}
 
       {activeTab === 'crypto' && canManageRates && token ? (
-        <>
-          <ObiexMarkupSettings token={token} />
-          <BushaMarkupSettings token={token} />
-          <BushaCoinFeeSettings token={token} />
-          <BushaFeeLedgerPanel token={token} />
-        </>
+        <ObiexMarkupSettings token={token} />
       ) : activeTab === 'gift-card' && canManageRates && token ? (
         <CryptoRatesSettings token={token} transactionTypes={GIFT_CARD_TRANSACTION_TYPES} />
       ) : (

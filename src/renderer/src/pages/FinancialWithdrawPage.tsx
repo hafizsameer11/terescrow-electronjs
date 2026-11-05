@@ -1,25 +1,38 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@renderer/context/authContext';
+import { useDailyReportSession } from '@renderer/context/dailyReportSessionContext';
 import {
-  getMerchantsOverview,
   getPalmpayBanks,
   verifyPalmpayBankAccount,
+  getProfitWithdrawDestination,
+  saveProfitWithdrawDestination,
   withdrawPalmPayProfit,
   listPalmPayProfitWithdrawals,
 } from '@renderer/api/admin/merchants';
+import { getMarkupProfitOverview } from '@renderer/api/admin/profitTracker';
 import { formatNairaAmount } from '@renderer/api/helper';
+import { toDateString, toApiInclusiveEnd } from '@renderer/utils/dateRange';
 import { toastSuccess, toastApiError } from '@renderer/utils/toast';
 
+function toCheckInIso(checkInTime: string): string {
+  const d = new Date(checkInTime);
+  return Number.isNaN(d.getTime()) ? checkInTime : d.toISOString();
+}
+
 /**
- * Admin-only: withdraw from PalmPay merchant balance to a bank account (profit payout).
+ * Admin: PalmPay-verify + save shared destination; withdraw into it.
+ * Agent: only withdrawable session profit + amount (no merchant balance).
  */
 const FinancialWithdrawPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { token, userData } = useAuth();
+  const { isClockedIn, session } = useDailyReportSession();
   const isAdmin = userData?.role === 'admin';
+  const isAgent = userData?.role === 'agent';
+  const isStaff = isAdmin || isAgent;
 
   const [bankCode, setBankCode] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
@@ -28,10 +41,39 @@ const FinancialWithdrawPage: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [verifyNote, setVerifyNote] = useState<string | null>(null);
 
-  const overviewQuery = useQuery({
-    queryKey: ['merchants-overview', token],
-    queryFn: () => getMerchantsOverview(token!),
-    enabled: !!token && isAdmin,
+  const sessionProfitParams = useMemo(() => {
+    const today = toDateString(new Date());
+    let startDate: string = today;
+    const endDate = toApiInclusiveEnd(today);
+    if (isClockedIn && session?.checkInTime) {
+      const checkInIso = toCheckInIso(session.checkInTime);
+      if (checkInIso.slice(0, 10) === today) {
+        startDate = checkInIso;
+      }
+    }
+    return { startDate, endDate };
+  }, [isClockedIn, session?.checkInTime]);
+
+  const sinceClockIn =
+    !!isClockedIn &&
+    !!session?.checkInTime &&
+    sessionProfitParams.startDate === toCheckInIso(session.checkInTime);
+
+  const sessionProfitQuery = useQuery({
+    queryKey: ['withdraw-session-markup-profit', token, sessionProfitParams],
+    queryFn: () => getMarkupProfitOverview(token!, sessionProfitParams),
+    enabled: !!token && isAgent,
+    staleTime: 30_000,
+  });
+
+  const withdrawableProfitNgn = Number(
+    sessionProfitQuery.data?.summary?.totalProfitNgn ?? 0
+  );
+
+  const destinationQuery = useQuery({
+    queryKey: ['palmpay-profit-withdraw-destination', token],
+    queryFn: () => getProfitWithdrawDestination(token!),
+    enabled: !!token && isStaff,
     staleTime: 30_000,
   });
 
@@ -48,7 +90,25 @@ const FinancialWithdrawPage: React.FC = () => {
     enabled: !!token && isAdmin,
   });
 
-  const available = overviewQuery.data?.palmpay?.balance?.availableBalanceNgn;
+  const destination = destinationQuery.data?.destination;
+  const available = isAdmin ? destinationQuery.data?.availableBalanceNgn : null;
+
+  useEffect(() => {
+    if (!isAdmin || !destination?.configured) return;
+    if (bankCode || accountNumber) return;
+    setBankCode(destination.bankCode || '');
+    setAccountNumber(destination.accountNumber || '');
+    setAccountName(destination.accountName || '');
+    setBankName(destination.bankName || '');
+  }, [isAdmin, destination, bankCode, accountNumber]);
+
+  // Agents: default amount to withdrawable session profit once loaded.
+  useEffect(() => {
+    if (!isAgent || amount) return;
+    if (withdrawableProfitNgn >= 100) {
+      setAmount(String(Math.round(withdrawableProfitNgn * 100) / 100));
+    }
+  }, [isAgent, withdrawableProfitNgn, amount]);
 
   const selectedBank = useMemo(
     () => (banksQuery.data || []).find((b) => b.bankCode === bankCode),
@@ -74,30 +134,42 @@ const FinancialWithdrawPage: React.FC = () => {
     onError: (err) => toastApiError(err, 'Verification failed'),
   });
 
-  const withdrawMutation = useMutation({
+  const saveMutation = useMutation({
     mutationFn: () =>
-      withdrawPalmPayProfit(token!, {
-        amount: parseFloat(amount),
+      saveProfitWithdrawDestination(token!, {
         bankCode,
         accountNumber: accountNumber.trim(),
-        accountName: accountName.trim(),
+        accountName: accountName.trim() || undefined,
         bankName: bankName || selectedBank?.bankName || undefined,
       }),
+    onSuccess: (res) => {
+      toastSuccess(
+        `Saved destination: ${res.destination.accountName} (${res.destination.accountNumber})`
+      );
+      setVerifyNote(`Saved: ${res.destination.accountName}`);
+      queryClient.invalidateQueries({ queryKey: ['palmpay-profit-withdraw-destination'] });
+    },
+    onError: (err) => toastApiError(err, 'Failed to save destination'),
+  });
+
+  const withdrawMutation = useMutation({
+    mutationFn: () => withdrawPalmPayProfit(token!, { amount: parseFloat(amount) }),
     onSuccess: (res) => {
       toastSuccess(
         `Withdrawal ${res.status}: ₦${formatNairaAmount(res.amount)} → ${res.accountName || res.accountNumber}`
       );
       setAmount('');
-      queryClient.invalidateQueries({ queryKey: ['merchants-overview'] });
+      queryClient.invalidateQueries({ queryKey: ['palmpay-profit-withdraw-destination'] });
       queryClient.invalidateQueries({ queryKey: ['palmpay-profit-withdrawals'] });
+      if (isAgent) sessionProfitQuery.refetch();
     },
     onError: (err) => toastApiError(err, 'Withdrawal failed'),
   });
 
-  if (!isAdmin) {
+  if (!isStaff) {
     return (
       <div className="p-6 max-w-3xl mx-auto">
-        <p className="text-red-600">Admin access required.</p>
+        <p className="text-red-600">Staff access required.</p>
         <button
           type="button"
           className="mt-4 text-sm text-[#147341] underline"
@@ -109,21 +181,105 @@ const FinancialWithdrawPage: React.FC = () => {
     );
   }
 
-  const canSubmit =
+  const canSave =
+    isAdmin &&
     !!bankCode &&
     accountNumber.trim().length >= 10 &&
     accountName.trim().length > 1 &&
-    Number(amount) >= 100 &&
-    !withdrawMutation.isPending;
+    !saveMutation.isPending;
 
+  const canWithdraw =
+    !!destination?.configured &&
+    Number(amount) >= 100 &&
+    !withdrawMutation.isPending &&
+    (!isAgent || Number(amount) <= withdrawableProfitNgn + 0.001);
+
+  // ——— Agent: withdrawable profit only ———
+  if (isAgent) {
+    return (
+      <div className="p-6 max-w-lg mx-auto w-full">
+        <div className="flex items-center justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900">Withdraw profit</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Withdraw session profit into the admin-saved account.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/chats')}
+            className="text-sm px-3 py-1.5 rounded-lg border border-gray-300 hover:bg-gray-50"
+          >
+            Back
+          </button>
+        </div>
+
+        <div className="mb-6 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-4">
+          <p className="text-xs uppercase text-emerald-700 font-medium">
+            {sinceClockIn ? 'Profit you can withdraw (since clock-in)' : 'Profit you can withdraw (today)'}
+          </p>
+          <p className="text-2xl font-semibold text-emerald-900 mt-1">
+            {sessionProfitQuery.isLoading
+              ? '…'
+              : `₦${formatNairaAmount(withdrawableProfitNgn)}`}
+          </p>
+        </div>
+
+        {!destination?.configured ? (
+          <p className="text-sm text-amber-700">
+            No withdraw account is set yet. Ask an admin to save one first.
+          </p>
+        ) : (
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+            <div className="max-w-xs">
+              <label className="block text-sm font-medium text-gray-800 mb-1">Amount (₦)</label>
+              <input
+                type="number"
+                min={100}
+                max={Math.max(100, withdrawableProfitNgn)}
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                placeholder="Min 100"
+              />
+              {Number(amount) > withdrawableProfitNgn + 0.001 ? (
+                <p className="text-xs text-red-600 mt-1">
+                  Cannot exceed session profit (₦{formatNairaAmount(withdrawableProfitNgn)}).
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              disabled={!canWithdraw}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Withdraw ₦${formatNairaAmount(amount)} of session profit?`
+                  )
+                ) {
+                  return;
+                }
+                withdrawMutation.mutate();
+              }}
+              className="mt-5 px-4 py-2.5 rounded-lg bg-[#147341] text-white text-sm font-medium hover:bg-[#0d5a2e] disabled:opacity-50"
+            >
+              {withdrawMutation.isPending ? 'Submitting…' : 'Withdraw'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ——— Admin ———
   return (
     <div className="p-6 max-w-4xl mx-auto w-full">
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Withdraw profit</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Pay out from the PalmPay merchant wallet to a bank account. Balance is checked before
-            PalmPay is called. Every attempt is logged with admin identity and destination account.
+            Verify and save a bank account with PalmPay. Agents withdraw into that saved account.
           </p>
         </div>
         <button
@@ -144,15 +300,41 @@ const FinancialWithdrawPage: React.FC = () => {
         </div>
         <button
           type="button"
-          onClick={() => overviewQuery.refetch()}
+          onClick={() => destinationQuery.refetch()}
           className="text-sm px-3 py-1.5 rounded-lg bg-white border border-emerald-200 text-emerald-800"
         >
           Refresh
         </button>
       </div>
 
+      <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 className="font-semibold text-gray-900 mb-1">Saved withdraw account</h2>
+        <p className="text-xs text-gray-500 mb-3">
+          Shared destination used for all profit withdrawals.
+        </p>
+        {destinationQuery.isLoading ? (
+          <p className="text-sm text-gray-500">Loading…</p>
+        ) : destination?.configured ? (
+          <div>
+            <p className="font-medium text-gray-900">{destination.accountName}</p>
+            <p className="text-sm text-gray-600 font-mono mt-0.5">
+              {destination.bankName || destination.bankCode} · {destination.accountNumber}
+            </p>
+            {destination.verifiedAt ? (
+              <p className="text-xs text-gray-400 mt-1">
+                PalmPay verified {new Date(destination.verifiedAt).toLocaleString()}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="text-sm text-amber-700">
+            No account saved yet. Verify a bank account below and save it.
+          </p>
+        )}
+      </div>
+
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm mb-8">
-        <h2 className="font-semibold text-gray-900 mb-4">New withdrawal</h2>
+        <h2 className="font-semibold text-gray-900 mb-4">Save / update account</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-800 mb-1">Bank</label>
@@ -195,7 +377,7 @@ const FinancialWithdrawPage: React.FC = () => {
               onClick={() => verifyMutation.mutate()}
               className="w-full px-3 py-2 rounded-lg border border-[#147341] text-[#147341] text-sm font-medium disabled:opacity-50"
             >
-              {verifyMutation.isPending ? 'Verifying…' : 'Verify account'}
+              {verifyMutation.isPending ? 'Verifying…' : 'Verify with PalmPay'}
             </button>
           </div>
           <div className="sm:col-span-2">
@@ -208,36 +390,59 @@ const FinancialWithdrawPage: React.FC = () => {
             />
             {verifyNote ? <p className="text-xs text-gray-500 mt-1">{verifyNote}</p> : null}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1">Amount (₦)</label>
-            <input
-              type="number"
-              min={100}
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-              placeholder="Min 100"
-            />
-          </div>
         </div>
         <button
           type="button"
-          disabled={!canSubmit}
-          onClick={() => {
-            if (
-              !window.confirm(
-                `Withdraw ₦${formatNairaAmount(amount)} to ${accountName} (${accountNumber})?`
-              )
-            ) {
-              return;
-            }
-            withdrawMutation.mutate();
-          }}
+          disabled={!canSave}
+          onClick={() => saveMutation.mutate()}
           className="mt-5 px-4 py-2.5 rounded-lg bg-[#147341] text-white text-sm font-medium hover:bg-[#0d5a2e] disabled:opacity-50"
         >
-          {withdrawMutation.isPending ? 'Submitting…' : 'Withdraw from PalmPay'}
+          {saveMutation.isPending ? 'Saving…' : 'Save account for withdrawals'}
         </button>
+      </div>
+
+      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm mb-8">
+        <h2 className="font-semibold text-gray-900 mb-4">New withdrawal</h2>
+        {!destination?.configured ? (
+          <p className="text-sm text-gray-500">Save a verified bank account before withdrawing.</p>
+        ) : (
+          <>
+            <p className="text-sm text-gray-600 mb-4">
+              Paying to{' '}
+              <span className="font-medium text-gray-900">{destination.accountName}</span>
+              <span className="font-mono text-gray-500"> · {destination.accountNumber}</span>
+            </p>
+            <div className="max-w-xs">
+              <label className="block text-sm font-medium text-gray-800 mb-1">Amount (₦)</label>
+              <input
+                type="number"
+                min={100}
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                placeholder="Min 100"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={!canWithdraw}
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Withdraw ₦${formatNairaAmount(amount)} to ${destination.accountName} (${destination.accountNumber})?`
+                  )
+                ) {
+                  return;
+                }
+                withdrawMutation.mutate();
+              }}
+              className="mt-5 px-4 py-2.5 rounded-lg bg-[#147341] text-white text-sm font-medium hover:bg-[#0d5a2e] disabled:opacity-50"
+            >
+              {withdrawMutation.isPending ? 'Submitting…' : 'Withdraw from PalmPay'}
+            </button>
+          </>
+        )}
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -250,7 +455,7 @@ const FinancialWithdrawPage: React.FC = () => {
             <thead className="bg-gray-50 text-xs uppercase text-gray-500">
               <tr>
                 <th className="text-left px-4 py-2">When</th>
-                <th className="text-left px-4 py-2">Admin</th>
+                <th className="text-left px-4 py-2">Staff</th>
                 <th className="text-left px-4 py-2">Account</th>
                 <th className="text-left px-4 py-2">Amount</th>
                 <th className="text-left px-4 py-2">Status</th>
@@ -301,7 +506,10 @@ const FinancialWithdrawPage: React.FC = () => {
                         {w.status}
                       </span>
                       {w.errorMessage ? (
-                        <div className="text-xs text-red-500 max-w-[200px] truncate" title={w.errorMessage}>
+                        <div
+                          className="text-xs text-red-500 max-w-[200px] truncate"
+                          title={w.errorMessage}
+                        >
                           {w.errorMessage}
                         </div>
                       ) : null}

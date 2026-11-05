@@ -23,8 +23,28 @@ const LoginPage = () => {
       if (data?.token) {
         const readOnly = isReadOnlyDemoUser(data.data)
         setReadOnlyDemoSession(readOnly)
+
+        // Store session HMAC key in main process only (never React state / localStorage).
+        const {
+          requestSigningKey,
+          requestSigningKid,
+          requestSigningExpiresAt,
+          ...safeUser
+        } = data.data || ({} as any)
+        try {
+          if (requestSigningKey && requestSigningKid && window.electron?.staffHmac?.set) {
+            await window.electron.staffHmac.set({
+              requestSigningKey,
+              requestSigningKid,
+              requestSigningExpiresAt: requestSigningExpiresAt || '',
+            })
+          }
+        } catch (e) {
+          console.error('Failed to store staff HMAC key', e)
+        }
+
         dispatch({ type: 'SET_TOKEN', payload: data?.token })
-        dispatch({ type: 'SET_USER_DATA', payload: { ...data.data, readOnlyMode: readOnly } })
+        dispatch({ type: 'SET_USER_DATA', payload: { ...safeUser, readOnlyMode: readOnly } })
         navigate(data.data.role === UserRoles.admin ? '/dashboard' : '/chats')
       } else {
         // toast.error(`Error: ${data?.message}`, {

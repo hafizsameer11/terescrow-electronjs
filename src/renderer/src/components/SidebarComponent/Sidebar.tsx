@@ -67,6 +67,11 @@ export const Sidebar = () => {
   const handlogout = () => {
     console.log("Logout Called");
     setReadOnlyDemoSession(false);
+    try {
+      void window.electron?.staffHmac?.clear?.();
+    } catch {
+      // ignore
+    }
     dispatch({ type: 'LOGOUT' }); // Clear auth state
     navigate('/', { replace: true }); // Redirect to login
   };
@@ -107,7 +112,7 @@ export const Sidebar = () => {
     { label: 'Crypto Txns', icon: <FaBitcoin />, href: '/transactions/crypto', id: 'crypto-txns' },
     { label: 'Bill Payments', icon: <MdReceipt />, href: '/transactions/bill-payments', id: 'bill-payments' },
     { label: 'Naira Txns', icon: <MdAttachMoney />, href: '/transactions/naira', id: 'naira-txns' },
-    { label: 'Busha Wallets', icon: <FaWallet />, href: '/user-balances', id: 'user-balances' },
+    { label: 'Obiex Wallets', icon: <FaWallet />, href: '/user-balances', id: 'user-balances' },
     { label: 'Rates', icon: Images.rates, href: '/rates', id: 'rates' },
     { label: 'Department', icon: Images.department, href: '/departments', id: 'department' },
     { label: 'Services', icon: <FaCog />, href: '/services', id: 'services' },
@@ -136,6 +141,7 @@ export const Sidebar = () => {
     { label: 'Bill Payments', icon: <MdReceipt />, href: '/transactions/bill-payments', id: 'bill-payments' },
     { label: 'Naira Txns', icon: <MdAttachMoney />, href: '/transactions/naira', id: 'naira-txns' },
     { label: 'Rates', icon: Images.rates, href: '/rates?tab=crypto', id: 'rates' },
+    { label: 'Profit Tracker', icon: <FaChartLine />, href: '/profit-tracker', id: 'profit-tracker' },
     { label: 'Banners', icon: <PiSlideshowThin />, href: '/notifications/in-app/banners', id: 'banner' },
   ], [pendingChatsCount,countData]);
 

@@ -19,13 +19,12 @@ import {
 } from '@renderer/api/admin/dailyReport';
 import { useDailyReportSession } from '@renderer/context/dailyReportSessionContext';
 import { getMarkupProfitOverview } from '@renderer/api/admin/profitTracker';
-import { listBushaCustomerWallets } from '@renderer/api/admin/busha';
 import { getReferralsSummary } from '@renderer/api/admin/referrals';
 import CheckInModal from '@renderer/components/modal/CheckInModal';
 import ChatFilters from '@renderer/components/ChatFilters';
 import ChatTable from '@renderer/components/ChatTable';
 import type { AgentToCustomerChatData } from '@renderer/api/queries/datainterfaces';
-import { getImageUrl, addThousandSeparator } from '@renderer/api/helper';
+import { getImageUrl } from '@renderer/api/helper';
 import { apiDateParams, toDateString, toApiInclusiveEnd } from '@renderer/utils/dateRange';
 
 const PAGE_SIZE = 50;
@@ -117,8 +116,6 @@ function toCheckInIso(checkInTime: string): string {
   return Number.isNaN(d.getTime()) ? checkInTime : d.toISOString();
 }
 
-type BalanceView = 'customers' | 'trades';
-
 const Chat = () => {
   const { token, userData } = useAuth();
   const navigate = useNavigate();
@@ -126,8 +123,6 @@ const Chat = () => {
   const { checkIn, checkOut, isCheckingIn, isCheckingOut, isClockedIn, session } =
     useDailyReportSession();
   const [checkInOpen, setCheckInOpen] = useState(false);
-  const [balanceView, setBalanceView] = useState<BalanceView>('customers');
-  const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [timeWindow, setTimeWindow] = useState<StatsTimeWindow>('all');
 
   const [dateRangePresetActive, setDateRangePresetActive] = useState(false);
@@ -230,14 +225,6 @@ const Chat = () => {
     refetchInterval: HUB_POLL_MS,
   });
 
-  const { data: bushaWalletsSummary } = useQuery({
-    queryKey: ['chat-busha-wallets-summary', token],
-    queryFn: () => listBushaCustomerWallets(token!, { page: 1, limit: 1 }),
-    enabled: !!token,
-    staleTime: 60_000,
-    refetchInterval: HUB_POLL_MS,
-  });
-
   const { data: referralSummary } = useQuery({
     queryKey: ['chat-referral-summary', token, profitDateParams],
     queryFn: () => getReferralsSummary(token!, profitDateParams),
@@ -321,22 +308,10 @@ const Chat = () => {
 
   const referralPaidOut = Number(referralSummary?.amountPaidOut ?? 0);
   const earnNgn = -referralPaidOut;
-  const earnNegative = earnNgn < 0;
 
-  const bushaCustomersDisplay = useMemo(() => {
-    const n = bushaWalletsSummary?.summary?.customers;
-    if (n == null) return '—';
-    const active = bushaWalletsSummary?.summary?.activeCustomers;
-    return active != null ? `${addThousandSeparator(n)} (${addThousandSeparator(active)} active)` : addThousandSeparator(n);
-  }, [bushaWalletsSummary]);
-
-  const bushaTradesDisplay = useMemo(() => {
-    const n = bushaWalletsSummary?.summary?.trades;
-    return n == null ? '—' : addThousandSeparator(n);
-  }, [bushaWalletsSummary]);
-
-  const balanceLabel = balanceView === 'customers' ? 'Busha customers' : 'Busha trades';
-  const balanceValue = balanceView === 'customers' ? bushaCustomersDisplay : bushaTradesDisplay;
+  const totalProfitNgn =
+    Number(markupProfit?.summary?.totalProfitNgn ?? 0) ||
+    profitBuckets.crypto + profitBuckets.giftCard + profitBuckets.billPayment;
 
   const agentAvatars = agentsList?.data?.slice(0, 4) ?? [];
   const onlineTotal = teamStats?.data?.totalOnlineAgents ?? agentAvatars.length;
@@ -441,27 +416,14 @@ const Chat = () => {
               stats?.successfulTransactions?.count ?? stats?.totalChats?.count,
           }}
           sinceClockIn={sinceClockIn}
-          balanceView={balanceView}
-          balanceMenuOpen={balanceMenuOpen}
-          balanceLabel={balanceLabel}
-          balanceValue={balanceValue}
-          bushaCustomersDisplay={bushaCustomersDisplay}
-          bushaTradesDisplay={bushaTradesDisplay}
-          onBalanceMenuToggle={() => setBalanceMenuOpen((o) => !o)}
-          onBalanceMenuClose={() => setBalanceMenuOpen(false)}
-          onBalanceViewChange={(view) => {
-            setBalanceView(view);
-            setBalanceMenuOpen(false);
-          }}
+          totalProfitNgn={totalProfitNgn}
           profits={{
             crypto: profitBuckets.crypto,
             giftCard: profitBuckets.giftCard,
             billPayment: profitBuckets.billPayment,
             earn: earnNgn,
-            earnNegative,
           }}
           onQuickAction={(href) => navigate(href)}
-          isAdmin={userData?.role === 'admin'}
         />
 
         <ChatFilters

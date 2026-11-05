@@ -32,9 +32,38 @@ export type ObiexStatus = {
     sellFlatFeeGhs?: number | null;
     withdrawMarkupPercentGhs?: number | null;
     withdrawFlatFeeGhs?: number | null;
+    swapFeePercent?: number | null;
+    receiveFeePercent?: number | null;
     collectionsTarget?: string | null;
   } | null;
   masterBalances?: unknown[];
+};
+
+export type ObiexUserWalletBalance = {
+  currency: string;
+  available: string;
+  lastObiexMasterBalance?: string | null;
+  reconcileMismatch?: boolean;
+  updatedAt?: string;
+};
+
+export type ObiexUserWalletRow = {
+  id: number;
+  firstname?: string | null;
+  lastname?: string | null;
+  email?: string | null;
+  username?: string | null;
+  profilePicture?: string | null;
+  balances: ObiexUserWalletBalance[];
+};
+
+export type ObiexUserWalletsResponse = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  masterBalances: Array<{ currency: string; available?: unknown; raw?: unknown }>;
+  users: ObiexUserWalletRow[];
 };
 
 const base = API_ENDPOINT.ADMIN.obiex;
@@ -57,10 +86,25 @@ export async function saveObiexSettings(
     sellFlatFeeGhs?: number;
     withdrawMarkupPercentGhs?: number;
     withdrawFlatFeeGhs?: number;
+    swapFeePercent?: number;
+    receiveFeePercent?: number;
     collectionsTarget?: string;
   }
 ) {
   const res = await apiCall(base + '/settings', 'PUT', payload, token);
+  return unwrap(res);
+}
+
+export async function listObiexUserWallets(
+  token: string,
+  params?: { page?: number; limit?: number; search?: string }
+): Promise<ObiexUserWalletsResponse> {
+  const sp = new URLSearchParams();
+  if (params?.page) sp.set('page', String(params.page));
+  if (params?.limit) sp.set('limit', String(params.limit));
+  if (params?.search) sp.set('search', params.search);
+  const qs = sp.toString() ? `?${sp.toString()}` : '';
+  const res = await apiCall(base + '/user-wallets' + qs, 'GET', undefined, token);
   return unwrap(res);
 }
 
