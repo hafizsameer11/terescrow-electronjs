@@ -117,6 +117,46 @@ export async function listObiexMarkupRanges(
   return unwrap(res) || [];
 }
 
+export type ObiexTrade = {
+  id: string;
+  side?: string | null;
+  sourceCurrency?: string | null;
+  targetCurrency?: string | null;
+  sourceAmount?: string | number | null;
+  targetAmount?: string | number | null;
+  obiexReference?: string | null;
+  obiexTransactionId?: string | null;
+  obiexQuoteId?: string | null;
+  obiexStatus?: string | null;
+  cryptoDepositAddress?: string | null;
+  withdrawAddress?: string | null;
+  status?: string | null;
+  providerResponse?: any;
+  createdAt: string;
+  updatedAt?: string | null;
+  user?: {
+    id: number;
+    username?: string | null;
+    firstname?: string | null;
+    lastname?: string | null;
+    profilePicture?: string | null;
+    country?: string | null;
+  } | null;
+};
+
+export async function listObiexTrades(token: string, limit = 100): Promise<ObiexTrade[]> {
+  const res = await apiCall(
+    `${base}/trades?limit=${Math.min(200, Math.max(1, limit))}`,
+    'GET',
+    undefined,
+    token
+  );
+  const data = unwrap<ObiexTrade[] | { trades?: ObiexTrade[] }>(res);
+  if (Array.isArray(data)) return data;
+  if (Array.isArray((data as any)?.trades)) return (data as any).trades;
+  return [];
+}
+
 export async function createObiexMarkupRange(
   token: string,
   payload: {

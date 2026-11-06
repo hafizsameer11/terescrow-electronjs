@@ -205,6 +205,7 @@ const TransactionsTable: React.FC<TransactionsTableProps> = ({
     ).toLowerCase();
     if (!p) return '—';
     if (p === 'busha') return 'Busha';
+    if (p === 'obiex') return 'Obiex';
     if (p === 'strowallet') return 'StroWallet';
     if (p === 'palmpay') return 'PalmPay';
     if (p === 'pagocard') return 'Pagocard';

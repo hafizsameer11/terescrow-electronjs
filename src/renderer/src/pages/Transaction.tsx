@@ -157,7 +157,7 @@ const Transactions: React.FC<TransactionsProps> = ({
             isPositive={statsData?.totalTransactions?.change === 'positive'}
           />
           <StatsCard
-            title="Crypto (Busha)"
+            title="Crypto (Busha + Obiex)"
             value={`$${addThousandSeparator(statsData?.cryptoTransactions?._sum?.amount ?? 0)}`}
             change={`${statsData?.cryptoTransactions?.percentage ?? 0}%`}
             isPositive={statsData?.cryptoTransactions?.change === 'positive'}

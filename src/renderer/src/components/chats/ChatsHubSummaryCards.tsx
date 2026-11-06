@@ -124,13 +124,13 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
           </div>
           <div className="shrink-0 rounded-md border border-gray-400/60 bg-white/40 px-2.5 py-1.5 text-center min-w-[110px]">
             <p className="text-[10px] text-gray-600 leading-tight">
-              {sinceClockIn ? 'Total Profit (Since clock-in)' : 'Total Profit'}
+              {sinceClockIn ? 'Total Transactions (Since clock-in)' : 'Total Transactions'}
             </p>
             <p
               className="text-[15px] font-bold mt-0.5 tabular-nums leading-none"
               style={{ color: GREEN }}
             >
-              {formatProfit(totalProfitNgn)}
+              {chatStats.totalTransactions ?? 0}
             </p>
           </div>
         </div>
@@ -155,11 +155,24 @@ const ChatsHubSummaryCards: React.FC<Props> = ({
 
       {/* Financials — right */}
       <div className="rounded-xl bg-white border border-gray-200 overflow-hidden w-full h-full flex flex-col min-h-0">
-        <div className={`flex items-start gap-2.5 ${PX} ${HEADER}`}>
-          <ChatsCardIcon />
-          <div className="min-w-0">
-            <h2 className={headerTitle}>Financials</h2>
-            <p className={headerSub}>View quick stats for your financials.</p>
+        <div className={`flex items-start justify-between gap-3 ${PX} ${HEADER}`}>
+          <div className="flex items-start gap-2.5 min-w-0">
+            <ChatsCardIcon />
+            <div className="min-w-0">
+              <h2 className={headerTitle}>Financials</h2>
+              <p className={headerSub}>View quick stats for your financials.</p>
+            </div>
+          </div>
+          <div className="shrink-0 rounded-md border border-gray-400/60 bg-white px-2.5 py-1.5 text-center min-w-[110px]">
+            <p className="text-[10px] text-gray-600 leading-tight">
+              {sinceClockIn ? 'Total Profit (Since clock-in)' : 'Total Profit'}
+            </p>
+            <p
+              className="text-[15px] font-bold mt-0.5 tabular-nums leading-none"
+              style={{ color: GREEN }}
+            >
+              {formatProfit(totalProfitNgn)}
+            </p>
           </div>
         </div>
 
